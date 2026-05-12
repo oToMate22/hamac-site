@@ -1,18 +1,9 @@
 import { defineConfig } from 'vite'
-import { resolve } from 'node:path'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  plugins: [react()],
   server: {
-    // Port dédié pour éviter le conflit avec hamac-site-equipe (ex. 5174)
     port: 5180,
-    strictPort: false,
-  },
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        biens: resolve(__dirname, 'biens/index.html'),
-      },
-    },
   },
 })

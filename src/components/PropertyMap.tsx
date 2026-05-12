@@ -10,6 +10,8 @@ type PropertyMapProps = {
   hoveredSlug: string | null
   onHoverChange: (slug: string | null) => void
   isVisible?: boolean
+  /** When the map container resizes (e.g. catalogue expanded mode), Leaflet must invalidate its layout. */
+  isExpanded?: boolean
 }
 
 const formatPriceCompact = (value: number) => `${Math.round(value / 1000)}k€`
@@ -32,23 +34,34 @@ function FitBounds({ properties }: { properties: Property[] }) {
   return null
 }
 
-function InvalidateMapOnVisible({ isVisible }: { isVisible: boolean }) {
+function InvalidateMapLayout({ isVisible, isExpanded }: { isVisible: boolean; isExpanded: boolean }) {
   const map = useMap()
 
   useEffect(() => {
     if (!isVisible) return
-    const timeoutId = window.setTimeout(() => {
-      map.invalidateSize()
-    }, 100)
-    return () => {
-      window.clearTimeout(timeoutId)
+    const run = () => {
+      map.invalidateSize({ pan: false })
     }
-  }, [isVisible, map])
+    const t1 = window.setTimeout(run, 50)
+    const t2 = window.setTimeout(run, 220)
+    const t3 = window.setTimeout(run, 480)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+      window.clearTimeout(t3)
+    }
+  }, [isVisible, isExpanded, map])
 
   return null
 }
 
-export function PropertyMap({ properties, hoveredSlug, onHoverChange, isVisible = true }: PropertyMapProps) {
+export function PropertyMap({
+  properties,
+  hoveredSlug,
+  onHoverChange,
+  isVisible = true,
+  isExpanded = false,
+}: PropertyMapProps) {
   // TODO: coordinates will come from Apimo API
   const validProperties = useMemo(() => {
     return properties.filter(
@@ -79,7 +92,7 @@ export function PropertyMap({ properties, hoveredSlug, onHoverChange, isVisible 
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="property-map__tiles"
         />
-        <InvalidateMapOnVisible isVisible={isVisible} />
+        <InvalidateMapLayout isVisible={isVisible} isExpanded={isExpanded} />
         <FitBounds properties={validProperties} />
         {clusters.map((group) => {
           const first = group[0]

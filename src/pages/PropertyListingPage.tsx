@@ -78,15 +78,43 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [hoveredPropertySlug, setHoveredPropertySlug] = useState<string | null>(null)
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
   const [cityFilterQuery, setCityFilterQuery] = useState('')
+  const budgetSliderCap = mode === 'rent' ? 8000 : 2_000_000
+  const budgetSliderStep = mode === 'rent' ? 100 : 50_000
+  const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
+  const defaultBudgetMax = mode === 'rent' ? 3000 : 800_000
+
   const type = searchParams.get('type') ?? 'all'
   const city = searchParams.get('city') ?? 'all'
-  const budget = searchParams.get('budget') ?? 'all'
+  const budgetParam = searchParams.get('budget')
+  const budgetMin = searchParams.get('budgetMin') ?? 'all'
   const surface = searchParams.get('surface') ?? 'all'
   const rooms = searchParams.get('rooms') ?? 'all'
   const q = searchParams.get('q') ?? ''
   const sort = (searchParams.get('sort') as PropertySort) ?? 'recent'
   const amenities = (searchParams.get('amenities')?.split(',').filter(Boolean) ?? []) as Amenity[]
-  const budgetValue = budget !== 'all' ? Number(budget) : 0
+
+  /** Plafond appliqué au filtre : absent de l’URL = 800 000 € (vente) ou défaut location ; `all` = aucun plafond */
+  const budgetMaxForFilter = (() => {
+    if (budgetParam === 'all') return undefined
+    if (budgetParam == null || budgetParam === '') return defaultBudgetMax
+    const n = Number(budgetParam)
+    if (!Number.isFinite(n)) return defaultBudgetMax
+    return Math.min(Math.max(0, n), budgetSliderCap)
+  })()
+
+  const budgetMinValue = (() => {
+    if (budgetMin === 'all') return 0
+    const n = Number(budgetMin)
+    if (!Number.isFinite(n)) return 0
+    return Math.min(Math.max(0, n), budgetSliderCap)
+  })()
+
+  /** Position du curseur droit : tout à droite = sans plafond (`all`) */
+  const budgetMaxThumb = budgetParam === 'all' ? budgetSliderCap : (budgetMaxForFilter ?? defaultBudgetMax)
+
+  /** Valeur affichée dans la barre de recherche (Select budget max) */
+  const budgetForSearchBar = budgetParam === 'all' ? 'all' : budgetParam == null || budgetParam === '' ? String(defaultBudgetMax) : budgetParam
+
   const surfaceValue = surface !== 'all' ? Number(surface) : 0
 
   const [apiProperties, setApiProperties] = useState<Property[] | null>(null)
@@ -167,7 +195,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       type: type.toLowerCase(),
       city,
       q,
-      budgetMax: budget !== 'all' ? Number(budget) : undefined,
+      budgetMin: budgetMin !== 'all' ? Number(budgetMin) : undefined,
+      budgetMax: budgetMaxForFilter,
       surfaceMin: surface !== 'all' ? Number(surface) : undefined,
       bedroomsMin: rooms !== 'all' ? Number(rooms) : undefined,
       amenities,
@@ -194,6 +223,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       }
       if (filters.type && filters.type !== 'all' && property.type.toLowerCase() !== filters.type) return false
       if (filters.city && filters.city !== 'all' && !matchesAllTokens(property.city, filters.city)) return false
+      if (filters.budgetMin && property.price < filters.budgetMin) return false
       if (filters.budgetMax && property.price > filters.budgetMax) return false
       if (filters.surfaceMin && property.surface < filters.surfaceMin) return false
       if (filters.bedroomsMin && property.bedrooms < filters.bedroomsMin) return false
@@ -236,7 +266,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       .map((item) => item.entry)
   })()
 
-  useEffect(() => setVisibleCount(32), [type, city, budget, surface, rooms, sort, q])
+  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q])
   useEffect(() => {
     setCityFilterQuery(city === 'all' ? '' : city)
   }, [city])
@@ -292,14 +322,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               : 'Des maisons et appartements choisis pour leur adresse, leur potentiel et leur qualite de vie.'}
           </p>
           <SearchBar
-            action="/acheter"
+            action={mode === 'rent' ? '/louer' : '/acheter'}
             compact
             cityOptions={availableCities}
-            initialValues={{ type, budget, city: q }}
+            initialValues={{ type, budget: budgetForSearchBar, city: q }}
             onSearch={(filters) => {
               updateParams([
                 { key: 'type', value: filters.type },
                 { key: 'budget', value: filters.budget },
+                { key: 'budgetMin', value: budgetMin },
                 { key: 'q', value: filters.city },
               ])
             }}
@@ -395,23 +426,49 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </Popover.Root>
               </label>
               <label className="catalog-filter__group">
-                <span className="catalog-filter__label">Budget max</span>
+                <span className="catalog-filter__label">
+                  {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
+                </span>
                 <p className="catalog-slider__value">
-                  {budgetValue > 0 ? `jusqu'à ${formatEuro(budgetValue)}` : 'Tous budgets'}
+                  {budgetMinValue > 0
+                    ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
+                    : mode === 'rent'
+                      ? 'sans plancher'
+                      : 'sans minimum'}
+                  {' — '}
+                  {budgetParam === 'all' ? 'sans plafond' : `jusqu'à ${formatEuro(budgetMaxForFilter ?? defaultBudgetMax)}${rentBudgetSuffix}`}
                 </p>
                 <Slider.Root
                   className="catalog-slider"
                   min={0}
-                  max={2000000}
-                  step={50000}
-                  value={[budgetValue]}
-                  onValueChange={(values) => updateParam('budget', values[0] > 0 ? String(values[0]) : 'all')}
-                  aria-label="Budget maximum"
+                  max={budgetSliderCap}
+                  step={budgetSliderStep}
+                  minStepsBetweenThumbs={1}
+                  value={[budgetMinValue, budgetMaxThumb]}
+                  onValueChange={(values) => {
+                    const rawMin = values[0] ?? 0
+                    const rawMax = values[1] ?? budgetSliderCap
+                    let minV = Math.min(rawMin, rawMax)
+                    let maxV = Math.max(rawMin, rawMax)
+                    minV = Math.min(Math.max(0, minV), budgetSliderCap)
+                    maxV = Math.min(Math.max(0, maxV), budgetSliderCap)
+                    if (maxV < minV + budgetSliderStep) maxV = minV + budgetSliderStep
+                    if (maxV > budgetSliderCap) maxV = budgetSliderCap
+                    const minParam = minV <= 0 ? 'all' : String(minV)
+                    const maxAtCap = maxV >= budgetSliderCap - budgetSliderStep / 2
+                    const maxParam = maxAtCap ? 'all' : String(maxV)
+                    updateParams([
+                      { key: 'budgetMin', value: minParam },
+                      { key: 'budget', value: maxParam },
+                    ])
+                  }}
+                  aria-label={mode === 'rent' ? 'Fourchette de loyer' : 'Fourchette de budget'}
                 >
                   <Slider.Track className="catalog-slider__track">
                     <Slider.Range className="catalog-slider__range" />
                   </Slider.Track>
-                  <Slider.Thumb className="catalog-slider__thumb" aria-label="Budget maximum" />
+                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer minimum' : 'Budget minimum'} />
+                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer maximum' : 'Budget maximum'} />
                 </Slider.Root>
               </label>
               <label className="catalog-filter__group">
@@ -464,6 +521,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     hoveredSlug={hoveredPropertySlug}
                     onHoverChange={setHoveredPropertySlug}
                     isVisible={!mobileMapOpen}
+                    isExpanded={mapExpanded}
                   />
                 </Suspense>
               )}
@@ -544,6 +602,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             </Suspense>
           )}
         </div>
+      ) : null}
+      {mapExpanded ? (
+        <button
+          type="button"
+          className="catalog-map-expanded-backdrop"
+          aria-label="Fermer la carte agrandie"
+          onClick={() => setMapExpanded(false)}
+        />
       ) : null}
     </main>
   )

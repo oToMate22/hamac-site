@@ -17,6 +17,7 @@ const BUDGET_OPTIONS = [
   { value: '250000', label: 'Jusqu\'à 250 000 €' },
   { value: '500000', label: 'Jusqu\'à 500 000 €' },
   { value: '750000', label: 'Jusqu\'à 750 000 €' },
+  { value: '800000', label: 'Jusqu\'à 800 000 €' },
   { value: '1000000', label: 'Jusqu\'à 1 000 000 €' },
   { value: '1500000', label: '1 000 000 € et +' },
 ]

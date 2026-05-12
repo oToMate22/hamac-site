@@ -311,6 +311,79 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
 
     setupHeroIntroAnimation()
 
+    const computeStarParts = (score: number): { full: number; half: boolean } => {
+      if (score >= 5) return { full: 5, half: false }
+      if (score >= 4.5 && score < 5) return { full: 4, half: true }
+      const roundedHalf = Math.round(score * 2) / 2
+      const full = Math.min(5, Math.floor(roundedHalf))
+      const half = roundedHalf % 1 !== 0 && full < 5
+      return { full, half }
+    }
+
+    const appendRatingStars = (container: HTMLElement, fullStars: number, halfStar: boolean) => {
+      const stars = document.createElement('span')
+      stars.className = 'temoignage-card__rating-stars'
+      stars.setAttribute('aria-hidden', 'true')
+
+      let placed = 0
+      for (; placed < fullStars; placed += 1) {
+        const star = document.createElement('span')
+        star.className = 'temoignage-card__star temoignage-card__star--full'
+        star.textContent = '★'
+        stars.appendChild(star)
+      }
+      if (halfStar) {
+        const wrap = document.createElement('span')
+        wrap.className = 'temoignage-card__star temoignage-card__star--half'
+        const track = document.createElement('span')
+        track.className = 'temoignage-card__star-half__track'
+        track.textContent = '★'
+        const fill = document.createElement('span')
+        fill.className = 'temoignage-card__star-half__fill'
+        fill.textContent = '★'
+        wrap.appendChild(track)
+        wrap.appendChild(fill)
+        stars.appendChild(wrap)
+        placed += 1
+      }
+      for (; placed < 5; placed += 1) {
+        const star = document.createElement('span')
+        star.className = 'temoignage-card__star temoignage-card__star--empty'
+        star.textContent = '★'
+        stars.appendChild(star)
+      }
+
+      container.appendChild(stars)
+    }
+
+    const setupTemoignageRatings = () => {
+      document.querySelectorAll<HTMLElement>('[data-temoignage-rating]').forEach((el) => {
+        const raw = 4.6 + Math.random() * 0.39999
+        const score = Math.min(5, Math.round(raw * 10) / 10)
+        const label = new Intl.NumberFormat('fr-FR', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }).format(score)
+        const { full, half } = computeStarParts(score)
+
+        el.replaceChildren()
+        el.classList.add('temoignage-card__rating--with-stars')
+
+        const scoreEl = document.createElement('span')
+        scoreEl.className = 'temoignage-card__rating-score'
+        scoreEl.textContent = `${label}/5`
+        el.appendChild(scoreEl)
+        appendRatingStars(el, full, half)
+
+        const starLabel =
+          half && full === 4
+            ? `Note ${label} sur 5, quatre étoiles et demi sur cinq`
+            : `Note ${label} sur 5, ${full} étoile${full > 1 ? 's' : ''} sur cinq`
+        el.setAttribute('aria-label', starLabel)
+      })
+    }
+    setupTemoignageRatings()
+
     const setupSectionTitleUnderline = () => {
       if (prefersReducedMotion) return
       const titles = Array.from(document.querySelectorAll<HTMLElement>('.section-title'))
