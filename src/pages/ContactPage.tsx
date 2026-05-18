@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase'
 import { usePageMeta } from '../utils/seo'
@@ -15,8 +16,10 @@ type ContactForm = {
 }
 
 const PROJECT_OPTIONS = ['Acheter', 'Vendre', 'Estimer mon bien', 'Investir', 'Autre']
+const ESTIMATION_PROJECT = 'Estimer mon bien'
 
 export function ContactPage() {
+  const [searchParams] = useSearchParams()
   usePageMeta({
     title: 'Contact — Hamac Investissements & Patrimoine',
     description: 'Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24h.',
@@ -32,6 +35,20 @@ export function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    const projet = searchParams.get('projet')
+    if (projet !== 'estimer' && projet !== 'estimation') return
+
+    setForm((current) => ({
+      ...current,
+      project: ESTIMATION_PROJECT,
+      message:
+        current.message.trim() === ''
+          ? 'Je souhaiterais obtenir une estimation de mon bien.'
+          : current.message,
+    }))
+  }, [searchParams])
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

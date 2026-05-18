@@ -385,6 +385,51 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     setupTemoignageRatings()
     setupReveal('.temoignage-card', (index) => Math.min(index * 0.12, 0.35))
 
+    const setupTemoignagesCarousel = () => {
+      const track = document.querySelector<HTMLElement>('[data-temoignages-track]')
+      const nextBtn = document.querySelector<HTMLButtonElement>('[data-temoignages-next]')
+      if (!track || !nextBtn) return
+
+      const updateNextState = () => {
+        const maxScroll = track.scrollWidth - track.clientWidth
+        nextBtn.disabled = maxScroll <= 4
+      }
+
+      const scrollNext = () => {
+        const firstCard = track.querySelector<HTMLElement>('.temoignage-card')
+        if (!firstCard) return
+
+        const gap = Number.parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 20
+        const step = firstCard.offsetWidth + gap
+        const maxScroll = track.scrollWidth - track.clientWidth
+        const target = track.scrollLeft + step
+        const behavior = prefersReducedMotion ? ('auto' as const) : ('smooth' as const)
+
+        if (target >= maxScroll - 4) {
+          track.scrollTo({ left: 0, behavior })
+        } else {
+          track.scrollTo({ left: target, behavior })
+        }
+      }
+
+      const onNext = () => scrollNext()
+      const onResize = () => updateNextState()
+      const onScroll = () => updateNextState()
+
+      nextBtn.addEventListener('click', onNext)
+      track.addEventListener('scroll', onScroll, { passive: true })
+      window.addEventListener('resize', onResize)
+      updateNextState()
+
+      return () => {
+        nextBtn.removeEventListener('click', onNext)
+        track.removeEventListener('scroll', onScroll)
+        window.removeEventListener('resize', onResize)
+      }
+    }
+
+    const teardownTemoignagesCarousel = setupTemoignagesCarousel()
+
     const setupSectionTitleUnderline = () => {
       if (prefersReducedMotion) return
       const titles = Array.from(document.querySelectorAll<HTMLElement>('.section-title'))
@@ -607,6 +652,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     return () => {
       cancelled = true
       if (interval) window.clearInterval(interval)
+      teardownTemoignagesCarousel?.()
       handlers.forEach(({ chip, onClick }) => chip.removeEventListener('click', onClick))
       observers.forEach((observer) => observer.disconnect())
     }

@@ -105,7 +105,7 @@ function NavDropdown({
       onMouseLeave={handleMouseLeave}
     >
       <NavLink
-        className="nav-item__label"
+        className="nav-link"
         to={to}
         onClick={(event) => {
           clearTimers()
@@ -249,7 +249,7 @@ function SiteLayout() {
             <NavLink className="nav-link" to="/louer">Louer</NavLink>
             <NavDropdown label="Vendre" to="/vendre" items={SELL_MENU} />
             <NavLink className="nav-link" to="/estimation">Estimation</NavLink>
-            <NavDropdown label="Quartiers" to="/quartiers" items={QUARTIERS_MENU} />
+            <NavDropdown label="Communes" to="/quartiers" items={QUARTIERS_MENU} />
             <NavLink className="nav-link" to="/agence">L'agence</NavLink>
             <NavLink className="nav-link" to="/contact">Contact</NavLink>
           </nav>
@@ -307,7 +307,7 @@ function SiteLayout() {
               setMobileQuartiersOpen(next)
             }}
           >
-            <span>Quartiers</span>
+            <span>Communes</span>
             <ChevronDown size={16} aria-hidden="true" />
           </button>
           <div hidden={!mobileQuartiersOpen} className="nav-mobile__items">

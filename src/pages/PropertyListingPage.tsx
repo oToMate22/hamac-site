@@ -8,6 +8,7 @@ import { Command } from 'cmdk'
 import { PropertyCard } from '../components/PropertyCard'
 import { type Amenity, type Property } from '../data/properties'
 import { SearchBar } from '../search/SearchBar'
+import { applyQuartierParamToSearch } from '../utils/catalogSearch'
 import { usePageMeta } from '../utils/seo'
 import { getProperties, getRentalProperties, type FeaturedProperty } from '../services/apimo'
 import { type PropertySort } from '../hooks/useProperties'
@@ -15,7 +16,7 @@ const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) =>
 
 type PropertyListingPageProps = {
   searchParams: URLSearchParams
-  setSearchParams: (value: URLSearchParams) => void
+  setSearchParams: (value: URLSearchParams, options?: { replace?: boolean }) => void
   mode?: 'sale' | 'rent'
 }
 
@@ -265,6 +266,16 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       .sort((a, b) => b.score - a.score || a.entry.localeCompare(b.entry, 'fr'))
       .map((item) => item.entry)
   })()
+
+  useEffect(() => {
+    const quartierSlug = searchParams.get('quartier')
+    if (!quartierSlug) return
+
+    const next = applyQuartierParamToSearch(searchParams, quartierSlug, mode)
+    if (!next) return
+
+    setSearchParams(next, { replace: true })
+  }, [mode, searchParams, setSearchParams])
 
   useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q])
   useEffect(() => {

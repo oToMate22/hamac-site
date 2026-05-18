@@ -16,6 +16,7 @@ export function SocialLinks({ className = '', variant = 'light' }: SocialLinksPr
         {HAMAC_SOCIAL_LINKS.map((item) => (
           <li key={item.id}>
             <a
+              className="social-links__link"
               href={item.href}
               target="_blank"
               rel="noopener noreferrer"

@@ -115,6 +115,16 @@
         </div>
       </section>
 
+      <!-- ESTIMATION — entre hero et Notre maison -->
+      <aside class="home-estimation-cta">
+        <div class="container home-estimation-cta__inner">
+          <a class="home-estimation-cta__link" href="/contact?projet=estimer">
+            Vous vendez&nbsp;? Estimez votre bien gratuitement
+            <span class="home-estimation-cta__arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </aside>
+
       <!-- NOTRE MAISON -->
       <section class="section section--cream notre-maison" id="notre-maison">
         <div class="wave wave--section-top wave--navy-fill" aria-hidden="true">
@@ -211,7 +221,7 @@
           <div class="bento">
             <a
               class="bento-card bento-card--featured"
-              href="/biens?quartier=sainte-foy-les-lyon"
+              href="/acheter?city=Sainte-Foy-l%C3%A8s-Lyon&amp;q=Sainte-Foy-l%C3%A8s-Lyon&amp;budgetMin=all&amp;budget=800000"
             >
               <img
                 src="/images/Biens/maison-jardin.jpg"
@@ -227,7 +237,7 @@
                 <p class="bento-card__meta">À partir de ~5 200 € / m²</p>
               </div>
             </a>
-            <a class="bento-card" href="/biens?quartier=tassin-la-demi-lune">
+            <a class="bento-card" href="/acheter?city=Tassin-la-Demi-Lune&amp;q=Tassin-la-Demi-Lune&amp;budgetMin=all&amp;budget=800000">
               <img
                 src="/images/Biens/appartement-interieur-1.jpg"
                 alt="Appartement à Tassin-la-Demi-Lune"
@@ -242,7 +252,7 @@
                 <p class="bento-card__meta">~4 800 € / m²</p>
               </div>
             </a>
-            <a class="bento-card" href="/biens?quartier=ecully">
+            <a class="bento-card" href="/acheter?city=%C3%89cully&amp;q=%C3%89cully&amp;budgetMin=all&amp;budget=800000">
               <img
                 src="/images/Biens/maison-art.jpg"
                 alt="Maison de caractère à Écully"
@@ -257,7 +267,7 @@
                 <p class="bento-card__meta">~5 000 € / m²</p>
               </div>
             </a>
-            <a class="bento-card" href="/biens?quartier=francheville">
+            <a class="bento-card" href="/acheter?city=Francheville&amp;q=Francheville&amp;budgetMin=all&amp;budget=800000">
               <img
                 src="/images/Biens/maison-city.jpg"
                 alt="Maison de ville à Francheville"
@@ -272,7 +282,7 @@
                 <p class="bento-card__meta">~4 200 € / m²</p>
               </div>
             </a>
-            <a class="bento-card" href="/biens?quartier=craponne">
+            <a class="bento-card" href="/acheter?city=Craponne&amp;q=Craponne&amp;budgetMin=all&amp;budget=800000">
               <img
                 src="/images/Biens/maison-bleu-2.jpg"
                 alt="Quartier résidentiel à Craponne"
@@ -287,7 +297,7 @@
                 <p class="bento-card__meta">~4 600 € / m²</p>
               </div>
             </a>
-            <a class="bento-card bento-card--wide" href="/biens?quartier=oullins">
+            <a class="bento-card bento-card--wide" href="/acheter?city=Oullins&amp;q=Oullins&amp;budgetMin=all&amp;budget=800000">
               <img
                 src="/images/Biens/appartement-interieur-2.jpg"
                 alt="Ambiance urbaine à Oullins"
@@ -454,7 +464,8 @@
             <p class="eyebrow">Confiance</p>
             <h2 class="section-title">Ils nous confient leur projet</h2>
           </header>
-          <div class="temoignages-grid">
+          <div class="temoignages-carousel">
+            <div class="temoignages-grid" data-temoignages-track tabindex="0" aria-label="Avis clients">
             <figure class="temoignage-card">
               <p class="temoignage-card__rating" data-temoignage-rating></p>
               <blockquote class="temoignage-card__quote">
@@ -485,6 +496,23 @@
               </blockquote>
               <figcaption class="temoignage-card__author">Sophie M. — Investisseuse, Ouest Lyonnais</figcaption>
             </figure>
+                        </div>
+            <button
+              type="button"
+              class="temoignages-carousel__next"
+              data-temoignages-next
+              aria-label="Afficher l’avis suivant"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M9 6l6 6-6 6"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </section>
