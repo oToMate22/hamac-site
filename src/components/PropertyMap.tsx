@@ -24,13 +24,25 @@ const markerIcon = (label: string, highlighted = false) =>
     iconAnchor: [34, 14],
   })
 
-function FitBounds({ properties }: { properties: Property[] }) {
+function FitBounds({ properties, isExpanded }: { properties: Property[]; isExpanded: boolean }) {
   const map = useMap()
   useEffect(() => {
     if (!properties.length) return
     const bounds = latLngBounds(properties.map((entry) => [entry.lat, entry.lng] as [number, number]))
-    map.flyToBounds(bounds, { padding: [40, 40], duration: 0.45, maxZoom: 14 })
-  }, [map, properties])
+    const padding: [number, number] = isExpanded ? [18, 18] : [40, 40]
+    const maxZoom = isExpanded ? 17 : 14
+    const opts = { padding, duration: 0.45, maxZoom }
+
+    const run = () => {
+      map.flyToBounds(bounds, opts)
+    }
+
+    if (isExpanded) {
+      const t = window.setTimeout(run, 160)
+      return () => window.clearTimeout(t)
+    }
+    run()
+  }, [map, properties, isExpanded])
   return null
 }
 
@@ -93,7 +105,7 @@ export function PropertyMap({
           className="property-map__tiles"
         />
         <InvalidateMapLayout isVisible={isVisible} isExpanded={isExpanded} />
-        <FitBounds properties={validProperties} />
+        <FitBounds properties={validProperties} isExpanded={isExpanded} />
         {clusters.map((group) => {
           const first = group[0]
           if (!first) return null

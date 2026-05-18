@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { SocialLinks } from './components/SocialLinks'
 import { AgencyPage } from './pages/AgencyPage'
 import { BlogPage, BlogPostPage } from './pages/BlogPage'
@@ -381,7 +382,7 @@ function SiteLayout() {
 
 export function App({ homeMainHtml }: AppProps) {
   return (
-    <>
+    <ErrorBoundary>
       <ScrollToTop />
       <Routes>
         <Route element={<SiteLayout />}>
@@ -405,6 +406,6 @@ export function App({ homeMainHtml }: AppProps) {
           <Route path="/confidentialite" element={<PrivacyPage />} />
         </Route>
       </Routes>
-    </>
+    </ErrorBoundary>
   )
 }

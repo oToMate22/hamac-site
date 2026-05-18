@@ -5,5 +5,19 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5180,
+    strictPort: false,
+    // Écoute sur toutes les interfaces (127.0.0.1 + localhost) — requis pour le Simple Browser Cursor
+    host: true,
+    // Autorise les requêtes depuis le navigateur intégré de l’IDE (hostnames proxy / tunnel)
+    allowedHosts: true,
+    hmr: {
+      host: 'localhost',
+      protocol: 'ws',
+    },
+  },
+  preview: {
+    port: 5180,
+    host: true,
+    allowedHosts: true,
   },
 })

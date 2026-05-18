@@ -383,6 +383,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       })
     }
     setupTemoignageRatings()
+    setupReveal('.temoignage-card', (index) => Math.min(index * 0.12, 0.35))
 
     const setupSectionTitleUnderline = () => {
       if (prefersReducedMotion) return

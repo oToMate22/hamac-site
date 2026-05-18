@@ -26,8 +26,8 @@ export const useProperties = (filters: PropertyFilters, sort: PropertySort = 're
     const filtered = PROPERTIES.filter((property) => {
       if (filters.type && filters.type !== 'all' && property.type !== filters.type) return false
       if (filters.city && filters.city !== 'all' && normalize(property.city) !== normalize(filters.city)) return false
-      if (filters.budgetMin && property.price < filters.budgetMin) return false
-      if (filters.budgetMax && property.price > filters.budgetMax) return false
+      if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
+      if (filters.budgetMax !== undefined && property.price > filters.budgetMax) return false
       if (filters.surfaceMin && property.surface < filters.surfaceMin) return false
       if (filters.bedroomsMin && property.bedrooms < filters.bedroomsMin) return false
       if (filters.q && !normalize(property.city).includes(normalize(filters.q))) return false

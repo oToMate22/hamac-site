@@ -195,7 +195,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       type: type.toLowerCase(),
       city,
       q,
-      budgetMin: budgetMin !== 'all' ? Number(budgetMin) : undefined,
+      budgetMin: budgetMinValue > 0 ? budgetMinValue : undefined,
       budgetMax: budgetMaxForFilter,
       surfaceMin: surface !== 'all' ? Number(surface) : undefined,
       bedroomsMin: rooms !== 'all' ? Number(rooms) : undefined,
@@ -223,8 +223,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       }
       if (filters.type && filters.type !== 'all' && property.type.toLowerCase() !== filters.type) return false
       if (filters.city && filters.city !== 'all' && !matchesAllTokens(property.city, filters.city)) return false
-      if (filters.budgetMin && property.price < filters.budgetMin) return false
-      if (filters.budgetMax && property.price > filters.budgetMax) return false
+      if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
+      if (filters.budgetMax !== undefined && property.price > filters.budgetMax) return false
       if (filters.surfaceMin && property.surface < filters.surfaceMin) return false
       if (filters.bedroomsMin && property.bedrooms < filters.bedroomsMin) return false
       if (filters.q && !matchesAllTokens(property.city, filters.q)) return false

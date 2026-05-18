@@ -4341,7 +4341,7 @@ a {
     min-width: 0;
   }
 
-  /* Un peu plus large pour « Budget · Tous budgets » sur une seule ligne */
+  /* Un peu plus large pour « Budget · Tous » sur une seule ligne */
   .premium-search--hero-glass .search-field:nth-child(3) {
     flex: 1.35 1 0;
     min-width: 8.75rem;
@@ -5048,6 +5048,10 @@ a {
   font-weight: 600;
   color: var(--gold);
   margin: 0 0 0.35rem;
+}
+
+.section--navy.biens .bien-card__price {
+  color: var(--white);
 }
 
 .bien-card__title {

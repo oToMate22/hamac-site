@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { getSupabase, isSupabaseConfigured } from '../lib/supabase'
 
 export type ApimoPropertyType = 'appartement' | 'maison' | 'terrain' | 'commerce' | 'bureau' | 'garage' | 'immeuble'
 
@@ -280,9 +280,14 @@ function extractList<T>(payload: unknown): T[] {
 }
 
 async function getAllMappedProperties(): Promise<FeaturedProperty[]> {
+  if (!isSupabaseConfigured()) {
+    console.warn('[apimo] Supabase non configuré — biens API indisponibles (voir .env.local).')
+    return []
+  }
+
   console.log('[apimo] getProperties: invoking edge function apimo-proxy with route=properties')
 
-  const res = await supabase.functions.invoke('apimo-proxy', {
+  const res = await getSupabase().functions.invoke('apimo-proxy', {
     body: { route: 'properties' },
   })
 

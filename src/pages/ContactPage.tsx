@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { SocialLinks } from '../components/SocialLinks'
-import { supabase } from '../lib/supabase'
+import { getSupabase, isSupabaseConfigured } from '../lib/supabase'
 import { usePageMeta } from '../utils/seo'
 
 type ContactForm = {
@@ -43,7 +43,16 @@ export function ContactPage() {
       ? `[Projet: ${form.project}] ${form.message}`.trim()
       : form.message.trim()
 
-    const { error } = await supabase.from('leads').insert({
+    if (!isSupabaseConfigured()) {
+      setFeedback({
+        type: 'error',
+        text: 'Le formulaire est temporairement indisponible. Merci de nous contacter par téléphone ou e-mail.',
+      })
+      setIsSubmitting(false)
+      return
+    }
+
+    const { error } = await getSupabase().from('leads').insert({
       nom,
       email: form.email,
       telephone: form.phone,

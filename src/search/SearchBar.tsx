@@ -6,14 +6,14 @@ import { Command } from 'cmdk'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
 
 const TYPE_OPTIONS = [
-  { value: 'all', label: 'Tous types', icon: Home },
+  { value: 'all', label: 'Tous', icon: Home },
   { value: 'maison', label: 'Maison', icon: Home },
   { value: 'appartement', label: 'Appartement', icon: Building2 },
   { value: 'terrain', label: 'Terrain', icon: LandPlot },
 ]
 
 const BUDGET_OPTIONS = [
-  { value: 'all', label: 'Tous budgets' },
+  { value: 'all', label: 'Tous' },
   { value: '250000', label: 'Jusqu\'à 250 000 €' },
   { value: '500000', label: 'Jusqu\'à 500 000 €' },
   { value: '750000', label: 'Jusqu\'à 750 000 €' },
@@ -159,10 +159,10 @@ export function SearchBar({
         <div className="search-card__fields premium-search__fields">
           <label className="search-field premium-search__field">
             <span className="search-field__pill premium-search__pill">
-              <span className="search-field__label">{variant === 'hero-glass' ? 'Type' : 'Type de bien'}</span>
+              <span className="search-field__label">Type</span>
               <Select.Root value={type} onValueChange={setType}>
-                <Select.Trigger className="premium-search__select-trigger" aria-label="Type de bien">
-                  <Select.Value placeholder="Tous types" />
+                <Select.Trigger className="premium-search__select-trigger" aria-label="Type">
+                  <Select.Value placeholder="Tous" />
                   <Select.Icon>
                     <ChevronDown size={chevronSize} />
                   </Select.Icon>
@@ -193,10 +193,10 @@ export function SearchBar({
 
           <label className="search-field premium-search__field">
             <span className="search-field__pill premium-search__pill">
-              <span className="search-field__label">{variant === 'hero-glass' ? 'Lieu' : 'Localisation'}</span>
+              <span className="search-field__label">Lieu</span>
               <Popover.Root open={cityOpen} onOpenChange={setCityOpen}>
                 <Popover.Trigger asChild>
-                  <button type="button" className="premium-search__combobox-trigger" aria-label="Rechercher une ville">
+                  <button type="button" className="premium-search__combobox-trigger" aria-label="Choisir un lieu">
                     <Search size={variant === 'hero-glass' ? 12 : 14} className="premium-search__search-icon" />
                     <span
                       className={
@@ -205,7 +205,7 @@ export function SearchBar({
                           : 'premium-search__city-value premium-search__city-value--placeholder'
                       }
                     >
-                      {city || 'Ville'}
+                      {city || '\u00a0'}
                     </span>
                     <ChevronDown size={chevronSize} className="premium-search__chevron" />
                   </button>
@@ -220,7 +220,7 @@ export function SearchBar({
                         <Search size={14} className="premium-search__search-icon" />
                         <Command.Input
                           className="premium-search__command-input"
-                          placeholder="Ville"
+                          placeholder="Quartier, ville…"
                           value={cityQuery}
                           onValueChange={setCityQuery}
                         />
@@ -266,10 +266,10 @@ export function SearchBar({
 
           <label className="search-field premium-search__field">
             <span className="search-field__pill premium-search__pill">
-              <span className="search-field__label">{variant === 'hero-glass' ? 'Budget' : 'Budget max'}</span>
+              <span className="search-field__label">Budget</span>
               <Select.Root value={budget} onValueChange={setBudget}>
                 <Select.Trigger className="premium-search__select-trigger" aria-label="Budget">
-                  <Select.Value placeholder="Tous budgets" />
+                  <Select.Value placeholder="Tous" />
                   <Select.Icon>
                     <ChevronDown size={chevronSize} />
                   </Select.Icon>
