@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
@@ -294,6 +295,37 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const isLoading = apiProperties === null && apiError === null
   const propertiesForMap = !isLoading && !apiError ? properties : []
 
+  useEffect(() => {
+    if (!mapExpanded) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMapExpanded(false)
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mapExpanded])
+
+  const renderCatalogMap = (expanded: boolean, visible: boolean) => {
+    if (apiError || isLoading) {
+      return <div className="catalog-map-loading">Chargement de la carte...</div>
+    }
+    return (
+      <Suspense fallback={<div className="catalog-map-loading">Chargement de la carte...</div>}>
+        <PropertyMap
+          properties={propertiesForMap}
+          hoveredSlug={hoveredPropertySlug}
+          onHoverChange={setHoveredPropertySlug}
+          isVisible={visible}
+          isExpanded={expanded}
+        />
+      </Suspense>
+    )
+  }
+
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)
     if (!value || value === 'all') next.delete(key)
@@ -514,29 +546,19 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </div>
               </div>
             </div>
-            <aside className={`catalog-map-panel ${mapExpanded ? 'is-expanded' : ''}`}>
-              <button
-                type="button"
-                className="catalog-map-expand"
-                aria-label={mapExpanded ? 'Reduire la carte' : 'Agrandir la carte'}
-                onClick={() => setMapExpanded((value) => !value)}
-              >
-                {mapExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-              </button>
-              {apiError || isLoading ? (
-                <div className="catalog-map-loading">Chargement de la carte...</div>
-              ) : (
-                <Suspense fallback={<div className="catalog-map-loading">Chargement de la carte...</div>}>
-                  <PropertyMap
-                    properties={propertiesForMap}
-                    hoveredSlug={hoveredPropertySlug}
-                    onHoverChange={setHoveredPropertySlug}
-                    isVisible={!mobileMapOpen}
-                    isExpanded={mapExpanded}
-                  />
-                </Suspense>
-              )}
-            </aside>
+            {!mapExpanded ? (
+              <aside className="catalog-map-panel">
+                <button
+                  type="button"
+                  className="catalog-map-expand"
+                  aria-label="Agrandir la carte"
+                  onClick={() => setMapExpanded(true)}
+                >
+                  <Maximize2 size={15} />
+                </button>
+                {renderCatalogMap(false, !mobileMapOpen)}
+              </aside>
+            ) : null}
           </aside>
           <div className="catalog-main">
             <div className="catalog-toolbar">
@@ -598,30 +620,43 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           <button type="button" className="catalog-map-overlay__close" onClick={() => setMobileMapOpen(false)}>
             Voir la liste
           </button>
-          {apiError || isLoading ? (
-            <div className="catalog-map-loading">Chargement de la carte...</div>
-          ) : (
-            <Suspense fallback={<div className="catalog-map-loading">Chargement de la carte...</div>}>
-              <div style={{ height: '100%', width: '100%' }}>
-                <PropertyMap
-                  properties={propertiesForMap}
-                  hoveredSlug={hoveredPropertySlug}
-                  onHoverChange={setHoveredPropertySlug}
-                  isVisible={mobileMapOpen}
-                />
-              </div>
-            </Suspense>
-          )}
+          <div
+            className="catalog-map-overlay__map"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {renderCatalogMap(true, mobileMapOpen)}
+          </div>
         </div>
       ) : null}
-      {mapExpanded ? (
-        <button
-          type="button"
-          className="catalog-map-expanded-backdrop"
-          aria-label="Fermer la carte agrandie"
-          onClick={() => setMapExpanded(false)}
-        />
-      ) : null}
+      {mapExpanded
+        ? createPortal(
+            <div className="catalog-map-expanded-root" role="dialog" aria-modal="true" aria-label="Carte agrandie des biens">
+              <button
+                type="button"
+                className="catalog-map-expanded-backdrop"
+                aria-label="Fermer la carte agrandie"
+                onClick={() => setMapExpanded(false)}
+              />
+              <aside
+                className="catalog-map-panel is-expanded"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="catalog-map-expand"
+                  aria-label="Reduire la carte"
+                  onClick={() => setMapExpanded(false)}
+                >
+                  <Minimize2 size={15} />
+                </button>
+                {renderCatalogMap(true, true)}
+              </aside>
+            </div>,
+            document.body,
+          )
+        : null}
     </main>
   )
 }

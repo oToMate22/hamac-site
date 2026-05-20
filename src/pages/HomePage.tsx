@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { animate, useMotionValueEvent, useScroll, useTransform } from 'framer-motion'
+import { CLIENT_REVIEWS } from '../data/clientReviews'
 import { BLOG_POSTS } from '../data/blogPosts'
 import { mountSearchBars } from '../search/mount'
 import { getProperties, type FeaturedProperty } from '../services/apimo'
@@ -311,6 +312,13 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
 
     setupHeroIntroAnimation()
 
+    const escapeHtml = (value: string) =>
+      value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+
     const computeStarParts = (score: number): { full: number; half: boolean } => {
       if (score >= 5) return { full: 5, half: false }
       if (score >= 4.5 && score < 5) return { full: 4, half: true }
@@ -356,14 +364,22 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       container.appendChild(stars)
     }
 
+    const formatReviewScoreLabel = (score: number) => {
+      if (score >= 5) return '5'
+      const rounded = Math.round(score * 10) / 10
+      if (Number.isInteger(rounded)) return String(rounded)
+      return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      }).format(rounded)
+    }
+
     const setupTemoignageRatings = () => {
       document.querySelectorAll<HTMLElement>('[data-temoignage-rating]').forEach((el) => {
-        const raw = 4.6 + Math.random() * 0.39999
+        const fixed = el.dataset.temoignageScore
+        const raw = fixed !== undefined ? Number.parseFloat(fixed) : 4.6 + Math.random() * 0.39999
         const score = Math.min(5, Math.round(raw * 10) / 10)
-        const label = new Intl.NumberFormat('fr-FR', {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        }).format(score)
+        const label = formatReviewScoreLabel(score)
         const { full, half } = computeStarParts(score)
 
         el.replaceChildren()
@@ -382,6 +398,29 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
         el.setAttribute('aria-label', starLabel)
       })
     }
+
+    const setupClientReviewCards = () => {
+      const track = document.querySelector<HTMLElement>('[data-temoignages-track]')
+      if (!track || !CLIENT_REVIEWS.length) return
+
+      track.innerHTML = CLIENT_REVIEWS.map(
+        (review) => `
+          <figure class="temoignage-card">
+            <p class="temoignage-card__rating" data-temoignage-rating${
+              review.rating !== undefined ? ` data-temoignage-score="${review.rating}"` : ''
+            }></p>
+            <blockquote class="temoignage-card__quote">
+              <p>${escapeHtml(review.quote)}</p>
+            </blockquote>
+            <figcaption class="temoignage-card__author">${escapeHtml(review.author)}</figcaption>
+          </figure>
+        `,
+      ).join('')
+
+      track.classList.toggle('temoignages-grid--few', CLIENT_REVIEWS.length <= 3)
+    }
+
+    setupClientReviewCards()
     setupTemoignageRatings()
     setupReveal('.temoignage-card', (index) => Math.min(index * 0.12, 0.35))
 
@@ -390,17 +429,19 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       const nextBtn = document.querySelector<HTMLButtonElement>('[data-temoignages-next]')
       if (!track || !nextBtn) return
 
+      const cards = () => Array.from(track.querySelectorAll<HTMLElement>('.temoignage-card'))
+
       const updateNextState = () => {
         const maxScroll = track.scrollWidth - track.clientWidth
         nextBtn.disabled = maxScroll <= 4
       }
 
       const scrollNext = () => {
-        const firstCard = track.querySelector<HTMLElement>('.temoignage-card')
-        if (!firstCard) return
+        const items = cards()
+        if (!items.length) return
 
         const gap = Number.parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 20
-        const step = firstCard.offsetWidth + gap
+        const step = items[0].offsetWidth + gap
         const maxScroll = track.scrollWidth - track.clientWidth
         const target = track.scrollLeft + step
         const behavior = prefersReducedMotion ? ('auto' as const) : ('smooth' as const)
@@ -413,17 +454,22 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       }
 
       const onNext = () => scrollNext()
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'ArrowRight') {
+          event.preventDefault()
+          scrollNext()
+        }
+      }
       const onResize = () => updateNextState()
-      const onScroll = () => updateNextState()
 
       nextBtn.addEventListener('click', onNext)
-      track.addEventListener('scroll', onScroll, { passive: true })
+      track.addEventListener('keydown', onKeyDown)
       window.addEventListener('resize', onResize)
       updateNextState()
 
       return () => {
         nextBtn.removeEventListener('click', onNext)
-        track.removeEventListener('scroll', onScroll)
+        track.removeEventListener('keydown', onKeyDown)
         window.removeEventListener('resize', onResize)
       }
     }

@@ -202,14 +202,16 @@ function SiteLayout() {
   }, [isAutoHidePage])
 
   const lightPages = ['/agence', '/vendre', '/estimation', '/contact', '/acheter', '/louer', '/quartiers', '/off-market']
-  const isLightPage = lightPages.some((entry) => pathname === entry || pathname.startsWith(`${entry}/`))
-  const logoSrc = '/images/Logo/logo-hamac-dark.png?v=20260507-6'
-
   const transparentHeaderRoutes = pathname === '/'
     || pathname === '/agence'
     || pathname === '/vendre'
     || pathname === '/off-market'
     || pathname.startsWith('/quartiers/')
+  const isLightPage =
+    lightPages.some((entry) => pathname === entry || pathname.startsWith(`${entry}/`))
+    && !transparentHeaderRoutes
+  const logoSrc = '/images/Logo/logo-hamac-dark.png?v=20260507-6'
+  const footerMergedWithCta = pathname === '/' || pathname === '/quartiers'
 
   return (
     <>
@@ -326,7 +328,7 @@ function SiteLayout() {
         <Outlet />
       </div>
 
-      <footer className="site-footer">
+      <footer className={`site-footer${footerMergedWithCta ? ' site-footer--merged-top' : ''}`}>
         <div className="wave wave--footer-top" aria-hidden="true">
           <svg viewBox="0 0 1440 56" preserveAspectRatio="none" focusable="false">
             <path className="wave__path wave__path--footer" d="M0,44 C240,30 520,50 820,38 C1080,28 1270,46 1440,34 L1440,56 L0,56 Z" />
@@ -334,10 +336,23 @@ function SiteLayout() {
         </div>
         <div className="container site-footer__grid">
           <div className="site-footer__brand">
-            <p className="logo logo--footer"><img className="logo__image logo__image--footer" src="/images/Logo/logo-hamac.png" alt="Hamac Investissements & Patrimoine" loading="lazy" /></p>
-            <p className="site-footer__tagline">Investissements & Patrimoine — Ouest Lyonnais</p>
-            <p className="site-footer__social-label">Suivez-nous</p>
-            <SocialLinks className="site-footer__socials" variant="dark" />
+            <div className="site-footer__brand-card">
+              <div className="site-footer__brand-logo">
+                <p className="logo logo--footer">
+                  <img
+                    className="logo__image logo__image--footer"
+                    src="/images/Logo/logo-hamac.png"
+                    alt="Hamac Investissements & Patrimoine"
+                    loading="lazy"
+                  />
+                </p>
+              </div>
+              <p className="site-footer__tagline">Agence indépendante, locale et non généraliste</p>
+              <div className="site-footer__brand-foot">
+                <p className="site-footer__social-label">Suivez-nous</p>
+                <SocialLinks className="site-footer__socials" variant="dark" />
+              </div>
+            </div>
           </div>
           <div>
             <h3 className="site-footer__heading">Contact</h3>
@@ -373,6 +388,11 @@ function SiteLayout() {
               <li><Link to="/blog?category=guides-pratiques">Guides pratiques</Link></li>
               <li><Link to="/blog?category=vie-locale">Vie locale</Link></li>
             </ul>
+          </div>
+        </div>
+        <div className="site-footer__bottom">
+          <div className="container site-footer__bottom-inner">
+            <p>© {new Date().getFullYear()} Hamac Investissements & Patrimoine. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

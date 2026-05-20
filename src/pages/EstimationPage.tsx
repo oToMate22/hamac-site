@@ -1,7 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
-import { Check, ChevronDown, Home, Building2, LandPlot, ShieldCheck, Clock3, MapPinHouse } from 'lucide-react'
-import { CITIES, type PropertyType } from '../data/properties'
+import { ArrowRight, Check, ChevronDown, Home, Building2, LandPlot, ShieldCheck, Clock3, MapPinHouse } from 'lucide-react'
+import { CitySearchField } from '../components/CitySearchField'
+import type { PropertyType } from '../data/properties'
 import { usePageMeta } from '../utils/seo'
 
 type EstimationForm = {
@@ -23,6 +24,30 @@ const TYPE_OPTIONS: Array<{ value: PropertyType; label: string; icon: typeof Hom
   { value: 'appartement', label: 'Appartement', icon: Building2 },
   { value: 'terrain', label: 'Terrain', icon: LandPlot },
 ]
+
+const STEPS = [
+  {
+    id: 1,
+    label: 'Bien',
+    title: 'Quel bien souhaitez-vous estimer ?',
+    description: 'Choisissez le type de bien et indiquez sa commune.',
+    hint: 'Sélectionnez un type de bien et une ville pour continuer.',
+  },
+  {
+    id: 2,
+    label: 'Détails',
+    title: 'Caractéristiques du bien',
+    description: 'Ces informations nous permettent d’affiner votre estimation.',
+    hint: 'Renseignez la surface et le nombre de pièces pour continuer.',
+  },
+  {
+    id: 3,
+    label: 'Contact',
+    title: 'Recevez votre estimation',
+    description: 'Un expert Hamac vous recontacte sous 24 h.',
+    hint: 'Complétez vos coordonnées pour envoyer la demande.',
+  },
+] as const
 
 function FieldSelect({
   label,
@@ -88,6 +113,13 @@ export function EstimationPage() {
   })
 
   const isLastStep = step === 3
+  const currentStep = STEPS[step - 1]
+  const continueHint = useMemo(() => {
+    if (step === 2 && form.type === 'maison' && form.surface && form.rooms && form.bedrooms && !form.land) {
+      return 'Indiquez la surface du terrain pour continuer.'
+    }
+    return currentStep.hint
+  }, [currentStep.hint, form.bedrooms, form.land, form.rooms, form.surface, form.type, step])
   const canContinue = useMemo(() => {
     if (step === 1) return Boolean(form.type && form.city)
     if (step === 2) return Boolean(form.surface && form.rooms && form.bedrooms && (form.type !== 'maison' || form.land))
@@ -117,15 +149,31 @@ export function EstimationPage() {
       <section className="container estimation-layout">
         <div className="estimation-form-card">
           <div className="estimation-progress" aria-label="Progression du formulaire">
-            {[1, 2, 3].map((entry) => (
-              <div key={entry} className={`estimation-progress__item ${step === entry ? 'is-active' : ''}`}>
-                <span>{entry}</span>
-                <p>Etape {entry}</p>
-              </div>
-            ))}
+            {STEPS.map((entry) => {
+              const isActive = step === entry.id
+              const isDone = step > entry.id
+              return (
+                <div
+                  key={entry.id}
+                  className={`estimation-progress__item ${isActive ? 'is-active' : ''} ${isDone ? 'is-done' : ''}`}
+                  aria-current={isActive ? 'step' : undefined}
+                >
+                  <span>{isDone ? <Check size={14} aria-hidden /> : entry.id}</span>
+                  <p>{entry.label}</p>
+                </div>
+              )
+            })}
           </div>
 
           <form onSubmit={submit} className="estimation-form">
+            <header className="estimation-step-header">
+              <p className="estimation-step-header__eyebrow">
+                Étape {step} sur {STEPS.length}
+              </p>
+              <h2 className="estimation-step-header__title">{currentStep.title}</h2>
+              <p className="estimation-step-header__desc">{currentStep.description}</p>
+            </header>
+
             {step === 1 ? (
               <>
                 <div className="estimation-type-grid">
@@ -144,12 +192,11 @@ export function EstimationPage() {
                     )
                   })}
                 </div>
-                <FieldSelect
+                <CitySearchField
                   label="Ville"
                   value={form.city}
                   onValueChange={(value) => setForm((current) => ({ ...current, city: value }))}
-                  options={CITIES.map((entry) => ({ value: entry, label: entry }))}
-                  placeholder="Selectionnez une ville"
+                  placeholder="Rechercher une commune"
                 />
               </>
             ) : null}
@@ -231,11 +278,19 @@ export function EstimationPage() {
                 <button type="button" className="estimation-back" onClick={() => setStep((value) => Math.max(1, value - 1))}>
                   Retour
                 </button>
-              ) : null}
-              <button type="submit" className="search-card__submit" disabled={!canContinue}>
-                {isLastStep ? 'Recevoir mon estimation' : 'Continuer'}
+              ) : (
+                <span className="estimation-actions__spacer" aria-hidden />
+              )}
+              <button type="submit" className="estimation-cta" disabled={!canContinue}>
+                <span>{isLastStep ? 'Recevoir mon estimation' : 'Continuer'}</span>
+                <ArrowRight size={20} aria-hidden />
               </button>
             </div>
+            {!canContinue ? (
+              <p className="estimation-cta-hint" role="status">
+                {continueHint}
+              </p>
+            ) : null}
           </form>
         </div>
 

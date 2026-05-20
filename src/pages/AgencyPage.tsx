@@ -22,7 +22,11 @@ export function AgencyPage() {
   return (
     <main className="agency-page">
       <section className="agency-hero">
-        <img src="/images/Biens/maison-homepage.jpg" alt="Facade de l'agence Hamac a Sainte-Foy-les-Lyon" loading="eager" />
+        <img
+          src="/images/Biens/pont-photo-page-agence.png"
+          alt="Vue du pont de Sainte-Foy-les-Lyon, territoire de l'agence Hamac"
+          loading="eager"
+        />
         <div className="agency-hero__overlay" />
         <div className="container agency-hero__content">
           <p className="eyebrow">L&apos;AGENCE</p>

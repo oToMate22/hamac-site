@@ -465,38 +465,13 @@
             <h2 class="section-title">Ils nous confient leur projet</h2>
           </header>
           <div class="temoignages-carousel">
-            <div class="temoignages-grid" data-temoignages-track tabindex="0" aria-label="Avis clients">
-            <figure class="temoignage-card">
-              <p class="temoignage-card__rating" data-temoignage-rating></p>
-              <blockquote class="temoignage-card__quote">
-                <p>
-                  « Une écoute rare. Hamac a sécurisé notre achat à Sainte-Foy avec une transparence que nous n’avions pas
-                  trouvée ailleurs. »
-                </p>
-              </blockquote>
-              <figcaption class="temoignage-card__author">Claire &amp; Marc D. — Sainte-Foy-lès-Lyon</figcaption>
-            </figure>
-            <figure class="temoignage-card">
-              <p class="temoignage-card__rating" data-temoignage-rating></p>
-              <blockquote class="temoignage-card__quote">
-                <p>
-                  « Vente rapide, photos magnifiques, et un interlocuteur unique du premier rendez-vous jusqu’à la
-                  signature. »
-                </p>
-              </blockquote>
-              <figcaption class="temoignage-card__author">Thomas L. — Tassin-la-Demi-Lune</figcaption>
-            </figure>
-            <figure class="temoignage-card">
-              <p class="temoignage-card__rating" data-temoignage-rating></p>
-              <blockquote class="temoignage-card__quote">
-                <p>
-                  « On cherchait un investissement sans prise de tête : Hamac connaît les quartiers et les rendements
-                  réalistes. »
-                </p>
-              </blockquote>
-              <figcaption class="temoignage-card__author">Sophie M. — Investisseuse, Ouest Lyonnais</figcaption>
-            </figure>
-                        </div>
+            <div
+              class="temoignages-grid"
+              data-temoignages-track
+              tabindex="0"
+              aria-label="Avis clients"
+              aria-live="polite"
+            ></div>
             <button
               type="button"
               class="temoignages-carousel__next"
@@ -614,8 +589,19 @@
       </div>
       <div class="container site-footer__grid">
         <div class="site-footer__brand">
-          <p class="logo logo--footer">Hamac</p>
-          <p class="site-footer__tagline">Investissements &amp; Patrimoine — Ouest Lyonnais</p>
+          <div class="site-footer__brand-card">
+            <div class="site-footer__brand-logo">
+              <p class="logo logo--footer">
+                <img
+                  class="logo__image logo__image--footer"
+                  src="/images/Logo/logo-hamac.png"
+                  alt="Hamac Investissements & Patrimoine"
+                  loading="lazy"
+                />
+              </p>
+            </div>
+            <p class="site-footer__tagline">Agence indépendante, locale et non généraliste</p>
+          </div>
         </div>
         <div>
           <h3 class="site-footer__heading">Contact</h3>
