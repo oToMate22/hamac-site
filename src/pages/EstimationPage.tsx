@@ -140,9 +140,10 @@ export function EstimationPage() {
     <main className="section section--cream estimation-page">
       <section className="estimation-hero">
         <div className="container">
-          <p className="eyebrow">ESTIMATION GRATUITE</p>
-          <h1 className="section-title">Connaitre la valeur de votre bien</h1>
-          <p className="estimation-hero__lead">Recevez une estimation precise et argumentee sous 24h, realisee par un expert de votre quartier.</p>
+          <h1 className="section-title estimation-hero__title">Connaître la valeur de votre bien</h1>
+          <p className="estimation-hero__lead">
+            Recevez une estimation précise et argumentée sous 24 h, réalisée par un expert de votre quartier.
+          </p>
         </div>
       </section>
 

@@ -1628,7 +1628,11 @@ a {
 }
 
 .estimation-hero {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.estimation-hero__title {
+  margin: 0 0 0.65rem;
 }
 
 .estimation-hero__lead {
@@ -2365,8 +2369,7 @@ a {
 
 .selling-hero {
   position: relative;
-  min-height: 68vh;
-  margin-top: var(--header-h);
+  min-height: calc(68vh + var(--header-h));
   display: flex;
   flex-direction: column;
 }
@@ -2384,15 +2387,28 @@ a {
 }
 
 .selling-hero__overlay {
-  background: linear-gradient(180deg, rgba(20, 42, 56, 0.66) 0%, rgba(20, 42, 56, 0.5) 62%, rgba(20, 42, 56, 0.35) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(20, 42, 56, 0.78) 0%,
+    rgba(20, 42, 56, 0.58) 38%,
+    rgba(20, 42, 56, 0.45) 100%
+  );
 }
 
 .selling-hero__content {
   position: relative;
   z-index: 2;
   color: var(--white);
-  padding-top: clamp(5.2rem, 9vw, 8rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: calc(var(--header-h) + clamp(2.5rem, 6vw, 5rem));
   padding-bottom: clamp(4rem, 8vw, 6rem);
+}
+
+.selling-hero__content .eyebrow {
+  color: rgba(253, 252, 250, 0.82);
 }
 
 .selling-hero__title {
@@ -4968,7 +4984,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 /* padding-top ici : .section--cream écrase sinon une règle plus haute dans le fichier */
 .estimation-page.section--cream {
-  padding-top: calc(var(--header-h) + clamp(3rem, 5.5vw, 4.5rem));
+  padding-top: calc(var(--header-h) + clamp(2rem, 4vw, 3rem));
   padding-bottom: clamp(2.35rem, 6vw, 4rem);
 }
 

@@ -3,7 +3,7 @@ import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
-import { getSupabase, isSupabaseConfigured } from '../lib/supabase'
+import { submitContactLead } from '../lib/submitContactLead'
 import { usePageMeta } from '../utils/seo'
 
 type ContactForm = {
@@ -60,16 +60,7 @@ export function ContactPage() {
       ? `[Projet: ${form.project}] ${form.message}`.trim()
       : form.message.trim()
 
-    if (!isSupabaseConfigured()) {
-      setFeedback({
-        type: 'error',
-        text: 'Le formulaire est temporairement indisponible. Merci de nous contacter par téléphone ou e-mail.',
-      })
-      setIsSubmitting(false)
-      return
-    }
-
-    const { error } = await getSupabase().from('leads').insert({
+    const result = await submitContactLead({
       nom,
       email: form.email,
       telephone: form.phone,
@@ -77,8 +68,17 @@ export function ContactPage() {
       type_contact: 'contact',
     })
 
-    if (error) {
-      setFeedback({ type: 'error', text: "Une erreur est survenue. Merci de réessayer dans un instant." })
+    if (!result.ok) {
+      console.error('[contact] submit failed', result)
+      const messages: Record<typeof result.reason, string> = {
+        missing_config:
+          'Le formulaire est temporairement indisponible. Merci de nous appeler au 04 78 85 08 27 ou d’écrire à agence@hamacpatrimoine.com.',
+        validation: 'Merci de remplir tous les champs obligatoires.',
+        network: 'Connexion impossible. Merci de réessayer ou de nous contacter par téléphone.',
+        rls: 'Envoi bloqué côté base de données. Merci de nous contacter par téléphone ou e-mail.',
+        insert_failed: 'Une erreur est survenue. Merci de réessayer dans un instant.',
+      }
+      setFeedback({ type: 'error', text: messages[result.reason] })
       setIsSubmitting(false)
       return
     }
