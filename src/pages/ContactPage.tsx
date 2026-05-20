@@ -3,7 +3,7 @@ import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
-import { submitContactLead } from '../lib/submitContactLead'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { usePageMeta } from '../utils/seo'
 
 type ContactForm = {
@@ -60,25 +60,35 @@ export function ContactPage() {
       ? `[Projet: ${form.project}] ${form.message}`.trim()
       : form.message.trim()
 
-    const result = await submitContactLead({
-      nom,
-      email: form.email,
-      telephone: form.phone,
-      message: messageWithProject,
-      type_contact: 'contact',
-    })
+    if (!isSupabaseConfigured()) {
+      setFeedback({
+        type: 'error',
+        text: 'Le formulaire est temporairement indisponible. Merci de nous appeler au 04 78 85 08 27 ou d’écrire à agence@hamacpatrimoine.com.',
+      })
+      setIsSubmitting(false)
+      return
+    }
 
-    if (!result.ok) {
-      console.error('[contact] submit failed', result)
-      const messages: Record<typeof result.reason, string> = {
-        missing_config:
-          'Le formulaire est temporairement indisponible. Merci de nous appeler au 04 78 85 08 27 ou d’écrire à agence@hamacpatrimoine.com.',
-        validation: 'Merci de remplir tous les champs obligatoires.',
-        network: 'Connexion impossible. Merci de réessayer ou de nous contacter par téléphone.',
-        rls: 'Envoi bloqué côté base de données. Merci de nous contacter par téléphone ou e-mail.',
-        insert_failed: 'Une erreur est survenue. Merci de réessayer dans un instant.',
-      }
-      setFeedback({ type: 'error', text: messages[result.reason] })
+    try {
+      const { data, error } = await supabase.from('leads').insert([
+        {
+          nom,
+          email: form.email,
+          telephone: form.phone,
+          message: messageWithProject,
+          type_contact: 'contact',
+        },
+      ])
+
+      if (error) throw error
+
+      console.log('Formulaire envoyé', data)
+    } catch (error) {
+      console.error('Erreur:', error)
+      setFeedback({
+        type: 'error',
+        text: 'Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.',
+      })
       setIsSubmitting(false)
       return
     }

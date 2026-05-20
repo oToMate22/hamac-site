@@ -28,3 +28,11 @@ export function getSupabase(): SupabaseClient {
   client = createClient(supabaseUrl, supabaseAnonKey)
   return client
 }
+
+/** Client Supabase pour les formulaires : `supabase.from('leads').insert(...)` */
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const value = Reflect.get(getSupabase(), prop, getSupabase())
+    return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(getSupabase()) : value
+  },
+})
