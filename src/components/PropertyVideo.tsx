@@ -23,7 +23,7 @@ function resolvePosterUrl(poster?: string): string | undefined {
 
 function buildStreamEmbedUrl(
   videoId: string,
-  options: { poster?: string; muted: boolean },
+  options: { poster?: string; muted: boolean; autoplay: boolean },
 ): string {
   const params = new URLSearchParams()
   params.set('primaryColor', 'C5A96A')
@@ -33,8 +33,9 @@ function buildStreamEmbedUrl(
   if (posterUrl) params.set('poster', posterUrl)
 
   if (options.muted) params.set('muted', 'true')
+  if (options.autoplay) params.set('autoplay', 'true')
   params.set('controls', 'true')
-  params.set('preload', 'metadata')
+  params.set('preload', options.autoplay ? 'auto' : 'metadata')
 
   return `https://iframe.cloudflarestream.com/${videoId}?${params.toString()}`
 }
@@ -72,6 +73,11 @@ function StreamPreview({
   active: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const activeRef = useRef(active)
+
+  useEffect(() => {
+    activeRef.current = active
+  }, [active])
 
   useEffect(() => {
     const video = videoRef.current
@@ -81,9 +87,15 @@ function StreamPreview({
     let hlsInstance: InstanceType<typeof import('hls.js').default> | null = null
     let cancelled = false
 
+    const playIfActive = () => {
+      if (!activeRef.current || cancelled) return
+      void video.play().catch(() => {})
+    }
+
     const setup = async () => {
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src
+        video.addEventListener('loadedmetadata', playIfActive, { once: true })
         return
       }
 
@@ -94,6 +106,7 @@ function StreamPreview({
 
       hlsInstance.loadSource(src)
       hlsInstance.attachMedia(video)
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, playIfActive)
     }
 
     void setup()
@@ -101,6 +114,7 @@ function StreamPreview({
     return () => {
       cancelled = true
       hlsInstance?.destroy()
+      video.removeEventListener('loadedmetadata', playIfActive)
       video.removeAttribute('src')
       video.load()
     }
@@ -126,6 +140,7 @@ function StreamPreview({
       autoPlay={active}
       loop
       muted={muted}
+      controls={false}
       preload="auto"
       disablePictureInPicture
     />
@@ -151,7 +166,7 @@ export function PropertyVideo({
     )
   }
 
-  const src = buildStreamEmbedUrl(videoId, { poster, muted })
+  const src = buildStreamEmbedUrl(videoId, { poster, muted, autoplay: active })
 
   return (
     <div
