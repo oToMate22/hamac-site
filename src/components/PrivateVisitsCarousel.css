@@ -1,0 +1,295 @@
+.private-visits-section {
+  padding-top: clamp(2rem, 5vw, 3rem);
+  padding-bottom: clamp(2.75rem, 6vw, 4.25rem);
+  background: var(--cream);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  isolation: isolate;
+}
+
+.private-visits-section .section-header {
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+}
+
+.private-visits-section .section-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--navy);
+  line-height: 1.1;
+}
+
+.private-visits-section .section-subtitle {
+  margin: 0.45rem 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+  font-style: italic;
+  color: rgba(27, 42, 74, 0.7);
+}
+
+.private-visits-section .section-eyebrow {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--navy-muted);
+}
+
+.private-visits-swiper-wrap {
+  position: relative;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+}
+
+.private-visits-swiper-wrap .mySwiper.private-visits-swiper {
+  --swiper-navigation-size: 1.75rem;
+  --swiper-navigation-color: rgba(20, 42, 56, 0.45);
+  --swiper-theme-color: rgba(20, 42, 56, 0.45);
+
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.private-visits-swiper-wrap .mySwiper .swiper-wrapper {
+  cursor: grab;
+}
+
+.private-visits-swiper-wrap .mySwiper.swiper-grab,
+.private-visits-swiper-wrap .mySwiper.swiper-grab .swiper-wrapper {
+  cursor: grabbing;
+}
+
+/* Clic sur une carte latérale → slideToClickedSlide */
+.mySwiper.private-visits-swiper .swiper-slide:not(.swiper-slide-active) {
+  cursor: pointer;
+}
+
+/* Largeur explicite pour slidesPerView: auto + swipe fiable */
+.mySwiper.private-visits-swiper .swiper-slide {
+  width: clamp(14.625rem, 40.5vw, 20.25rem);
+  height: clamp(26rem, 72vw, 36rem);
+  aspect-ratio: 9 / 16;
+  flex-shrink: 0;
+}
+
+.visit-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: var(--navy-deep);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.visit-card:not(.is-active) {
+  opacity: 0.88;
+}
+
+.visit-poster,
+.visit-card__media,
+.visit-card .property-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.visit-card .property-video,
+.visit-card .property-video iframe,
+.visit-card .property-video__element {
+  pointer-events: none;
+}
+
+.visit-card__media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.visit-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.35s ease;
+}
+
+.visit-card.is-playing .visit-poster {
+  opacity: 0;
+}
+
+.visit-card .property-video--preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.visit-caption {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  padding: 2.75rem 0.85rem 1rem;
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 42, 56, 0.88) 72%);
+  pointer-events: none;
+}
+
+.visit-city {
+  font-family: var(--font-serif);
+  font-size: clamp(0.9rem, 2.4vw, 1.2rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--cream);
+  text-align: center;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+
+.swiper-slide-active .visit-city {
+  font-size: clamp(1rem, 3vw, 1.45rem);
+}
+
+.mySwiper.private-visits-swiper .swiper-pagination {
+  bottom: 0.35rem !important;
+}
+
+.mySwiper.private-visits-swiper .swiper-pagination-bullet {
+  width: 0.45rem;
+  height: 0.45rem;
+  background: rgba(20, 42, 56, 0.25);
+  opacity: 1;
+}
+
+.mySwiper.private-visits-swiper .swiper-pagination-bullet-active {
+  background: var(--navy);
+  transform: scale(1.35);
+}
+
+/* Flèches discrètes — même style gauche / droite */
+.mySwiper.private-visits-swiper .swiper-button-prev,
+.mySwiper.private-visits-swiper .swiper-button-next {
+  z-index: 12;
+  top: 44%;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 42, 56, 0.1);
+  background: rgba(247, 244, 239, 0.55);
+  color: rgba(20, 42, 56, 0.45);
+  box-shadow: none;
+  opacity: 0.55;
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev:hover,
+.mySwiper.private-visits-swiper .swiper-button-next:hover {
+  opacity: 0.92;
+  border-color: rgba(20, 42, 56, 0.16);
+  background: rgba(253, 252, 250, 0.9);
+  color: rgba(20, 42, 56, 0.72);
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev:active,
+.mySwiper.private-visits-swiper .swiper-button-next:active {
+  opacity: 1;
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev:focus-visible,
+.mySwiper.private-visits-swiper .swiper-button-next:focus-visible {
+  opacity: 1;
+  outline: 1px solid rgba(20, 42, 56, 0.25);
+  outline-offset: 2px;
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev.swiper-button-disabled,
+.mySwiper.private-visits-swiper .swiper-button-next.swiper-button-disabled {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev::after,
+.mySwiper.private-visits-swiper .swiper-button-next::after {
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.mySwiper.private-visits-swiper .swiper-button-prev {
+  left: max(0.5rem, env(safe-area-inset-left));
+}
+
+.mySwiper.private-visits-swiper .swiper-button-next {
+  right: max(0.5rem, env(safe-area-inset-right));
+}
+
+@media (min-width: 768px) {
+  .mySwiper.private-visits-swiper .swiper-slide {
+    width: 18.5625rem;
+    height: 33rem;
+  }
+
+  .private-visits-swiper-wrap .mySwiper.private-visits-swiper {
+    --swiper-navigation-size: 2rem;
+  }
+
+  .mySwiper.private-visits-swiper .swiper-button-prev,
+  .mySwiper.private-visits-swiper .swiper-button-next {
+    top: 45%;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .mySwiper.private-visits-swiper .swiper-button-prev::after,
+  .mySwiper.private-visits-swiper .swiper-button-next::after {
+    font-size: 0.55rem;
+  }
+
+  .mySwiper.private-visits-swiper .swiper-button-prev {
+    left: max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .mySwiper.private-visits-swiper .swiper-button-next {
+    right: max(0.85rem, env(safe-area-inset-right));
+  }
+}
+
+@media (min-width: 1200px) {
+  .mySwiper.private-visits-swiper .swiper-slide {
+    width: 20.25rem;
+    height: 36rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visit-poster,
+  .mySwiper.private-visits-swiper .swiper-button-prev,
+  .mySwiper.private-visits-swiper .swiper-button-next {
+    transition: none;
+  }
+
+  .mySwiper.private-visits-swiper .swiper-button-prev:hover,
+  .mySwiper.private-visits-swiper .swiper-button-next:hover {
+    opacity: 0.92;
+  }
+}

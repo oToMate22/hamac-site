@@ -3,7 +3,7 @@ import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
-import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { submitLead } from '@/services/leads'
 import { usePageMeta } from '../utils/seo'
 
 type ContactForm = {
@@ -60,29 +60,14 @@ export function ContactPage() {
       ? `[Projet: ${form.project}] ${form.message}`.trim()
       : form.message.trim()
 
-    if (!isSupabaseConfigured()) {
-      setFeedback({
-        type: 'error',
-        text: 'Le formulaire est temporairement indisponible. Merci de nous appeler au 04 78 85 08 27 ou d’écrire à agence@hamacpatrimoine.com.',
-      })
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      const { data, error } = await supabase.from('leads').insert([
-        {
-          nom,
-          email: form.email,
-          telephone: form.phone,
-          message: messageWithProject,
-          type_contact: 'contact',
-        },
-      ])
-
-      if (error) throw error
-
-      console.log('Formulaire envoyé', data)
+      await submitLead({
+        nom,
+        email: form.email.trim(),
+        telephone: form.phone.trim(),
+        message: messageWithProject || null,
+        type_contact: 'contact',
+      })
     } catch (error) {
       console.error('Erreur:', error)
       setFeedback({

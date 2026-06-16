@@ -1,0 +1,1871 @@
+# HAMAC — Contenus du site à valider
+
+Document unique destiné à la relecture client.
+
+Chaque section correspond à une page ou à une famille de pages du site.
+
+La personne qui relit peut modifier directement le texte ou ajouter ses remarques sous chaque bloc.
+
+
+---
+
+
+
+---
+
+<!-- Source : 00-mode-emploi.md -->
+
+# Contenus du site Hamac — mode d'emploi
+
+Ce dossier sert de document de relecture pour valider ou modifier les textes du site avant livraison.
+
+Chaque fichier correspond à une page ou à une grande famille de pages :
+
+- `01-accueil.md` : page d'accueil
+- `02-acheter-louer.md` : pages catalogue acheter / louer
+- `03-vendre.md` : page vendre
+- `04-estimation.md` : page estimation
+- `05-off-market.md` : page off-market
+- `06-investir.md` : page investir
+- `07-agence-equipe.md` : page agence et section équipe
+- `08-contact.md` : page contact
+- `09-quartiers.md` : page quartiers et fiches communes
+- `10-blog.md` : journal / articles
+- `11-legal.md` : mentions légales, honoraires, confidentialité
+
+## Comment faire les retours
+
+Pour chaque texte, l'entreprise peut :
+
+- valider le texte tel quel ;
+- remplacer directement le texte dans ce document ;
+- ajouter un commentaire sous la ligne concernée, par exemple : `À modifier : ...`
+
+## Important
+
+Les textes des fiches biens ne sont pas listés ici, car ils viennent d'Apimo et changent selon les annonces.
+
+Les textes légaux doivent idéalement être relus par un conseil juridique avant mise en ligne définitive.
+
+
+
+---
+
+<!-- Source : 01-accueil.md -->
+
+# Page : Accueil
+
+Route : `/`
+
+## SEO
+
+Titre navigateur :
+Hamac — Immobilier premium | Ouest Lyonnais
+
+Meta description :
+Hamac Investissements & Patrimoine — agence immobilière premium dans l'Ouest Lyonnais. Immobilier de confiance, sur-mesure et humain.
+
+## Hero
+
+Accroche :
+Agence locale & conseil
+
+Titre :
+Des lieux choisis, pour des vies bien pensées
+
+Texte :
+Nous accompagnons chaque projet immobilier avec une connaissance fine du marché et une attention portée à chaque détail.
+
+Lien secondaire :
+Découvrir nos biens en vedette
+
+## CTA estimation
+
+Vous vendez ? Estimez votre bien gratuitement
+
+## Section : Notre maison
+
+Sur-titre :
+Notre maison
+
+Titre :
+Hamac, l’immobilier autrement
+
+Texte 1 :
+Fondée à Sainte-Foy-lès-Lyon, Hamac accompagne chaque projet avec une approche humaine et sur-mesure. Nous connaissons intimement chaque quartier de l’Ouest Lyonnais — ses rythmes, ses atouts, ses meilleures adresses.
+
+Texte 2 :
+L’humain est au cœur de notre métier : chaque projet mérite une attention particulière. Il ne s’agit pas seulement d’un logement, mais d’un lieu de vie qui vous ressemble.
+
+Lien :
+Découvrir l’agence
+
+## Chiffres clés
+
++800
+familles accompagnées
+
+82
+biens vendus en 2024
+
+118
+biens vendus en 2025
+
+4,6/5
+avis google — satisfaction client
+
+## Section : Biens en vedette
+
+Sur-titre :
+Sélection
+
+Titre :
+Biens en vedette
+
+Filtres :
+Tout
+Maisons
+Appartements
+Avec jardin
+Avec piscine
+Exclusivités
+
+Bouton :
+Voir tous nos biens
+
+## Section : Territoire
+
+Sur-titre :
+Territoire
+
+Titre :
+L’Ouest Lyonnais, quartier par quartier
+
+Texte :
+Explorez nos quartiers de prédilection — puis affinez votre recherche dans notre catalogue.
+
+Cartes communes :
+
+Sainte-Foy-lès-Lyon
+Calme résidentiel, écoles reconnues et vue sur Lyon — le cœur historique de notre agence.
+À partir de ~5 200 € / m²
+
+Tassin-la-Demi-Lune
+Art de vivre village, commerces de proximité.
+~4 800 € / m²
+
+Écully
+Demeures contemporaines et campus.
+~5 000 € / m²
+
+Francheville
+Nature et familles, à deux pas du centre.
+~4 200 € / m²
+
+Craponne
+Quartiers résidentiels et cadre verdoyant.
+~4 600 € / m²
+
+Oullins
+Dynamisme urbain, métro et rives du Rhône — idéal pour un premier achat ou un investissement.
+~4 000 € / m²
+
+## Section : Confiance / témoignages
+
+Sur-titre :
+Confiance
+
+Titre :
+Ils nous confient leur projet
+
+Avis clients :
+
+« Une écoute rare. Hamac a sécurisé notre achat à Sainte-Foy avec une transparence que nous n’avions pas trouvée ailleurs. »
+Claire & Marc D. — Sainte-Foy-lès-Lyon
+
+« Vente rapide, photos magnifiques, et un interlocuteur unique du premier rendez-vous jusqu’à la signature. »
+Thomas L. — Tassin-la-Demi-Lune
+
+« On cherchait un investissement sans prise de tête : Hamac connaît les quartiers et les rendements réalistes. »
+Sophie M. — Investisseuse, Ouest Lyonnais
+
+« Accompagnement clair et réactif du début à la fin. Nous recommandons Hamac sans hésiter. »
+Famille R. — Francheville
+
+« Estimation juste, stratégie de mise en vente efficace, vente conclue dans les délais annoncés. »
+Philippe G. — Écully
+
+« Une équipe disponible qui connaît vraiment le secteur. Visites bien ciblées, zéro perte de temps. »
+Julie & Antoine B. — Craponne
+
+« Location gérée avec sérieux : dossiers complets, locataire solide, suivi impeccable. »
+Marc D. — Oullins
+
+« Conseils patrimoniaux pertinents et pédagogiques. On se sent accompagné, pas pressé. »
+Isabelle V. — Sainte-Foy-lès-Lyon
+
+« Photos et annonce au top, nombreuses visites qualifiées, vente au prix attendu. »
+Nicolas P. — Tassin-la-Demi-Lune
+
+« Très bonne lecture du marché local. Hamac a su rassurer acquéreurs et vendeurs. »
+Céline M. — Ouest Lyonnais
+
+« Professionnalisme, transparence et proximité : exactement ce que l’on attend d’une agence de quartier. »
+Laurent & Anne F. — Sainte-Foy-lès-Lyon
+
+## Section : L'agence / équipe
+
+Sur-titre :
+L'AGENCE
+
+Titre :
+Une équipe qui connaît chaque rue
+
+Sébastien Garnier
+Gérant
+Passionné par le patrimoine lyonnais, il met son expertise au service de votre projet depuis plus de 15 ans.
+
+Romain Monneri-Fons
+Agent commercial indépendant
+Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.
+
+Victor Bonazza
+Agent commercial indépendant
+Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur.
+
+Élodie Renard
+Agent commercial indépendant
+Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.
+
+Raphaël Lasbatx
+Agent commercial indépendant
+Réactif et attentif, il vous guide sur chaque phase de la transaction.
+
+Samuel Ribes
+Agent commercial indépendant
+Il conseille les investisseurs avec une lecture patrimoniale claire et durable.
+
+Ana Sanabria
+Agent commercial indépendant
+Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute.
+
+Anthony Ribeiro
+Agent commercial indépendant
+Il structure chaque dossier pour offrir un suivi fluide et transparent.
+
+Pauline Rodriguez
+Agent commercial indépendant
+Elle met son sens du détail au service d'un accompagnement immobilier serein.
+
+Axel Bernard
+Agent commercial indépendant
+Il vous accompagne avec disponibilité et précision sur les secteurs de l'Ouest lyonnais.
+
+Bouton :
+Découvrir l'agence
+
+## Section : Journal
+
+Sur-titre :
+JOURNAL
+
+Titre :
+Derniers articles
+
+Texte :
+Analyses du marché, guides pratiques et vie locale dans l'Ouest Lyonnais.
+
+Lien :
+Lire tous nos articles
+
+## CTA final
+
+Titre :
+Vous avez un projet immobilier ?
+
+Texte :
+Rencontrons-nous pour en discuter. Premier rendez-vous offert et sans engagement.
+
+Bouton :
+Prendre rendez-vous
+
+## Footer
+
+Tagline :
+Agence indépendante, locale et non généraliste
+
+Contact :
+12 avenue de la Libération
+69110 Sainte-Foy-lès-Lyon
+04 00 00 00 00
+contact@hamac-immo.fr
+
+Liens rapides :
+Nos biens
+L’agence
+Estimation
+Contact
+
+Informations :
+Mentions légales
+Politique de confidentialité
+Cookies
+
+Copyright :
+Hamac Investissements & Patrimoine. Tous droits réservés.
+
+
+
+---
+
+<!-- Source : 02-acheter-louer.md -->
+
+# Pages : Acheter / Louer
+
+Routes :
+`/acheter`
+`/louer`
+
+## Page Acheter
+
+SEO title :
+Biens à vendre — Hamac Investissements & Patrimoine
+
+SEO description :
+Explorez nos biens disponibles dans l'Ouest Lyonnais : maisons, appartements et terrains sélectionnés par Hamac.
+
+Titre :
+Nos biens dans l'Ouest Lyonnais
+
+Introduction :
+Des maisons et appartements choisis pour leur adresse, leur potentiel et leur qualite de vie.
+
+Bouton mobile :
+Filtres avances
+
+Filtres :
+Type
+Ville
+Budget (min. — max.)
+Surface min
+Chambres min
+Criteres
+
+Options type :
+Tous
+Appartement
+Maison
+Terrain
+Commerce
+Bureau
+Garage / Parking
+Immeuble
+
+Options ville :
+Toutes les villes
+Rechercher une ville
+Aucune ville trouvée.
+
+Options critères :
+jardin
+piscine
+terrasse
+garage
+
+Tri :
+Trier
+Plus recents
+Prix croissant
+Prix decroissant
+Surface
+
+États :
+Chargement...
+Erreur lors du chargement
+biens trouves
+Impossible de charger les biens.
+Réessayer
+Chargement des biens...
+Voir plus de biens
+
+Carte :
+Chargement de la carte...
+Agrandir la carte
+Réduire la carte
+Aucun bien ne correspond à vos filtres actuellement.
+
+Popup map :
+biens dans ce secteur
+Cliquez sur le marqueur pour zoomer et voir chaque bien.
+Voir le bien →
+
+## Page Louer
+
+SEO title :
+Biens à louer — Hamac Investissements & Patrimoine
+
+SEO description :
+Explorez nos biens à louer dans l'Ouest Lyonnais : appartements, maisons et opportunités sélectionnés par Hamac.
+
+Titre :
+Nos biens dans l'Ouest Lyonnais
+
+Introduction :
+Des biens en location choisis pour leur emplacement, leur confort et leur qualite de vie.
+
+Filtre spécifique :
+Loyer (min. — max.)
+
+Texte si pas de minimum :
+sans plancher
+
+Le reste des textes est identique à la page acheter.
+
+## Fiches biens
+
+Les textes des fiches biens (titre, description, prix, ville, détails) viennent d'Apimo. Ils ne sont donc pas listés ici.
+
+Textes fixes sur une fiche :
+
+Retour aux biens
+Description
+Caractéristiques
+Localisation
+Demander une visite
+Votre nom
+Email
+Téléphone
+Message
+Envoyer
+Biens similaires
+Voir le bien
+
+Messages formulaire fiche bien :
+Votre demande a bien été envoyée. Nous vous recontactons rapidement.
+Une erreur est survenue. Merci de réessayer ou de nous contacter directement.
+
+
+
+---
+
+<!-- Source : 03-vendre.md -->
+
+# Page : Vendre
+
+Route : `/vendre`
+
+## SEO
+
+Titre :
+Vendre avec Hamac — Hamac Investissements & Patrimoine
+
+Description :
+De l’estimation à la signature, Hamac vous accompagne pour vendre votre bien dans l’Ouest lyonnais.
+
+## Hero
+
+Sur-titre :
+VENDRE AVEC HAMAC
+
+Titre :
+Votre bien merite une mise en valeur a la hauteur de son caractere
+
+Texte :
+De l'estimation a la signature, nous vous accompagnons avec precision et transparence.
+
+## Section : Les étapes d'une vente réussie
+
+Titre :
+Les etapes d'une vente reussie
+
+1. Estimation precise
+Nous analysons votre bien, le marche local et les transactions recentes pour fixer le juste prix.
+
+2. Mise en valeur
+Photos professionnelles, visite virtuelle, redaction soignee de l'annonce.
+
+3. Diffusion ciblee
+Visibilite sur les portails immobiliers, notre site, nos reseaux sociaux et notre reseau off-market.
+
+4. Selection des acquereurs
+Nous qualifions chaque candidat : budget valide, projet serieux, visite organisee.
+
+5. Negociation
+Nous defendons vos interets avec diplomatie pour obtenir le meilleur prix.
+
+6. Accompagnement jusqu'a la signature
+Suivi administratif, coordination avec le notaire, serenite totale.
+
+## Section : Pourquoi vendre avec Hamac
+
+Titre :
+Pourquoi vendre avec Hamac
+
+Connaissance hyper-locale
+Nous connaissons chaque rue, chaque ecole, chaque prix de l'Ouest Lyonnais.
+
+Reseau off-market
+Acces a des acheteurs qualifies avant meme la mise en ligne de votre bien.
+
+Transparence totale
+Des rapports de visite detailles, un suivi regulier et des conseils honnetes.
+
+## Actions
+
+Estimer mon bien
+
+Prendre rendez-vous
+
+## Témoignage
+
+« Une vente menee avec calme, clarte et beaucoup de precision. Nous nous sommes sentis accompagnes du debut a la signature. »
+
+— Claire & Julien M., Vente maison a Sainte-Foy-les-Lyon.
+
+## CTA final
+
+Sur-titre :
+Parlons de votre projet
+
+Titre :
+Un accompagnement sur-mesure, de la premiere visite a la signature
+
+Texte :
+Contactez notre equipe pour une estimation, une vente ou un achat dans l'Ouest Lyonnais.
+
+Bouton :
+Nous contacter
+
+
+
+---
+
+<!-- Source : 04-estimation.md -->
+
+# Page : Estimation
+
+Route : `/estimation`
+
+## SEO
+
+Titre :
+Estimation immobilière gratuite — Hamac Investissements & Patrimoine
+
+Description :
+Obtenez une estimation précise et argumentée de votre bien sous 24h avec un expert Hamac de votre quartier.
+
+## Hero
+
+Titre :
+Connaître la valeur de votre bien
+
+Texte :
+Recevez une estimation précise et argumentée sous 24 h, réalisée par un expert de votre quartier.
+
+## Formulaire — progression
+
+Étape 1 :
+Bien
+
+Étape 2 :
+Détails
+
+Étape 3 :
+Contact
+
+## Étape 1 : Bien
+
+Titre :
+Quel bien souhaitez-vous estimer ?
+
+Description :
+Choisissez le type de bien et indiquez sa commune.
+
+Aide si incomplet :
+Sélectionnez un type de bien et une ville pour continuer.
+
+Options type de bien :
+Maison
+Appartement
+Terrain
+
+Champ :
+Ville
+
+Placeholder :
+Rechercher une commune
+
+## Étape 2 : Détails
+
+Titre :
+Caractéristiques du bien
+
+Description :
+Ces informations nous permettent d'affiner votre estimation.
+
+Aide si incomplet :
+Renseignez la surface habitable pour continuer.
+
+Champs :
+Surface habitable
+Nombre de pieces
+Nombre de chambres
+Terrain
+
+Placeholders :
+Ex: 120
+Pieces
+Chambres
+Ex: 600
+
+## Étape 3 : Contact
+
+Titre :
+Recevez votre estimation
+
+Description :
+Un expert Hamac vous recontacte sous 24 h.
+
+Aide si incomplet :
+Complétez vos coordonnées pour envoyer la demande.
+
+Champs :
+Nom
+Prenom
+Email
+Telephone
+Message optionnel
+
+## Boutons
+
+Retour
+Continuer
+Recevoir mon estimation
+Envoi en cours...
+
+## Messages
+
+Succès :
+Votre demande d'estimation a bien été envoyée. Nous vous recontactons sous 24 h.
+
+Erreur :
+Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.
+
+## Bloc réassurance
+
+Titre :
+Pourquoi estimer avec Hamac ?
+
+Points :
+Estimation gratuite et sans engagement
+Reponse sous 24h par un expert local
+Connaissance precise des prix de l'Ouest Lyonnais
+
+Témoignage :
+« Estimation claire, argumentee et tres juste par rapport au marche. Nous avons vendu sereinement, au bon prix. »
+
+Signature :
+Claire & Marc D. — Sainte-Foy-les-Lyon
+
+Texte confidentialité :
+Vos donnees sont protegees et ne seront jamais partagees.
+
+
+
+---
+
+<!-- Source : 05-off-market.md -->
+
+# Page : Off-market
+
+Route : `/off-market`
+
+## SEO
+
+Titre :
+Off-market immobilier — Hamac Investissements & Patrimoine
+
+Description :
+Accédez aux biens off-market de l’Ouest lyonnais avant leur publication et rejoignez le club privé Hamac.
+
+## Hero
+
+Sur-titre :
+ACCÈS PRIVILÉGIÉ
+
+Titre :
+Le off-market — des biens avant tout le monde
+
+Texte :
+Accédez à des propriétés exclusives qui ne sont jamais publiées sur les portails immobiliers.
+
+## Section : Qu'est-ce que le off-market ?
+
+Titre :
+Qu'est-ce que le off-market ?
+
+Texte 1 :
+Le off-market représente environ 5 à 10% du marché immobilier français. Il s'agit de biens vendus dans la discrétion, sans diffusion publique sur les portails traditionnels.
+
+Texte 2 :
+Pour les acquéreurs, c'est un vrai avantage : moins de concurrence, moins de pression, et souvent de meilleures marges de négociation.
+
+Texte 3 :
+Chez Hamac, nous avons construit au fil des années un réseau local solide qui nous donne accès à ces opportunités confidentielles, souvent avant qu'elles ne deviennent visibles.
+
+## Bénéfices
+
+Moins de concurrence
+Vous êtes parmi les premiers informés, loin de la guerre des offres.
+
+Biens rares
+Des propriétés atypiques, des emplacements premium, des opportunités uniques.
+
+Discrétion totale
+Une transaction sereine, sans visibilité publique.
+
+## Section : Comment ça fonctionne
+
+Titre :
+Comment ça fonctionne
+
+1. Inscrivez-vous
+Renseignez vos critères de recherche et vos coordonnées.
+
+2. Nous cherchons pour vous
+Notre réseau local nous alerte dès qu'un bien correspond à votre profil.
+
+3. Visite prioritaire
+Vous êtes contacté en avant-première pour organiser une visite privée.
+
+## Formulaire
+
+Titre :
+Rejoindre le club off-market
+
+Texte :
+Recevez nos biens exclusifs avant leur mise en ligne — c'est gratuit et sans engagement.
+
+Champs :
+Prénom
+Nom
+Email
+Téléphone
+Type de bien recherché
+Secteur privilégié
+Budget
+
+Options type :
+Maison
+Appartement
+Les deux
+
+Options secteur :
+Sainte-Foy-lès-Lyon
+Tassin-la-Demi-Lune
+Écully
+Francheville
+Craponne
+Oullins
+Tout l'Ouest Lyonnais
+
+Options budget :
+< 400 000 EUR
+400 000 - 700 000 EUR
+700 000 - 1 000 000 EUR
+1 000 000 EUR+
+
+Bouton :
+Rejoindre le club
+
+Bouton pendant l'envoi :
+Envoi en cours…
+
+Texte confidentialité :
+Vos données sont protégées. Vous pouvez vous désinscrire à tout moment.
+
+Messages :
+Votre demande a bien été enregistrée. Nous vous contacterons sous 48h.
+Une erreur est survenue, veuillez réessayer ou nous contacter directement.
+
+Erreurs champs :
+Le prénom est requis.
+Le nom est requis.
+L'email est requis.
+Le téléphone est requis.
+
+## Témoignage
+
+« Grâce au réseau off-market de Hamac, nous avons trouvé notre maison à Sainte-Foy avant même sa mise en vente. Aucune concurrence, un prix juste, et un accompagnement irréprochable. »
+
+— Famille D., Achat off-market à Sainte-Foy-lès-Lyon.
+
+## Questions fréquentes
+
+Le off-market est-il réservé aux biens de luxe ?
+Non, des biens de toutes gammes peuvent être commercialisés en off-market. Tout dépend de la stratégie du vendeur et du niveau de discrétion recherché.
+
+Combien de temps faut-il attendre ?
+Cela dépend de vos critères. Certains clients trouvent en quelques semaines, d’autres sur un horizon plus long lorsque la recherche est très ciblée.
+
+Y a-t-il des frais supplémentaires ?
+Non, l'inscription est gratuite et les honoraires sont identiques à une transaction classique.
+
+Comment Hamac accède-t-il à ces biens ?
+Notre implantation locale depuis 2021 et notre réseau de partenaires, de propriétaires et de prescripteurs nous permettent d’être informés en amont.
+
+
+
+---
+
+<!-- Source : 06-investir.md -->
+
+# Page : Investir
+
+Route : `/investir`
+
+## SEO
+
+Titre :
+Investir dans l’immobilier — Hamac Investissements & Patrimoine
+
+Description :
+Hamac accompagne vos projets d'investissement immobilier dans l'Ouest lyonnais avec une sélection locale et une lecture patrimoniale.
+
+## Hero
+
+Sur-titre :
+INVESTIR AVEC HAMAC
+
+Titre :
+Construire un projet immobilier rentable, lisible et durable
+
+Texte :
+Nous vous aidons à identifier les biens adaptés à vos objectifs patrimoniaux : résidence locative, diversification, pied-à-terre ou projet de long terme.
+
+Boutons :
+Parler de mon projet
+Voir les biens
+
+## Section : Approche patrimoniale
+
+Sur-titre :
+APPROCHE PATRIMONIALE
+
+Titre :
+Un investissement se choisit autant pour son adresse que pour son usage
+
+Texte 1 :
+Hamac croise expertise immobilière, connaissance fine des communes et compréhension de vos priorités : rendement, valorisation, transmission, qualité de vie ou équilibre entre plusieurs objectifs.
+
+Texte 2 :
+Notre rôle : vous aider à arbitrer avec des informations claires, des biens cohérents et un accompagnement humain jusqu'à la décision.
+
+## Piliers
+
+Sélection locale
+Nous ciblons les adresses et typologies cohérentes avec votre stratégie patrimoniale dans l'Ouest lyonnais.
+
+Lecture du marché
+Prix, demande locative, travaux, revente : chaque opportunité est étudiée avec une approche concrète du terrain.
+
+Accompagnement complet
+De la recherche à la signature, Hamac coordonne les étapes clés pour avancer avec clarté et sérénité.
+
+## CTA final
+
+Sur-titre :
+Première étape
+
+Titre :
+Parlons de vos critères et de votre horizon d'investissement
+
+Texte :
+Un échange suffit pour préciser votre cible, votre budget et les communes à privilégier.
+
+Bouton :
+Contacter Hamac
+
+
+
+---
+
+<!-- Source : 07-agence-equipe.md -->
+
+# Page : Agence
+
+Route : `/agence`
+
+## SEO
+
+Titre :
+L'agence Hamac — Hamac Investissements & Patrimoine
+
+Description :
+Découvrez l'histoire, l'équipe et la vision de Hamac, agence immobilière spécialisée dans l’Ouest lyonnais.
+
+## Hero
+
+Sur-titre :
+L'AGENCE
+
+Titre :
+Une agence ancree dans son territoire, attentive a chaque projet
+
+Texte :
+Depuis Sainte-Foy-les-Lyon, nous accompagnons chaque client avec exigence, transparence et sensibilite locale.
+
+## Section histoire
+
+Titre :
+L'histoire de Hamac et la vision de Sebastien
+
+Texte 1 :
+Nee a Sainte-Foy-les-Lyon, Hamac s'est construite autour d'une conviction simple: chaque projet merite une strategie sur-mesure et un accompagnement humain.
+
+Texte 2 :
+Notre expertise de l'Ouest Lyonnais permet d'identifier les bonnes adresses, d'anticiper les attentes des acquereurs et d'orchestrer des ventes sereines.
+
+## Valeurs
+
+Proximite
+Une presence locale forte et disponible.
+
+Expertise locale
+Une lecture fine des micro-marches.
+
+Transparence
+Des conseils clairs a chaque etape.
+
+## Chiffres
+
+15+
+annees d'experience cumulee
+
+240+
+biens accompagnes
+
+96%
+satisfaction client
+
+## Équipe
+
+Titre :
+Une equipe qui connait chaque rue
+
+Sébastien Garnier
+Gerant
+Accompagnement humain et precision locale.
+
+Romain Monneri-Fons
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Victor Bonazza
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Elodie Renard
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Raphael Lasbatx
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Samuel Ribes
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Ana Sanabria
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Anthony Ribeiro
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Pauline Rodriguez
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Axel Bernard
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+## CTA final
+
+Sur-titre :
+Parlons de votre projet
+
+Titre :
+Un accompagnement sur-mesure, de la premiere visite a la signature
+
+Texte :
+Contactez notre equipe pour une estimation, une vente ou un achat dans l'Ouest Lyonnais.
+
+Bouton :
+Nous contacter
+
+
+
+---
+
+<!-- Source : 08-contact.md -->
+
+# Page : Contact
+
+Route : `/contact`
+
+## SEO
+
+Titre :
+Contact — Hamac Investissements & Patrimoine
+
+Description :
+Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24h.
+
+## Hero
+
+Titre :
+Nous rencontrer
+
+Texte :
+Passez nous voir a l'agence ou ecrivez-nous. Nous repondons sous 24h.
+
+## Informations agence
+
+Adresse de l'agence
+19 Boulevard Baron du Marais, 69110 Sainte-Foy-les-Lyon
+
+Telephone
+04 78 85 08 27
+
+Email
+agence@hamacpatrimoine.com
+
+Horaires
+Lundi au vendredi : 9h-19h, Samedi : 9h-13h
+
+Suivez-nous
+
+## Formulaire
+
+Champs :
+Prenom
+Nom
+Email
+Telephone
+Votre projet
+Message
+
+Placeholder projet :
+Selectionnez un projet
+
+Options projet :
+Acheter
+Vendre
+Estimer mon bien
+Investir
+Autre
+
+Bouton :
+Envoyer
+
+Bouton pendant l'envoi :
+Envoi en cours...
+
+Message prérempli si lien estimation :
+Je souhaiterais obtenir une estimation de mon bien.
+
+Messages :
+Votre demande a bien été envoyée. Nous revenons vers vous rapidement.
+Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.
+
+
+
+---
+
+<!-- Source : 09-quartiers.md -->
+
+# Pages : Quartiers
+
+Routes :
+`/quartiers`
+`/quartiers/sainte-foy-les-lyon`
+`/quartiers/tassin-la-demi-lune`
+`/quartiers/ecully`
+`/quartiers/francheville`
+`/quartiers/craponne`
+`/quartiers/oullins`
+
+## Page hub quartiers
+
+Titre :
+L'Ouest Lyonnais, quartier par quartier
+
+Texte :
+Découvrez nos communes, leurs atouts et les biens disponibles dans chaque secteur.
+
+CTA :
+Vous ne savez pas encore où chercher ?
+
+Texte CTA :
+Parlez-nous de votre projet : nous vous orientons vers la commune et le quartier les plus adaptés à vos critères.
+
+Bouton :
+Parlez-nous de votre projet
+
+## Textes communs des pages quartier
+
+Chiffres clés
+Prix moyen
+Évolution
+Population
+Écoles
+
+Vivre à [commune]
+Écoles
+Transports
+Commerces & marchés
+Espaces verts
+
+Biens disponibles à [commune]
+Aucun bien disponible actuellement à [commune] — inscrivez-vous pour être alerté.
+Votre email
+Être alerté
+
+Votre expert à [commune]
+Contacter l'agent
+
+Explorer les communes voisines
+
+## Sainte-Foy-lès-Lyon
+
+Tagline :
+Le bourg historique aux portes de Lyon
+
+Prix :
+4 850 EUR/m²
+
+Évolution :
++3.2% sur 12 mois
+
+Population :
+22 000 habitants
+
+Description :
+Sainte-Foy-lès-Lyon séduit par son équilibre rare entre charme de village et proximité immédiate de Lyon. Entre les pentes arborées, les places animées du bourg et les vues ouvertes sur la ville, la commune offre un cadre de vie paisible sans compromis sur la praticité du quotidien.
+
+Les familles apprécient ses établissements scolaires réputés, ses rues résidentielles calmes et la qualité des services de proximité. Le patrimoine local, dont les aqueducs romains, donne à la ville une identité forte et un caractère authentique.
+
+Vivre à Sainte-Foy, c'est choisir une adresse rassurante, élégante et durable, où l'on s'installe souvent pour longtemps.
+
+Écoles :
+Lycée Jean-Baptiste-Say
+Institution Sainte-Marc
+École Châtelain
+
+Transports :
+Bus C19 / C20 vers Lyon centre
+Accès rapide Lyon 5e
+Connexion A6 / périphérique
+
+Commerces :
+Commerces de bouche, cafés de quartier, marché hebdomadaire et services de centre-bourg.
+
+Espaces verts :
+Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.
+
+Agent référent :
+Sébastien Garnier — Gérant
+
+## Tassin-la-Demi-Lune
+
+Tagline :
+Le carrefour dynamique de l'Ouest
+
+Prix :
+4 200 EUR/m²
+
+Évolution :
++2.6% sur 12 mois
+
+Population :
+18 000 habitants
+
+Description :
+Tassin-la-Demi-Lune combine énergie urbaine et douceur résidentielle. Sa position stratégique en fait un point de connexion majeur entre l'Ouest lyonnais et le centre-ville.
+
+La commune propose une offre immobilière variée, des appartements proches des commerces aux maisons familiales dans des rues plus calmes. Cette diversité attire aussi bien les jeunes actifs que les familles établies.
+
+Avec ses écoles, ses infrastructures et ses accès fluides, Tassin offre un mode de vie simple et efficace, très recherché sur le marché local.
+
+Écoles :
+Institution Saint-Joseph
+Collège Jean-Jacques-Rousseau
+École Baraillon
+
+Transports :
+Gare TER de Tassin
+Bus 5 / 72 / 73
+Accès rapide A6 / périphérique ouest
+
+Commerces :
+Centre commerçant vivant, enseignes de proximité, restaurants et services du quotidien.
+
+Espaces verts :
+Squares résidentiels, promenades vertes et accès rapide aux espaces boisés de l’Ouest lyonnais.
+
+Agent référent :
+Romain Monneri-Fons — Agent commercial indépendant
+
+## Écully
+
+Tagline :
+Prestige discret et grandes écoles
+
+Prix :
+5 100 EUR/m²
+
+Évolution :
++2.1% sur 12 mois
+
+Population :
+19 000 habitants
+
+Description :
+Écully incarne un standing résidentiel recherché, avec de belles propriétés nichées dans un environnement verdoyant et confidentiel. L'atmosphère y est élégante, sans ostentation.
+
+La présence d'établissements majeurs comme EM Lyon et Centrale Lyon renforce le dynamisme local et l'attractivité de la commune sur le long terme.
+
+Entre patrimoine, calme et qualité architecturale, Écully reste une valeur sûre pour les familles et les acquéreurs en quête d'un cadre premium.
+
+Écoles :
+École Centrale de Lyon
+EM Lyon
+Lycée Valpré
+
+Transports :
+Bus 3 / 19 / 89
+Accès A6 immédiat
+Liaison rapide vers Gorge de Loup
+
+Commerces :
+Commerces de qualité, artisanat local, services premium et vie de quartier active.
+
+Espaces verts :
+Grandes propriétés arborées, parcs paysagers et ambiance très verte au quotidien.
+
+Agent référent :
+Victor Bonazza — Agent commercial indépendant
+
+## Francheville
+
+Tagline :
+Nature et tranquillité
+
+Prix :
+3 600 EUR/m²
+
+Évolution :
++3.9% sur 12 mois
+
+Population :
+14 000 habitants
+
+Description :
+Francheville attire celles et ceux qui recherchent un quotidien plus apaisé, entre nature, reliefs boisés et esprit familial. La commune conserve une identité résidentielle forte.
+
+Le secteur bénéficie d'un excellent rapport qualité-prix dans l'Ouest lyonnais, ce qui en fait une alternative particulièrement intéressante face à Écully ou Sainte-Foy.
+
+Avec sa popularité croissante, Francheville reste un choix stratégique pour habiter durablement ou valoriser un investissement patrimonial.
+
+Écoles :
+Collège Christiane Bernardin
+École du Bourg
+Groupe scolaire Chater
+
+Transports :
+Bus C20E / 14
+Proximité A450
+Connexion TER Francheville
+
+Commerces :
+Commerces de proximité, services essentiels et vie locale active autour des centres de quartier.
+
+Espaces verts :
+Vallée de l'Yzeron, sentiers verts et espaces naturels appréciés des familles.
+
+Agent référent :
+Élodie Renard — Agent commercial indépendant
+
+## Craponne
+
+Tagline :
+La campagne aux portes de Lyon
+
+Prix :
+3 800 EUR/m²
+
+Évolution :
++4.1% sur 12 mois
+
+Population :
+11 000 habitants
+
+Description :
+Craponne conserve un esprit village très apprécié, avec une vraie convivialité de quartier et un rythme de vie plus serein que dans l'hyper-centre.
+
+Son marché hebdomadaire, ses commerces indépendants et sa vie associative donnent à la commune une ambiance chaleureuse, idéale pour les jeunes familles.
+
+Avec un ticket d'entrée plus accessible que d'autres communes de l'Ouest, Craponne devient un choix naturel pour concrétiser un premier projet maison.
+
+Écoles :
+Collège Jean Rostand
+École publique de Craponne
+Institution Saint-Irénée
+
+Transports :
+Bus C24 / C24E
+Accès rapide vers Tassin
+Connexion A450
+
+Commerces :
+Marché de plein vent, commerces locaux et services de centre-ville très pratiques.
+
+Espaces verts :
+Espaces verts familiaux, promenades en lisière de campagne et environnement résidentiel aéré.
+
+Agent référent :
+Raphaël Lasbatx — Agent commercial indépendant
+
+## Oullins
+
+Tagline :
+L'énergie du sud-ouest lyonnais
+
+Prix :
+3 400 EUR/m²
+
+Évolution :
++3.5% sur 12 mois
+
+Population :
+26 000 habitants
+
+Description :
+Oullins offre une dynamique urbaine appréciée pour sa connexion directe avec Lyon, notamment grâce au métro B. C'est une commune active, vivante et en transformation.
+
+Les bords du Rhône, les commerces et la diversité de son parc immobilier en font un secteur attractif pour les primo-accédants comme pour les investisseurs.
+
+Plus urbain que d'autres communes de l'Ouest lyonnais, Oullins conserve néanmoins des poches résidentielles agréables et une vraie qualité de vie de proximité.
+
+Écoles :
+Lycée Parc Chabrières
+Collège Pierre Brossolette
+École de la Saulaie
+
+Transports :
+Métro B
+Bus C7 / 63 / 88
+Accès rapide A7 / périphérique
+
+Commerces :
+Commerces de centre-ville, marchés, cafés et services urbains complets.
+
+Espaces verts :
+Berges du Rhône, parcs de quartier et promenades aménagées.
+
+Agent référent :
+Samuel Ribes — Agent commercial indépendant
+
+
+
+---
+
+<!-- Source : 10-blog.md -->
+
+# Page : Blog / Journal
+
+Routes :
+`/blog`
+`/blog/:article`
+
+## Page liste
+
+Titre :
+Journal Hamac
+
+Texte :
+Analyses du marché, guides pratiques et vie locale dans l'Ouest Lyonnais.
+
+Catégories :
+Tout
+Marché immobilier
+Guides pratiques
+Vie locale
+Conseils patrimoine
+
+## Article 1
+
+Slug :
+prix-immobilier-ouest-lyonnais-2026
+
+Titre :
+Prix immobilier dans l'Ouest Lyonnais en 2026 : bilan et perspectives
+
+Catégorie :
+Marché immobilier
+
+Auteur :
+Sébastien Garnier
+
+Date :
+2026-02-11
+
+Temps de lecture :
+5 min
+
+Extrait :
+Après deux années de normalisation, les prix se stabilisent dans la plupart des communes de l'Ouest lyonnais. Voici les signaux à surveiller pour acheter ou vendre au bon moment.
+
+Contenu :
+En 2026, le marché immobilier de l'Ouest lyonnais montre un visage plus lisible. Les délais de vente se sont allongés par rapport à la période très tendue de 2021-2022, mais les biens bien positionnés continuent de se vendre dans des conditions satisfaisantes.
+
+Sainte-Foy-lès-Lyon et Écully restent des secteurs premium, soutenus par une demande familiale régulière et un cadre de vie recherché. Tassin et Francheville, de leur côté, attirent davantage de profils actifs en quête d'équilibre entre accessibilité et qualité résidentielle.
+
+Pour les vendeurs, la clé est désormais la justesse du prix dès la mise en ligne. Pour les acquéreurs, 2026 offre un meilleur pouvoir de négociation, à condition d'avoir un dossier solide et une stratégie claire.
+
+Dans ce contexte, une lecture fine des micro-secteurs fait la différence : d'une rue à l'autre, les écarts de valorisation restent significatifs.
+
+## Article 2
+
+Slug :
+acheter-premiere-maison-guide
+
+Titre :
+Acheter sa première maison : le guide complet pour les primo-accédants
+
+Catégorie :
+Guides pratiques
+
+Auteur :
+Romain Monneri-Fons
+
+Date :
+2026-01-22
+
+Temps de lecture :
+7 min
+
+Extrait :
+De la capacité d'emprunt à la signature chez le notaire, ce guide pratique vous aide à structurer votre premier achat sans stress ni mauvaise surprise.
+
+Contenu :
+Le premier achat immobilier est souvent un mélange d'enthousiasme et d'incertitude. Avant de lancer les visites, il est indispensable de cadrer votre budget global : apport, mensualité cible, frais de notaire et travaux éventuels.
+
+Ensuite, définissez une grille de priorités simple : localisation, surface, nombre de chambres, extérieur, potentiel d'évolution. Cette méthode évite les décisions impulsives et permet de comparer les biens de manière objective.
+
+Au moment de l'offre, la préparation du dossier fait toute la différence. Un financement clair, validé en amont, vous place dans une position plus forte face au vendeur.
+
+Enfin, entourez-vous d'interlocuteurs fiables pour sécuriser chaque étape : négociation, compromis, clauses suspensives et coordination notariale.
+
+## Article 3
+
+Slug :
+vivre-sainte-foy-les-lyon
+
+Titre :
+Vivre à Sainte-Foy-lès-Lyon : le quartier à la loupe
+
+Catégorie :
+Vie locale
+
+Auteur :
+Élodie Renard
+
+Date :
+2026-03-03
+
+Temps de lecture :
+6 min
+
+Extrait :
+Entre village et ville, Sainte-Foy offre un cadre de vie recherché par les familles. Écoles, commerces, ambiance locale : on vous explique pourquoi la commune séduit autant.
+
+Contenu :
+Sainte-Foy-lès-Lyon plaît d'abord pour son atmosphère : un esprit de bourg, des adresses de proximité et une vraie vie de quartier. On y trouve un rythme plus apaisé qu'en centre-ville, sans être isolé de Lyon.
+
+Les familles apprécient particulièrement la qualité des établissements scolaires, les équipements sportifs et les espaces verts accessibles au quotidien. Le secteur combine praticité et qualité de vie.
+
+Sur le plan immobilier, la commune propose des profils variés : appartements de standing, maisons familiales, biens avec vue. Cette diversité attire des parcours de vie très différents.
+
+C'est un territoire qui se choisit pour longtemps, avec une vraie logique patrimoniale.
+
+## Article 4
+
+Slug :
+investissement-locatif-lyon-ouest
+
+Titre :
+Investissement locatif dans l'Ouest Lyonnais : où et comment investir
+
+Catégorie :
+Conseils patrimoine
+
+Auteur :
+Samuel Ribes
+
+Date :
+2026-02-27
+
+Temps de lecture :
+6 min
+
+Extrait :
+Rentabilité, tension locative, typologies de biens : les bons repères pour investir intelligemment dans les communes de l'Ouest lyonnais.
+
+Contenu :
+L'Ouest lyonnais attire des investisseurs qui cherchent un compromis entre sécurité patrimoniale et demande locative stable. Les secteurs proches des transports et des bassins d'emploi restent les plus performants.
+
+Le choix de la typologie est central : les petites surfaces sont plus liquides, tandis que les T3/T4 bien situés séduisent des locataires longue durée avec un taux de vacance limité.
+
+Au-delà du prix d'achat, il faut intégrer le potentiel locatif réel : charges, fiscalité, état du bien et qualité de la copropriété. Un rendement brut attractif peut masquer des coûts d'exploitation élevés.
+
+Une stratégie d'investissement réussie repose sur l'alignement entre horizon de détention, niveau de risque accepté et objectifs de valorisation.
+
+## Textes communs page article
+
+Retour au journal
+Découvrir l'équipe
+Articles similaires
+
+
+
+---
+
+<!-- Source : 11-legal.md -->
+
+# Pages légales
+
+Routes :
+`/mentions-legales`
+`/honoraires`
+`/confidentialite`
+
+Dernière mise à jour affichée :
+26 mai 2026
+
+Note : ces textes doivent idéalement être validés juridiquement.
+
+## Mentions légales
+
+SEO title :
+Mentions légales — Hamac Investissements & Patrimoine
+
+SEO description :
+Mentions légales du site Hamac Investissements & Patrimoine, agence immobilière à Sainte-Foy-lès-Lyon.
+
+Titre page :
+Mentions légales
+
+Texte introduction :
+Conformément aux dispositions des articles 6-III et 19 de la loi pour la Confiance dans l'Économie Numérique, ainsi que l'arrêté du 10 janvier 2017 relatif à l'information des consommateurs par les professionnels intervenant dans une transaction immobilière, nous vous informons que :
+
+Texte barème :
+Notre barème tarifaire est disponible sur notre site, ou sur simple demande par e-mail, courrier, téléphone ou depuis la rubrique contact.
+
+Éditeur :
+Hamac Investissements & Patrimoine
+19 Boulevard Baron du Marais
+69110 Sainte-Foy-lès-Lyon
+France
+Tél. : +33 4 78 85 08 27
+Email : agence@hamacpatrimoine.com
+Tribunal de commerce : 89954018100026
+
+Hébergeurs et sous-traitants techniques :
+
+Hébergement du site web
+Vercel Inc.
+440 N Barranca Ave #4133, Covina, CA 91723, États-Unis
+vercel.com
+
+Hébergement des données des formulaires (contact, estimation, off-market, demande sur un bien)
+Supabase, Inc.
+supabase.com
+
+Texte données personnelles :
+Le détail des traitements de données personnelles est précisé sur la page Politique de confidentialité.
+
+Texte final :
+Les sections relatives aux données personnelles, aux cookies et au démarchage téléphonique sont consultables sur la page Politique de confidentialité.
+
+## Honoraires
+
+SEO title :
+Honoraires — Hamac Investissements & Patrimoine
+
+SEO description :
+Barème et modalités d'honoraires de l'agence Hamac Investissements & Patrimoine.
+
+Titre page :
+Honoraires d'agence
+
+Texte 1 :
+Conformément à la réglementation en vigueur, Hamac Investissements & Patrimoine communique ses honoraires de manière transparente avant toute mission.
+
+Texte 2 :
+Notre barème tarifaire est disponible sur notre site, ou sur simple demande par e-mail, courrier, téléphone ou depuis la rubrique contact.
+
+Demande de renseignements :
+Pour obtenir le détail de nos honoraires (vente, achat, estimation) : agence@hamacpatrimoine.com — +33 4 78 85 08 27.
+
+Adresse :
+19 Boulevard Baron du Marais, 69110 Sainte-Foy-lès-Lyon, France
+
+## Politique de confidentialité
+
+SEO title :
+Politique de confidentialité — Hamac Investissements & Patrimoine
+
+SEO description :
+Données personnelles, cookies et droits des utilisateurs sur le site Hamac Investissements & Patrimoine.
+
+Titre page :
+Données personnelles et cookies
+
+### Conditions d'utilisation du site
+
+L'utilisation du site est soumise au respect des conditions ci-dessous. L'accès et la navigation sur le site entraînent l'acceptation de ces conditions :
+
+Site : désigne le site internet auquel vous accédez depuis votre navigateur internet
+
+L'Agence : désigne l'agence immobilière Hamac Investissements & Patrimoine, qui diffuse les annonces et récupère les données saisies par l'internaute sur les formulaires de contact
+
+### Données personnelles collectées
+
+Les données personnelles pouvant être collectées sur le site sont les suivantes :
+
+Cookies : les cookies sont utilisés, dans le cadre de l'utilisation du site, afin de collecter certaines informations (en particulier, votre adresse IP, des informations relatives à l'ordinateur utilisé pour la navigation, le mode de connexion, le type et la version du navigateur internet, le système d'exploitation et d'autres identifiants techniques ou encore l'adresse URL des connexions, y compris la date et l'heure, ainsi que le contenu accédé). Vous avez la possibilité de désactiver les cookies à partir des paramètres de votre navigateur.
+
+Formulaires de contact : selon le formulaire utilisé, sont collectés notamment vos nom, prénom, adresse électronique, numéro de téléphone, le contenu de votre message, et le cas échéant des informations relatives à un bien (référence), à une demande d'estimation (type de bien, commune, surfaces, pièces) ou à une inscription off-market (critères de recherche, secteur, budget).
+
+Pages concernées : contact, estimation, off-market, demande sur une fiche bien (acheter / louer).
+
+### Utilisation de vos données
+
+Les utilisations de vos données personnelles sont principalement les suivantes :
+
+gestion de la relation avec vous ;
+
+fourniture de contenus et services personnalisés, en fonction de votre historique de navigation, de vos préférences et centres d'intérêts ;
+
+Lorsque certaines informations sont obligatoires pour accéder à des fonctionnalités spécifiques du site, ce caractère obligatoire est indiqué au moment de la saisie des données. En cas de refus de votre part de fournir des informations obligatoires, vous pourriez ne pas avoir accès à certains services, fonctionnalités ou rubriques du site.
+
+### Durée de conservation
+
+Vos informations personnelles sont conservées pendant une durée qui ne saurait excéder 36 mois, sauf si :
+
+vous exercez, dans les conditions prévues ci-après, l'un des droits qui vous sont reconnus par la législation ;
+
+une durée de conservation plus longue est autorisée ou imposée en vertu d'une disposition légale ou réglementaire ;
+
+ce délai peut être renouvelé si vous donnez suite à la relation commerciale.
+
+Pendant cette période, le site met en œuvre les moyens organisationnels, logiciels, juridiques, techniques et physiques aptes à assurer la confidentialité et la sécurité de vos données personnelles, de manière à empêcher leur endommagement, effacement ou accès par des tiers non autorisés.
+
+### Accès aux données personnelles
+
+L'accès à vos données personnelles est strictement limité au personnel et agents commerciaux de l'Agence, habilités en raison de leurs fonctions et tenus à une obligation de confidentialité. Cependant, les données collectées pourront éventuellement être communiquées à des sous-traitants chargés contractuellement de l'exécution des tâches nécessaires au bon fonctionnement du site et de ses services ainsi qu'à la bonne gestion de la relation avec vous, sans que vous ayez besoin de donner votre autorisation. Il est précisé que, dans le cadre de l'exécution de leurs prestations, les sous-traitants n'ont qu'un accès limité à vos données et ont une obligation contractuelle de les utiliser en conformité avec les dispositions de la législation applicable en matière de protection des données personnelles, notamment :
+
+Vercel Inc. — hébergement et diffusion du site web ;
+
+Supabase, Inc. — hébergement et stockage des données transmises via les formulaires en ligne (contact, estimation, off-market, fiche bien).
+
+En dehors des cas énoncés ci-dessus, l'Agence s'engage à ne pas vendre, louer, céder ou donner accès à des tiers à vos données sans votre consentement préalable, à moins d'y être contraints en raison d'un motif légitime (obligation légale, lutte contre la fraude ou l'abus, exercice des droits de la défense, etc.).
+
+### Vos droits
+
+Conformément aux dispositions légales et réglementaires applicables, en particulier la loi n° 78-17 du 6 janvier 1978 modifiée relative à l'informatique, aux fichiers et aux libertés et du règlement européen n° 2016/679/UE du 27 avril 2016, vous disposez des droits suivants :
+
+exercer votre droit d'accès, pour connaître les données personnelles qui vous concernent ;
+
+demander la mise à jour de vos données, si celles-ci sont inexactes ;
+
+demander la portabilité ou la suppression de vos données ;
+
+demander la limitation du traitement de vos données ;
+
+vous opposer, pour des motifs légitimes, au traitement de vos données ;
+
+vous opposer ou retirer votre consentement à l'utilisation, par nos services, de vos coordonnées pour l'envoi de nos promotions et sollicitations via courriers électroniques, messages SMS, appels téléphoniques et courriers postaux. Ce droit demeure valable que les informations vous concernant nous aient été transmises directement par vous ou par des partenaires tiers à qui vous les avez communiquées (dans ce cas, il faudra cliquer sur les liens de désinscription prévus dans nos SMS ou courriels ou nous contacter dans les conditions ci-dessous).
+
+Ces différents droits sont à exercer soit directement sur le site à la rubrique Contact, soit par courrier postal, soit par courriel à l'adresse agence@hamacpatrimoine.com.
+
+Pour des raisons de sécurité et éviter toute demande frauduleuse, cette demande devra être accompagnée d'un justificatif d'identité. Le justificatif sera détruit une fois la demande traitée.
+
+Pour toute information complémentaire ou réclamation, vous pouvez contacter la Commission Nationale de l'Informatique et des Libertés (plus d'informations sur www.cnil.fr).
+
+### Utilisation des cookies
+
+Qu'est-ce qu'un cookie ?
+
+Un cookie est un petit fichier texte que les sites web sauvegardent sur votre ordinateur ou appareil mobile lorsque vous les consultez. Il permet à ces sites de mémoriser vos actions et préférences (nom d'utilisateur, langue, taille des caractères et autres paramètres d'affichage) pendant un temps donné, pour que vous n'ayez pas à réindiquer ces informations à chaque fois que vous consultez ces sites ou naviguez d'une page à une autre.
+
+Comment puis-je désactiver les cookies ?
+
+Vous pouvez contrôler et/ou supprimer des cookies comme vous le souhaitez. Pour en savoir plus, consultez aboutcookies.org. Vous avez la possibilité de supprimer tous les cookies déjà stockés sur votre ordinateur et de configurer la plupart des navigateurs pour qu'ils les bloquent. Toutefois, dans ce cas, vous devrez peut-être indiquer vous-mêmes certaines préférences chaque fois que vous vous rendrez sur un site, et certains services et fonctionnalités risquent de ne pas être accessibles.
+
+Pourquoi utilise-t-on des cookies ?
+
+Nous utilisons des cookies notamment pour :
+
+gérer vos préférences lors de la navigation sur le site ;
+
+améliorer nos services et permettre une mesure de l'audience ;
+
+D'autres cookies peuvent être ajoutés par des applications tierces telles que les boutons de partage des réseaux sociaux.
+
+### Politique liée au démarchage téléphonique
+
+Nous vous informons de votre droit d'inscription à la liste d'opposition pour le démarchage téléphonique et vous suggérons de vous inscrire sur Bloctel.
+
+Bloctel est la liste d'opposition au démarchage téléphonique sur laquelle tout consommateur peut s'inscrire gratuitement afin de ne plus être démarché téléphoniquement par un professionnel avec lequel il n'a pas de relation contractuelle en cours, conformément à la loi n° 2014-344 du 17 mars 2014 relative à la consommation.
+
+La loi précise qu'il est interdit à tout professionnel, directement ou par l'intermédiaire d'un tiers agissant pour son compte, de démarcher téléphoniquement un consommateur inscrit sur cette liste, à l'exception des cas énumérés par la loi.
+
+Pour plus d'informations : www.bloctel.gouv.fr
+
+Pour s'inscrire : conso.bloctel.fr
+
+
+
+---
+
+<!-- Source : 12-textes-transverses.md -->
+
+# Textes transverses
+
+Ce fichier regroupe les textes partagés entre plusieurs pages : navigation, footer, barre de recherche, visites privées.
+
+## Navigation principale
+
+Acheter
+Louer
+Vendre
+Estimation
+Communes
+L'agence
+Contact
+
+Menu Vendre :
+Les etapes d'une vente
+Acces off-market
+
+Menu Communes :
+Sainte-Foy-lès-Lyon
+Tassin-la-Demi-Lune
+Écully
+Francheville
+Craponne
+Oullins
+
+Accessibilité :
+Aller au contenu
+Ouvrir le menu
+
+## Footer global
+
+Tagline :
+Agence indépendante, locale et non généraliste
+
+Suivez-nous
+
+Contact :
+12 avenue de la Liberation
+69110 Sainte-Foy-les-Lyon
+04 00 00 00 00
+contact@hamac-immo.fr
+
+Liens rapides :
+Nos biens
+L'agence
+Estimation
+Contact
+
+Informations :
+Mentions legales
+Honoraires
+Confidentialite
+
+Journal :
+Tous les articles
+Marche immobilier
+Guides pratiques
+Vie locale
+
+Copyright :
+Hamac Investissements & Patrimoine. Tous droits réservés.
+
+## Barre de recherche
+
+Labels :
+Type
+Lieu
+Budget
+
+Bouton :
+Rechercher
+
+Lien :
+Plus de critères
+
+Options type :
+Tous
+Maison
+Appartement
+Terrain
+
+Options budget :
+Tous
+Jusqu'à 250 000 €
+Jusqu'à 500 000 €
+Jusqu'à 750 000 €
+Jusqu'à 800 000 €
+Jusqu'à 1 000 000 €
+1 000 000 € et +
+Jusqu'à 1 950 000 €
+
+Recherche ville :
+Quartier, ville…
+Aucune ville trouvée.
+
+## Visites privées
+
+Note : les vidéos sont hébergées sur Cloudflare Stream. Les titres et descriptions ci-dessous s'affichent dans le carousel de la home.
+
+Maison familiale avec jardin
+Sainte-Foy-lès-Lyon
+Une demeure lumineuse aux volumes généreux, vendue après une mise en valeur soignée de l’extérieur et des espaces de vie.
+
+Appartement lumineux proche du métro
+Oullins
+Visite privée mettant en valeur la proximité des transports et la qualité de vie dans un quartier en plein essor.
+
+Appartement traversant avec terrasse
+Tassin-la-Demi-Lune
+Visite filmée mettant en avant la lumière naturelle et la proximité des commerces de centre-ville.
+
+Villa contemporaine de standing
+Écully
+Architecture actuelle, prestations haut de gamme et vue dégagée : un bien vendu dans un délai maîtrisé.
+
+Maison de ville rénovée
+Francheville
+Rénovation complète valorisée en visite privée, avec un parcours fluide entre pièces de réception et jardin.
+
+Propriété proche des espaces verts
+Craponne
+Cadre résidentiel calme, garage double et pièce de vie ouverte sur l’extérieur : une vente accompagnée de bout en bout.

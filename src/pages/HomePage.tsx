@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { animate, useMotionValueEvent, useScroll, useTransform } from 'framer-motion'
 import { CLIENT_REVIEWS } from '../data/clientReviews'
 import { BLOG_POSTS } from '../data/blogPosts'
+import { mountPrivateVisits, unmountPrivateVisits } from '../components/home/mountPrivateVisits'
 import { mountSearchBars } from '../search/mount'
 import { getProperties, type FeaturedProperty } from '../services/apimo'
 
@@ -84,6 +85,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
 
   useEffect(() => {
     mountSearchBars()
+    mountPrivateVisits()
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const slides = document.querySelectorAll<HTMLElement>('.hero-slide')
     const slideBackgrounds = Array.from(document.querySelectorAll<HTMLElement>('.hero-slide__ken'))
@@ -615,8 +617,6 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     const initFeatured = async () => {
       try {
         const featured = await getProperties()
-        // Debug: inspect what Apimo returns (after normalization in getProperties)
-        console.log('[apimo] getProperties() returned:', featured)
         if (cancelled) return
 
         const grid = document.querySelector<HTMLElement>('.biens-grid')
@@ -697,6 +697,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
 
     return () => {
       cancelled = true
+      unmountPrivateVisits()
       if (interval) window.clearInterval(interval)
       teardownTemoignagesCarousel?.()
       handlers.forEach(({ chip, onClick }) => chip.removeEventListener('click', onClick))

@@ -80,22 +80,23 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [hoveredPropertySlug, setHoveredPropertySlug] = useState<string | null>(null)
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
   const [cityFilterQuery, setCityFilterQuery] = useState('')
-  const budgetSliderCap = mode === 'rent' ? 8000 : 2_000_000
+  const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
   const budgetSliderStep = mode === 'rent' ? 100 : 50_000
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
-  const defaultBudgetMax = mode === 'rent' ? 3000 : 800_000
+  const defaultBudgetMin = mode === 'rent' ? 0 : 650_000
+  const defaultBudgetMax = mode === 'rent' ? 3000 : 1_950_000
 
   const type = searchParams.get('type') ?? 'all'
   const city = searchParams.get('city') ?? 'all'
   const budgetParam = searchParams.get('budget')
-  const budgetMin = searchParams.get('budgetMin') ?? 'all'
+  const budgetMin = searchParams.get('budgetMin') ?? String(defaultBudgetMin)
   const surface = searchParams.get('surface') ?? 'all'
   const rooms = searchParams.get('rooms') ?? 'all'
   const q = searchParams.get('q') ?? ''
   const sort = (searchParams.get('sort') as PropertySort) ?? 'recent'
   const amenities = (searchParams.get('amenities')?.split(',').filter(Boolean) ?? []) as Amenity[]
 
-  /** Plafond appliqué au filtre : absent de l’URL = 800 000 € (vente) ou défaut location ; `all` = aucun plafond */
+  /** Plafond appliqué au filtre : absent de l’URL = défaut vente/location ; `all` = aucun plafond */
   const budgetMaxForFilter = (() => {
     if (budgetParam === 'all') return undefined
     if (budgetParam == null || budgetParam === '') return defaultBudgetMax
@@ -174,12 +175,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
         : (await getProperties()).filter((property) => property.agreementType !== 2)
       const mapped = featured.map(mapFeaturedToProperty)
       setApiProperties(mapped)
-      console.log(
-        '[filter] first mapped property type:',
-        mapped[0]?.type,
-        'all types:',
-        [...new Set(mapped.map((p) => p.type))],
-      )
     } catch (err) {
       setApiError(err instanceof Error ? err.message : String(err))
     }
@@ -204,25 +199,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       amenities,
     }
 
-    const selectedType = filters.type
-    console.log(
-      '[filter] selectedType:',
-      selectedType,
-      'property types in list:',
-      [...new Set(apiProperties.map((p) => p.type))],
-    )
-
     const filtered = apiProperties.filter((property) => {
-      if (filters.type !== 'all') {
-        console.log(
-          '[filter] checking:',
-          property.type,
-          '===',
-          filters.type,
-          '->',
-          property.type.toLowerCase() === filters.type,
-        )
-      }
       if (filters.type && filters.type !== 'all' && property.type.toLowerCase() !== filters.type) return false
       if (filters.city && filters.city !== 'all' && !matchesAllTokens(property.city, filters.city)) return false
       if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
@@ -497,7 +474,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     maxV = Math.min(Math.max(0, maxV), budgetSliderCap)
                     if (maxV < minV + budgetSliderStep) maxV = minV + budgetSliderStep
                     if (maxV > budgetSliderCap) maxV = budgetSliderCap
-                    const minParam = minV <= 0 ? 'all' : String(minV)
+                    const minParam = minV <= 0 ? '0' : String(minV)
                     const maxAtCap = maxV >= budgetSliderCap - budgetSliderStep / 2
                     const maxParam = maxAtCap ? 'all' : String(maxV)
                     updateParams([

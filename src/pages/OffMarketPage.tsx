@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Gem, Lock, ShieldCheck } from 'lucide-react'
+import { submitOffmarket } from '../services/offmarket'
 import { usePageMeta } from '../utils/seo'
 
 type OffMarketForm = {
@@ -11,6 +12,27 @@ type OffMarketForm = {
   propertyType: string
   sector: string
   budget: string
+}
+
+type RequiredOffMarketField = 'firstName' | 'lastName' | 'email' | 'phone'
+
+const EMPTY_FORM: OffMarketForm = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  propertyType: '',
+  sector: '',
+  budget: '',
+}
+
+function validateRequiredFields(form: OffMarketForm): Partial<Record<RequiredOffMarketField, string>> {
+  const errors: Partial<Record<RequiredOffMarketField, string>> = {}
+  if (!form.firstName.trim()) errors.firstName = 'Le prénom est requis.'
+  if (!form.lastName.trim()) errors.lastName = 'Le nom est requis.'
+  if (!form.email.trim()) errors.email = "L'email est requis."
+  if (!form.phone.trim()) errors.phone = 'Le téléphone est requis.'
+  return errors
 }
 
 const PROPERTY_TYPES = ['Maison', 'Appartement', 'Les deux']
@@ -92,20 +114,63 @@ export function OffMarketPage() {
     description: 'Accédez aux biens off-market de l’Ouest lyonnais avant leur publication et rejoignez le club privé Hamac.',
   })
 
-  const [form, setForm] = useState<OffMarketForm>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    propertyType: '',
-    sector: '',
-    budget: '',
-  })
+  const [form, setForm] = useState<OffMarketForm>(EMPTY_FORM)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<RequiredOffMarketField, string>>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const updateField = <K extends keyof OffMarketForm>(key: K, value: OffMarketForm[K]) => {
+    setForm((current) => ({ ...current, [key]: value }))
+    if (key in fieldErrors) {
+      setFieldErrors((current) => {
+        const next = { ...current }
+        delete next[key as RequiredOffMarketField]
+        return next
+      })
+    }
+    setSubmitSuccess(false)
+    setSubmitError(null)
+  }
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log('off_market_lead', form)
+    if (isSubmitting) return
+
+    const errors = validateRequiredFields(form)
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      setSubmitSuccess(false)
+      setSubmitError(null)
+      return
+    }
+
+    setFieldErrors({})
+
+    setIsSubmitting(true)
+    setSubmitSuccess(false)
+    setSubmitError(null)
+
+    try {
+      await submitOffmarket({
+        first_name: form.firstName.trim(),
+        last_name: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        property_type: form.propertyType || null,
+        sector: form.sector || null,
+        budget: form.budget || null,
+      })
+
+      setSubmitSuccess(true)
+      setForm(EMPTY_FORM)
+    } catch (err) {
+      console.error('Erreur off-market:', err)
+      setSubmitError('Une erreur est survenue, veuillez réessayer ou nous contacter directement.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -212,44 +277,97 @@ export function OffMarketPage() {
             <div className="offmarket-signup__grid">
               <label className="offmarket-field">
                 <span>Prénom</span>
-                <input value={form.firstName} onChange={(e) => setForm((c) => ({ ...c, firstName: e.target.value }))} required />
+                <input
+                  value={form.firstName}
+                  onChange={(e) => updateField('firstName', e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.firstName)}
+                  aria-describedby={fieldErrors.firstName ? 'offmarket-firstName-error' : undefined}
+                />
+                {fieldErrors.firstName ? (
+                  <span id="offmarket-firstName-error" className="offmarket-field__error" role="alert">
+                    {fieldErrors.firstName}
+                  </span>
+                ) : null}
               </label>
               <label className="offmarket-field">
                 <span>Nom</span>
-                <input value={form.lastName} onChange={(e) => setForm((c) => ({ ...c, lastName: e.target.value }))} required />
+                <input
+                  value={form.lastName}
+                  onChange={(e) => updateField('lastName', e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.lastName)}
+                  aria-describedby={fieldErrors.lastName ? 'offmarket-lastName-error' : undefined}
+                />
+                {fieldErrors.lastName ? (
+                  <span id="offmarket-lastName-error" className="offmarket-field__error" role="alert">
+                    {fieldErrors.lastName}
+                  </span>
+                ) : null}
               </label>
               <label className="offmarket-field">
                 <span>Email</span>
-                <input type="email" value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} required />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? 'offmarket-email-error' : undefined}
+                />
+                {fieldErrors.email ? (
+                  <span id="offmarket-email-error" className="offmarket-field__error" role="alert">
+                    {fieldErrors.email}
+                  </span>
+                ) : null}
               </label>
               <label className="offmarket-field">
                 <span>Téléphone</span>
-                <input value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} required />
+                <input
+                  value={form.phone}
+                  onChange={(e) => updateField('phone', e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                  aria-describedby={fieldErrors.phone ? 'offmarket-phone-error' : undefined}
+                />
+                {fieldErrors.phone ? (
+                  <span id="offmarket-phone-error" className="offmarket-field__error" role="alert">
+                    {fieldErrors.phone}
+                  </span>
+                ) : null}
               </label>
               <LeadSelect
                 label="Type de bien recherché"
                 placeholder="Sélectionnez"
                 value={form.propertyType}
-                onValueChange={(value) => setForm((c) => ({ ...c, propertyType: value }))}
+                onValueChange={(value) => updateField('propertyType', value)}
                 options={PROPERTY_TYPES}
               />
               <LeadSelect
                 label="Secteur privilégié"
                 placeholder="Sélectionnez"
                 value={form.sector}
-                onValueChange={(value) => setForm((c) => ({ ...c, sector: value }))}
+                onValueChange={(value) => updateField('sector', value)}
                 options={SECTORS}
               />
               <LeadSelect
                 label="Budget"
                 placeholder="Sélectionnez"
                 value={form.budget}
-                onValueChange={(value) => setForm((c) => ({ ...c, budget: value }))}
+                onValueChange={(value) => updateField('budget', value)}
                 options={BUDGETS}
               />
             </div>
             <div className="offmarket-signup__actions">
-              <button className="btn btn--gold" type="submit">Rejoindre le club</button>
+              {submitSuccess ? (
+                <p className="offmarket-feedback offmarket-feedback--success" role="status">
+                  Votre demande a bien été enregistrée. Nous vous contacterons sous 48h.
+                </p>
+              ) : null}
+              {submitError ? (
+                <p className="offmarket-feedback offmarket-feedback--error" role="alert">
+                  {submitError}
+                </p>
+              ) : null}
+              <button className="btn btn--gold" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Envoi en cours…' : 'Rejoindre le club'}
+              </button>
               <p>Vos données sont protégées. Vous pouvez vous désinscrire à tout moment.</p>
             </div>
           </form>

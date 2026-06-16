@@ -3,6 +3,7 @@ import * as Select from '@radix-ui/react-select'
 import { ArrowRight, Check, ChevronDown, Home, Building2, LandPlot, ShieldCheck, Clock3, MapPinHouse } from 'lucide-react'
 import { CitySearchField } from '../components/CitySearchField'
 import type { PropertyType } from '../data/properties'
+import { submitEstimation } from '../services/estimations'
 import { usePageMeta } from '../utils/seo'
 
 type EstimationForm = {
@@ -37,8 +38,8 @@ const STEPS = [
     id: 2,
     label: 'Détails',
     title: 'Caractéristiques du bien',
-    description: 'Ces informations nous permettent d’affiner votre estimation.',
-    hint: 'Renseignez la surface et le nombre de pièces pour continuer.',
+    description: "Ces informations nous permettent d'affiner votre estimation.",
+    hint: 'Renseignez la surface habitable pour continuer.',
   },
   {
     id: 3,
@@ -111,29 +112,71 @@ export function EstimationPage() {
     phone: '',
     message: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
   const isLastStep = step === 3
   const currentStep = STEPS[step - 1]
   const continueHint = useMemo(() => {
-    if (step === 2 && form.type === 'maison' && form.surface && form.rooms && form.bedrooms && !form.land) {
-      return 'Indiquez la surface du terrain pour continuer.'
-    }
     return currentStep.hint
-  }, [currentStep.hint, form.bedrooms, form.land, form.rooms, form.surface, form.type, step])
+  }, [currentStep.hint])
   const canContinue = useMemo(() => {
     if (step === 1) return Boolean(form.type && form.city)
-    if (step === 2) return Boolean(form.surface && form.rooms && form.bedrooms && (form.type !== 'maison' || form.land))
+    if (step === 2) return Boolean(form.surface)
     return Boolean(form.lastName && form.firstName && form.email && form.phone)
   }, [form, step])
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!isLastStep) {
+      setSubmitError(null)
+      setSubmitSuccess(false)
       if (canContinue) setStep((value) => Math.min(3, value + 1))
       return
     }
-    if (!canContinue) return
-    console.log('estimation_request', form)
+    if (!canContinue || isSubmitting) return
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+    setSubmitSuccess(false)
+
+    try {
+      await submitEstimation({
+        property_type: form.type,
+        city: form.city.trim(),
+        surface_habitable: form.surface ? Number.parseInt(form.surface, 10) : null,
+        nombre_pieces: form.rooms ? Number.parseInt(form.rooms, 10) : null,
+        nombre_chambres: form.bedrooms ? Number.parseInt(form.bedrooms, 10) : null,
+        surface_terrain: form.land ? Number.parseInt(form.land, 10) : null,
+        nom: form.lastName.trim(),
+        prenom: form.firstName.trim(),
+        email: form.email.trim(),
+        telephone: form.phone.trim(),
+        message: form.message.trim() || null,
+      })
+
+      setSubmitSuccess(true)
+      setForm({
+        type: '',
+        city: '',
+        surface: '',
+        rooms: '',
+        bedrooms: '',
+        land: '',
+        lastName: '',
+        firstName: '',
+        email: '',
+        phone: '',
+        message: '',
+      })
+      setStep(1)
+    } catch (error) {
+      console.error('Erreur estimation:', error)
+      setSubmitError('Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -282,12 +325,24 @@ export function EstimationPage() {
               ) : (
                 <span className="estimation-actions__spacer" aria-hidden />
               )}
-              <button type="submit" className="estimation-cta" disabled={!canContinue}>
-                <span>{isLastStep ? 'Recevoir mon estimation' : 'Continuer'}</span>
+              <button type="submit" className="estimation-cta" disabled={!canContinue || isSubmitting}>
+                <span>
+                  {isSubmitting ? 'Envoi en cours...' : isLastStep ? 'Recevoir mon estimation' : 'Continuer'}
+                </span>
                 <ArrowRight size={20} aria-hidden />
               </button>
             </div>
-            {!canContinue ? (
+            {submitSuccess ? (
+              <p className="estimation-feedback estimation-feedback--success" role="status">
+                Votre demande d&apos;estimation a bien été envoyée. Nous vous recontactons sous 24 h.
+              </p>
+            ) : null}
+            {submitError ? (
+              <p className="estimation-feedback estimation-feedback--error" role="alert">
+                {submitError}
+              </p>
+            ) : null}
+            {!canContinue && !submitSuccess ? (
               <p className="estimation-cta-hint" role="status">
                 {continueHint}
               </p>

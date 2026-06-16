@@ -1,4 +1,7 @@
-import { getSupabase, isSupabaseConfigured } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
+
+const isSupabaseConfigured = () =>
+  Boolean(import.meta.env.VITE_SUPABASE_URL?.trim() && import.meta.env.VITE_SUPABASE_ANON_KEY?.trim())
 
 export type ApimoPropertyType = 'appartement' | 'maison' | 'terrain' | 'commerce' | 'bureau' | 'garage' | 'immeuble'
 
@@ -237,30 +240,20 @@ function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
 
 function extractList<T>(payload: unknown): T[] {
   if (!payload) {
-    console.log('[apimo] extractList: payload is empty:', payload)
     return []
   }
 
   if (Array.isArray(payload)) {
-    console.log('[apimo] extractList: payload is array, length:', payload.length)
     return payload as T[]
   }
 
   if (typeof payload === 'object') {
     const obj = payload as Record<string, unknown>
-    console.log('[apimo] extractList: payload keys:', Object.keys(obj))
 
     const dataVal = obj.data
     const resultsVal = obj.results
     const propertiesVal = obj.properties
     const itemsVal = obj.items
-
-    console.log('[apimo] extractList: has arrays?',
-      'data:', Array.isArray(dataVal),
-      'results:', Array.isArray(resultsVal),
-      'properties:', Array.isArray(propertiesVal),
-      'items:', Array.isArray(itemsVal),
-    )
 
     const firstArray =
       (Array.isArray(dataVal) ? dataVal : null) ??
@@ -270,94 +263,31 @@ function extractList<T>(payload: unknown): T[] {
       null
 
     if (firstArray) {
-      console.log('[apimo] extractList: using array length:', (firstArray as unknown[]).length)
       return firstArray as T[]
     }
   }
 
-  console.log('[apimo] extractList: no array found in payload')
   return []
 }
 
 async function getAllMappedProperties(): Promise<FeaturedProperty[]> {
   if (!isSupabaseConfigured()) {
-    console.warn('[apimo] Supabase non configuré — biens API indisponibles (voir .env.local).')
     return []
   }
 
-  console.log('[apimo] getProperties: invoking edge function apimo-proxy with route=properties')
-
-  const res = await getSupabase().functions.invoke('apimo-proxy', {
+  const res = await supabase.functions.invoke('apimo-proxy', {
     body: { route: 'properties' },
   })
-
-  const anyRes = res as any
-  console.log('[apimo] getProperties: raw invoke response:', anyRes)
-  console.log('[apimo] getProperties: invoke response keys:', anyRes ? Object.keys(anyRes) : [])
-  console.log('[apimo] getProperties: invoke res.data:', anyRes?.data)
-  console.log('[apimo] getProperties: invoke res.error:', anyRes?.error)
 
   // supabase-js returns { data, error } depending on version; keep tolerant parsing
   if ('error' in res && res.error) throw res.error
 
   const payload = (res as any).data ?? (res as any)
-  console.log('[apimo] getProperties: payload for extractList:', payload)
 
   const rawList = extractList<ApimoRawProperty>(payload)
-  console.log('[apimo] getProperties: extracted raw list length:', rawList.length)
-  console.log(
-    '[apimo] agreements:',
-    rawList.map((p: any) => ({
-      id: p.id,
-      price: p.price?.value,
-      agreement_type: p.agreement?.type,
-    })),
-  )
-  console.log(
-    '[apimo] agreement types sample:',
-    rawList.slice(0, 5).map((p: any) => ({ id: p.id, agreement: p.agreement })),
-  )
-  const rental = rawList.find((p: any) => p.id === 86973766)
-  console.log('[apimo] suspicious property full:', JSON.stringify(rental, null, 2))
-  console.log('[apimo] unique types:', [...new Set(rawList.map((p: any) => p.type))])
-
-  const uniqueCategories = [...new Set(rawList.map((p) => (p as Record<string, unknown>).category))]
-  console.log('[apimo] categories found:', uniqueCategories)
-
-  const categorySamples = (() => {
-    const samples = new Map<unknown, string>()
-    for (const item of rawList) {
-      const propertyItem = item as Record<string, unknown>
-      const category = propertyItem.category
-      if (samples.has(category)) continue
-
-      const cityObj =
-        propertyItem.city && typeof propertyItem.city === 'object'
-          ? (propertyItem.city as { name?: unknown })
-          : undefined
-      const cityName = typeof cityObj?.name === 'string' ? cityObj.name : undefined
-      const reference = typeof propertyItem.reference === 'string' ? propertyItem.reference : undefined
-      const sampleTitle = cityName ?? reference ?? String(propertyItem.id ?? 'N/A')
-      samples.set(category, sampleTitle)
-    }
-    return Array.from(samples.entries()).map(([category, title]) => ({ category, title }))
-  })()
-  console.log('[apimo] category sample titles:', categorySamples)
-
-  if (rawList.length) {
-    const firstRaw = rawList[0]
-    try {
-      console.log('[apimo] first raw property:', JSON.stringify(firstRaw, null, 2))
-    } catch (err) {
-      console.error('[apimo] failed to stringify first raw property:', err)
-    }
-    console.log('[apimo] getProperties: first raw item keys:', Object.keys(firstRaw))
-  }
 
   const mapped = rawList.map(mapFeaturedProperty)
-  console.log('[apimo] getProperties: mapped properties count:', mapped.length)
   const filtered = mapped.filter((p) => p.images.length > 0 || p.title)
-  console.log('[apimo] getProperties: filtered properties count (images or title):', filtered.length)
 
   return filtered
 }
@@ -373,17 +303,11 @@ export async function getRentalProperties(): Promise<FeaturedProperty[]> {
 }
 
 export async function getPropertyById(id: string | number): Promise<FeaturedProperty | null> {
-  console.log('[apimo] getPropertyById: requested id:', id, 'type:', typeof id)
-
   const slugToFind = String(id)
-  console.log('[apimo] getPropertyById: searching by slug:', slugToFind)
 
   const all = await getProperties()
-  console.log('[apimo] getPropertyById: getProperties() returned count:', all.length)
-  console.log('[apimo] getPropertyById: first mapped property slug:', all[0]?.slug)
 
   const matched = all.find((p) => p.slug === slugToFind)
-  console.log('[apimo] getPropertyById: matched by slug?', Boolean(matched))
 
   return matched ?? null
 }

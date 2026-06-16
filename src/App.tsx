@@ -201,11 +201,12 @@ function SiteLayout() {
     }
   }, [isAutoHidePage])
 
-  const lightPages = ['/agence', '/vendre', '/estimation', '/contact', '/acheter', '/louer', '/quartiers', '/off-market']
+  const lightPages = ['/agence', '/vendre', '/estimation', '/contact', '/acheter', '/louer', '/quartiers', '/off-market', '/investir']
   const transparentHeaderRoutes = pathname === '/'
     || pathname === '/agence'
     || pathname === '/vendre'
     || pathname === '/off-market'
+    || pathname === '/investir'
     || pathname.startsWith('/quartiers/')
   const isLightPage =
     lightPages.some((entry) => pathname === entry || pathname.startsWith(`${entry}/`))

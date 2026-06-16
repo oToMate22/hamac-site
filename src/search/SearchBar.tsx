@@ -20,6 +20,7 @@ const BUDGET_OPTIONS = [
   { value: '800000', label: 'Jusqu\'à 800 000 €' },
   { value: '1000000', label: 'Jusqu\'à 1 000 000 €' },
   { value: '1500000', label: '1 000 000 € et +' },
+  { value: '1950000', label: 'Jusqu\'à 1 950 000 €' },
 ]
 
 const normalize = (value: string) =>

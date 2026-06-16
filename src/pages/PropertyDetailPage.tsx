@@ -2,12 +2,28 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import type { Property } from '../data/properties'
+import { submitLead } from '../services/leads'
 import { getProperties, getPropertyById, getRentalProperties, type FeaturedProperty } from '../services/apimo'
 import { usePageMeta } from '../utils/seo'
 import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/images/Biens/maison-homepage.jpg'
 const DESCRIPTION_PREVIEW_LIMIT = 300
+const DEFAULT_CONTACT_MESSAGE = 'Je souhaite etre recontacte au sujet de ce bien...'
+
+type RequiredContactField = 'name' | 'email' | 'phone'
+
+function validateContactFields(
+  name: string,
+  email: string,
+  phone: string,
+): Partial<Record<RequiredContactField, string>> {
+  const errors: Partial<Record<RequiredContactField, string>> = {}
+  if (!name.trim()) errors.name = 'Le nom est requis.'
+  if (!email.trim()) errors.email = "L'email est requis."
+  if (!phone.trim()) errors.phone = 'Le téléphone est requis.'
+  return errors
+}
 
 function normalize(value: string) {
   return value
@@ -95,7 +111,11 @@ export function PropertyDetailPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [message, setMessage] = useState('Je souhaite etre recontacte au sujet de ce bien...')
+  const [message, setMessage] = useState(DEFAULT_CONTACT_MESSAGE)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<RequiredContactField, string>>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
   const meta = useMemo(() => {
@@ -214,6 +234,12 @@ export function PropertyDetailPage() {
     setIsDescriptionExpanded(false)
   }, [property?.slug])
 
+  useEffect(() => {
+    setSubmitSuccess(false)
+    setSubmitError(null)
+    setFieldErrors({})
+  }, [property?.slug])
+
   const agent = property?.agent
   const agentPicture = agent?.picture ?? '/images/team/anthony.jpg'
   const agentName = agent?.name ?? 'Équipe Hamac'
@@ -224,10 +250,50 @@ export function PropertyDetailPage() {
     return `https://maps.google.com/maps?q=${property.lat},${property.lng}&z=14&output=embed`
   }, [property])
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const clearFieldError = (field: RequiredContactField) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!property) return
-    console.log({ property: property.slug, name, email, phone, message })
+    if (!property || isSubmitting) return
+
+    const errors = validateContactFields(name, email, phone)
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      setSubmitError(null)
+      return
+    }
+
+    setFieldErrors({})
+
+    const bienRef = property.slug || propertyId
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      await submitLead({
+        nom: name.trim(),
+        email: email.trim(),
+        telephone: phone.trim(),
+        message: message.trim() || null,
+        type_contact: 'bien',
+        bien_ref: bienRef,
+      })
+
+      setSubmitSuccess(true)
+    } catch (err) {
+      console.error('Erreur fiche bien:', err)
+      setSubmitError('Une erreur est survenue, veuillez réessayer ou nous contacter directement.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (isRedirecting || loading) return <PagePlaceholder title="Chargement..." />
@@ -391,15 +457,86 @@ export function PropertyDetailPage() {
                 </p>
               </div>
 
-              <form className="detail-contact" onSubmit={submit}>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom" required />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telephone" required />
-                <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5} />
-                <button className="search-card__submit" type="submit">
-                  Envoyer ma demande
-                </button>
-              </form>
+              {submitSuccess ? (
+                <p className="detail-contact__success" role="status">
+                  Merci ! Un conseiller Hamac vous contactera très prochainement.
+                </p>
+              ) : (
+                <form className="detail-contact" onSubmit={submit}>
+                  <label className="detail-contact-field">
+                    <input
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value)
+                        clearFieldError('name')
+                        setSubmitError(null)
+                      }}
+                      placeholder="Nom"
+                      aria-invalid={Boolean(fieldErrors.name)}
+                      aria-describedby={fieldErrors.name ? 'detail-contact-name-error' : undefined}
+                    />
+                    {fieldErrors.name ? (
+                      <span id="detail-contact-name-error" className="detail-contact-field__error" role="alert">
+                        {fieldErrors.name}
+                      </span>
+                    ) : null}
+                  </label>
+                  <label className="detail-contact-field">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value)
+                        clearFieldError('email')
+                        setSubmitError(null)
+                      }}
+                      placeholder="Email"
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={fieldErrors.email ? 'detail-contact-email-error' : undefined}
+                    />
+                    {fieldErrors.email ? (
+                      <span id="detail-contact-email-error" className="detail-contact-field__error" role="alert">
+                        {fieldErrors.email}
+                      </span>
+                    ) : null}
+                  </label>
+                  <label className="detail-contact-field">
+                    <input
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value)
+                        clearFieldError('phone')
+                        setSubmitError(null)
+                      }}
+                      placeholder="Telephone"
+                      aria-invalid={Boolean(fieldErrors.phone)}
+                      aria-describedby={fieldErrors.phone ? 'detail-contact-phone-error' : undefined}
+                    />
+                    {fieldErrors.phone ? (
+                      <span id="detail-contact-phone-error" className="detail-contact-field__error" role="alert">
+                        {fieldErrors.phone}
+                      </span>
+                    ) : null}
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => {
+                      setMessage(e.target.value)
+                      setSubmitError(null)
+                    }}
+                    rows={5}
+                    placeholder="Votre message"
+                  />
+                  {submitError ? (
+                    <p className="detail-contact__error" role="alert">
+                      {submitError}
+                    </p>
+                  ) : null}
+                  <button className="search-card__submit" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Envoi en cours…' : 'Envoyer ma demande'}
+                  </button>
+                </form>
+              )}
             </section>
           </aside>
         </div>

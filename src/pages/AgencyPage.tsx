@@ -17,7 +17,7 @@ export function AgencyPage() {
     ['Ana Sanabria', 'Agent commercial independant', '/images/team/ana-sanabria.jpg'],
     ['Anthony Ribeiro', 'Agent commercial independant', '/images/team/anthony.jpg'],
     ['Pauline Rodriguez', 'Agent commercial independant', '/images/team/pauline.jpg'],
-    ['Axel Bernard', 'Agent commercial independant', '/images/team/axel.jpg'],
+    ['Axel Bernard', 'Agent commercial independant', '/images/team/AXELBERNARD.png'],
   ] as const
   return (
     <main className="agency-page">
@@ -65,7 +65,12 @@ export function AgencyPage() {
           <div className="agency-team__grid">
             {team.map(([name, role, photo]) => (
               <article key={name} className="agency-agent">
-                <img src={photo} alt={`Portrait de ${name}, ${role}`} loading="lazy" />
+                <img
+                  className={name === 'Samuel Ribes' ? 'team-photo--samuel' : undefined}
+                  src={photo}
+                  alt={`Portrait de ${name}, ${role}`}
+                  loading="lazy"
+                />
                 <h3>{name}</h3><p className="agency-agent__role">{role}</p><p className="agency-agent__tagline">Accompagnement humain et precision locale.</p>
               </article>
             ))}

@@ -1,6 +1,7 @@
 import { getNeighborhoodBySlug, type Neighborhood } from '../data/neighborhoods'
 
-const DEFAULT_BUDGET_MAX_SALE = 800_000
+const DEFAULT_BUDGET_MIN_SALE = 650_000
+const DEFAULT_BUDGET_MAX_SALE = 1_950_000
 const DEFAULT_BUDGET_MAX_RENT = 3_000
 
 export function buildCatalogSearchFromNeighborhood(
@@ -10,7 +11,7 @@ export function buildCatalogSearchFromNeighborhood(
   const params = new URLSearchParams()
   params.set('city', neighborhood.name)
   params.set('q', neighborhood.name)
-  params.set('budgetMin', 'all')
+  params.set('budgetMin', String(mode === 'rent' ? 0 : DEFAULT_BUDGET_MIN_SALE))
   params.set('budget', String(mode === 'rent' ? DEFAULT_BUDGET_MAX_RENT : DEFAULT_BUDGET_MAX_SALE))
   return params
 }
@@ -34,7 +35,7 @@ export function applyQuartierParamToSearch(
   next.delete('quartier')
   next.set('city', neighborhood.name)
   next.set('q', neighborhood.name)
-  if (!next.has('budgetMin')) next.set('budgetMin', 'all')
+  if (!next.has('budgetMin')) next.set('budgetMin', String(mode === 'rent' ? 0 : DEFAULT_BUDGET_MIN_SALE))
   if (!next.has('budget')) {
     next.set('budget', String(mode === 'rent' ? DEFAULT_BUDGET_MAX_RENT : DEFAULT_BUDGET_MAX_SALE))
   }

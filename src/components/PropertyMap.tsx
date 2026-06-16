@@ -219,6 +219,13 @@ function PropertyMapMarker({
 
   const openPopup = () => markerRef.current?.openPopup()
   const closePopup = () => markerRef.current?.closePopup()
+  const scheduleClosePopup = () => {
+    clearCloseTimer()
+    closeTimerRef.current = window.setTimeout(() => {
+      onHoverChange(null)
+      closePopup()
+    }, 700)
+  }
 
   useEffect(() => {
     if (isHighlighted) {
@@ -250,10 +257,7 @@ function PropertyMapMarker({
         },
         mouseout: () => {
           if (isCluster) return
-          closeTimerRef.current = window.setTimeout(() => {
-            onHoverChange(null)
-            closePopup()
-          }, 220)
+          scheduleClosePopup()
         },
         click: () => {
           clearCloseTimer()
@@ -266,9 +270,25 @@ function PropertyMapMarker({
         },
       }}
     >
-      <Popup closeButton autoClose={false} className="property-map__popup">
+      <Popup
+        closeButton
+        autoClose={false}
+        closeOnClick={false}
+        className="property-map__popup"
+        eventHandlers={{
+          mouseover: () => {
+            clearCloseTimer()
+            if (!isCluster) onHoverChange(first.slug)
+          },
+          mouseout: scheduleClosePopup,
+        }}
+      >
         {isCluster ? (
-          <div className="property-map__popup-list">
+          <div
+            className="property-map__popup-list"
+            onMouseEnter={clearCloseTimer}
+            onMouseLeave={scheduleClosePopup}
+          >
             <p>{group.length} biens dans ce secteur</p>
             <p className="property-map__popup-hint">Cliquez sur le marqueur pour zoomer et voir chaque bien.</p>
             {group.slice(0, 3).map((property) => (
@@ -278,7 +298,14 @@ function PropertyMapMarker({
             ))}
           </div>
         ) : (
-          <article className="property-map__popup-card">
+          <article
+            className="property-map__popup-card"
+            onMouseEnter={() => {
+              clearCloseTimer()
+              onHoverChange(first.slug)
+            }}
+            onMouseLeave={scheduleClosePopup}
+          >
             <img src={first.images[0]} alt={`Photo du bien ${first.title} à ${first.city}`} loading="lazy" />
             <h4>{first.title}</h4>
             <p className="price">{new Intl.NumberFormat('fr-FR').format(first.price)} €</p>
