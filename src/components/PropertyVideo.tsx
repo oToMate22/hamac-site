@@ -83,6 +83,10 @@ function StreamPreview({
     const video = videoRef.current
     if (!video) return
 
+    video.muted = muted
+    video.defaultMuted = muted
+    video.playsInline = true
+
     const src = streamHlsUrl(videoId)
     let hlsInstance: InstanceType<typeof import('hls.js').default> | null = null
     let cancelled = false
@@ -96,6 +100,7 @@ function StreamPreview({
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src
         video.addEventListener('loadedmetadata', playIfActive, { once: true })
+        video.addEventListener('canplay', playIfActive, { once: true })
         return
       }
 
@@ -107,6 +112,7 @@ function StreamPreview({
       hlsInstance.loadSource(src)
       hlsInstance.attachMedia(video)
       hlsInstance.on(Hls.Events.MANIFEST_PARSED, playIfActive)
+      hlsInstance.on(Hls.Events.FRAG_BUFFERED, playIfActive)
     }
 
     void setup()
@@ -115,20 +121,23 @@ function StreamPreview({
       cancelled = true
       hlsInstance?.destroy()
       video.removeEventListener('loadedmetadata', playIfActive)
+      video.removeEventListener('canplay', playIfActive)
       video.removeAttribute('src')
       video.load()
     }
-  }, [videoId])
+  }, [muted, videoId])
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
+    video.muted = muted
+    video.defaultMuted = muted
     if (active) {
       void video.play().catch(() => {})
     } else {
       video.pause()
     }
-  }, [active, videoId])
+  }, [active, muted, videoId])
 
   return (
     <video
