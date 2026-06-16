@@ -7,7 +7,6 @@ type PrivateVisitCardProps = {
   index: number
   isCenter: boolean
   shouldPreload: boolean
-  playInView: boolean
   onOpen: (index: number) => void
   cardRef: (node: HTMLButtonElement | null) => void
 }
@@ -17,13 +16,12 @@ export function PrivateVisitCard({
   index,
   isCenter,
   shouldPreload,
-  playInView,
   onOpen,
   cardRef,
 }: PrivateVisitCardProps) {
   const hasStreamVideo = Boolean(visit.streamVideoId)
-  const shouldMountVideo = hasStreamVideo && playInView && shouldPreload
-  const showVideo = hasStreamVideo && playInView && isCenter
+  const shouldMountVideo = hasStreamVideo && shouldPreload
+  const showVideo = hasStreamVideo && isCenter
 
   return (
     <button

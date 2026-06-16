@@ -15,7 +15,6 @@ export function PrivateVisitsSection() {
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [centerIndex, setCenterIndex] = useState(featuredIndex >= 0 ? featuredIndex : 0)
-  const [sectionInView, setSectionInView] = useState(false)
 
   const scrollCardToCenter = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
     const track = trackRef.current
@@ -58,21 +57,6 @@ export function PrivateVisitsSection() {
   }, [updateCenterFromScroll])
 
   useEffect(() => {
-    const section = sectionRef.current
-    if (!section) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setSectionInView(entry.isIntersecting && entry.intersectionRatio >= 0.35)
-      },
-      { threshold: [0, 0.35, 0.55] },
-    )
-
-    observer.observe(section)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
     const track = trackRef.current
     if (!track) return
 
@@ -106,8 +90,6 @@ export function PrivateVisitsSection() {
     lastTriggerRef.current = cardRefs.current[index] ?? null
     setActiveIndex(index)
   }
-
-  const playInView = sectionInView
 
   return (
     <section
@@ -160,7 +142,6 @@ export function PrivateVisitsSection() {
                 index={index}
                 isCenter={isCenter}
                 shouldPreload={shouldPreload}
-                playInView={playInView}
                 onOpen={openVisit}
                 cardRef={(node) => {
                   cardRefs.current[index] = node
