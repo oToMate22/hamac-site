@@ -76,7 +76,7 @@ function VisitSlide({ visit, isActive, showVideo }: VisitSlideProps) {
             title={visit.title}
             poster={visit.posterSrc}
             preview
-            muted={false}
+            muted
           />
         ) : null}
       </span>
