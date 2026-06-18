@@ -483,10 +483,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   {budgetMinValue > 0
                     ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
                     : mode === 'rent'
-                      ? 'sans plancher'
-                      : 'sans minimum'}
+                      ? 'Sans Plancher'
+                      : 'Sans Minimum'}
                   {' — '}
-                  {budgetParam === 'all' ? 'sans plafond' : `jusqu'à ${formatEuro(budgetMaxForFilter ?? defaultBudgetMax)}${rentBudgetSuffix}`}
+                  {budgetParam === 'all' || (budgetMaxForFilter ?? defaultBudgetMax) >= budgetSliderCap
+                    ? 'Sans Budget Max'
+                    : `jusqu'à ${formatEuro(budgetMaxForFilter ?? defaultBudgetMax)}${rentBudgetSuffix}`}
                 </p>
                 <Slider.Root
                   className="catalog-slider"
