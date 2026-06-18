@@ -145,6 +145,15 @@ export function PropertyDetailPage() {
   const isRentalRoute =
     (typeof window !== 'undefined' ? window.location.pathname : location.pathname).includes('/louer')
   const listingPath = isRentalRoute ? '/louer' : '/acheter'
+  // Restaure les filtres mémorisés pour revenir au catalogue tel qu'il était.
+  const backToListing = (() => {
+    try {
+      const saved = sessionStorage.getItem(`hamac:catalog-filters:${isRentalRoute ? 'rent' : 'sale'}`)
+      return saved ? `${listingPath}?${saved}` : listingPath
+    } catch {
+      return listingPath
+    }
+  })()
 
   const [property, setProperty] = useState<FeaturedProperty | null>(null)
   const [similar, setSimilar] = useState<Property[]>([])
@@ -396,7 +405,7 @@ export function PropertyDetailPage() {
     <main className="detail-page section section--cream">
       <div className="container">
         <p className="detail-back">
-          <Link to={listingPath}>← Retour aux biens</Link>
+          <Link to={backToListing}>← Retour aux biens</Link>
         </p>
 
         <div className="detail-layout">

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
@@ -85,6 +85,33 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
   const defaultBudgetMin = mode === 'rent' ? 0 : 650_000
   const defaultBudgetMax = mode === 'rent' ? 3000 : 1_950_000
+
+  // Mémorise les filtres par mode pour une navigation fluide (retour fiche → catalogue).
+  const filtersStorageKey = `hamac:catalog-filters:${mode}`
+  const restoredFiltersRef = useRef(false)
+
+  const persistFilters = (params: URLSearchParams) => {
+    try {
+      sessionStorage.setItem(filtersStorageKey, params.toString())
+    } catch {
+      // sessionStorage indisponible (mode privé strict) : on ignore.
+    }
+  }
+
+  // Au montage : si on arrive sans aucun filtre dans l'URL, on restaure la
+  // dernière recherche de ce mode (sale/rent) mémorisée pendant la session.
+  useEffect(() => {
+    if (restoredFiltersRef.current) return
+    restoredFiltersRef.current = true
+    if (Array.from(searchParams.keys()).length > 0) return
+    try {
+      const saved = sessionStorage.getItem(filtersStorageKey)
+      if (saved) setSearchParams(new URLSearchParams(saved), { replace: true })
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const type = searchParams.get('type') ?? 'all'
   const city = searchParams.get('city') ?? 'all'
@@ -307,6 +334,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     const next = new URLSearchParams(searchParams)
     if (!value || value === 'all') next.delete(key)
     else next.set(key, value)
+    persistFilters(next)
     setSearchParams(next)
   }
 
@@ -316,6 +344,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       if (!value || value === 'all') next.delete(key)
       else next.set(key, value)
     })
+    persistFilters(next)
     setSearchParams(next)
   }
 
@@ -326,6 +355,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     const next = new URLSearchParams(searchParams)
     if (nextSet.size) next.set('amenities', Array.from(nextSet).join(','))
     else next.delete('amenities')
+    persistFilters(next)
     setSearchParams(next)
   }
 
