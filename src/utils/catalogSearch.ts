@@ -1,7 +1,7 @@
 import { getNeighborhoodBySlug, type Neighborhood } from '../data/neighborhoods'
 
-const DEFAULT_BUDGET_MIN_SALE = 650_000
-const DEFAULT_BUDGET_MAX_SALE = 1_950_000
+const DEFAULT_BUDGET_MIN_SALE = 450_000
+const DEFAULT_BUDGET_MAX_SALE = 1_500_000
 const DEFAULT_BUDGET_MAX_RENT = 3_000
 
 export function buildCatalogSearchFromNeighborhood(

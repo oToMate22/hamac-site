@@ -83,8 +83,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
   const budgetSliderStep = mode === 'rent' ? 100 : 50_000
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
-  const defaultBudgetMin = mode === 'rent' ? 0 : 650_000
-  const defaultBudgetMax = mode === 'rent' ? 3000 : 1_950_000
+  const defaultBudgetMin = mode === 'rent' ? 0 : 450_000
+  const defaultBudgetMax = mode === 'rent' ? 3000 : 1_500_000
 
   // Mémorise les filtres par mode pour une navigation fluide (retour fiche → catalogue).
   const filtersStorageKey = `hamac:catalog-filters:${mode}`
