@@ -543,18 +543,24 @@ export function PropertyDetailPage() {
               </p>
 
               <div className="detail-stats">
-                <div>
-                  <span>Surface</span>
-                  <strong>{property.surface} m²</strong>
-                </div>
-                <div>
-                  <span>Pieces</span>
-                  <strong>{property.rooms}</strong>
-                </div>
-                <div>
-                  <span>Chambres</span>
-                  <strong>{property.bedrooms}</strong>
-                </div>
+                {property.surface ? (
+                  <div>
+                    <span>Surface</span>
+                    <strong>{property.surface} m²</strong>
+                  </div>
+                ) : null}
+                {property.rooms ? (
+                  <div>
+                    <span>Pieces</span>
+                    <strong>{property.rooms}</strong>
+                  </div>
+                ) : null}
+                {property.bedrooms ? (
+                  <div>
+                    <span>Chambres</span>
+                    <strong>{property.bedrooms}</strong>
+                  </div>
+                ) : null}
               </div>
             </section>
 

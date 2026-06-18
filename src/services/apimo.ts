@@ -156,6 +156,54 @@ function labelFrom(map: ApimoLabelMap, code: unknown): string | undefined {
   return map[String(code)]
 }
 
+const FRENCH_NUMBER_WORDS: Record<string, number> = {
+  une: 1,
+  un: 1,
+  deux: 2,
+  trois: 3,
+  quatre: 4,
+  cinq: 5,
+  six: 6,
+  sept: 7,
+  huit: 8,
+  neuf: 9,
+  dix: 10,
+  onze: 11,
+  douze: 12,
+}
+
+/**
+ * Apimo renvoie parfois `bedrooms: 0` (donnée manquante). On tente alors de
+ * retrouver le nombre de chambres dans la description (« 3 chambres », « trois
+ * belles chambres »…). Renvoie undefined si rien d'exploitable.
+ */
+function inferBedroomsFromText(text?: string): number | undefined {
+  if (!text) return undefined
+  const normalized = text.toLowerCase()
+  const candidates: number[] = []
+
+  const adjectives = '(?:belles?\\s+|grandes?\\s+|jolies?\\s+|spacieuses?\\s+|vastes?\\s+)?'
+
+  const numericPattern = new RegExp(`(\\d+)\\s*${adjectives}chambres?\\b`, 'g')
+  let match: RegExpExecArray | null
+  while ((match = numericPattern.exec(normalized)) !== null) {
+    const n = Number(match[1])
+    if (Number.isFinite(n) && n > 0 && n <= 30) candidates.push(n)
+  }
+
+  const wordPattern = new RegExp(
+    `\\b(une?|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze)\\s+${adjectives}chambres?\\b`,
+    'g',
+  )
+  while ((match = wordPattern.exec(normalized)) !== null) {
+    const n = FRENCH_NUMBER_WORDS[match[1]]
+    if (n) candidates.push(n)
+  }
+
+  if (!candidates.length) return undefined
+  return Math.max(...candidates)
+}
+
 function isEnergyClass(value: unknown): value is string {
   return typeof value === 'string' && /^[A-G]$/i.test(value.trim())
 }
@@ -357,6 +405,10 @@ function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
     return selectedComment.comment.replace(/\r\n/g, '\n')
   })()
 
+  // Apimo renvoie parfois 0 chambre (donnée manquante) : on tente de la déduire
+  // de la description plutôt que d'afficher « 0 chambre ».
+  const resolvedBedrooms = bedrooms > 0 ? bedrooms : inferBedroomsFromText(description) ?? 0
+
   // Agent: sourced from `property.user` (name, phone, email, picture)
   const agent = (() => {
     const userRaw = property.user && typeof property.user === 'object' ? property.user : null
@@ -404,7 +456,7 @@ function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
     price: priceValue ?? 0,
     surface: surfaceValue ?? 0,
     rooms, // not in FeaturedProperty type, but kept for debug? (we don't have it)
-    bedrooms,
+    bedrooms: resolvedBedrooms,
     city: cityName ?? '',
     zipcode,
     lat: latitude,
