@@ -3,13 +3,59 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import type { Property } from '../data/properties'
 import { submitLead } from '../services/leads'
-import { getProperties, getPropertyById, getRentalProperties, type FeaturedProperty } from '../services/apimo'
+import {
+  getProperties,
+  getPropertyById,
+  getRentalProperties,
+  type EnergyRating,
+  type FeaturedProperty,
+} from '../services/apimo'
 import { usePageMeta } from '../utils/seo'
 import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/images/Biens/maison-homepage.jpg'
 const DESCRIPTION_PREVIEW_LIMIT = 300
 const DEFAULT_CONTACT_MESSAGE = 'Je souhaite etre recontacte au sujet de ce bien...'
+
+const ENERGY_CLASSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const
+
+function EnergyRatingScale({
+  rating,
+  variant,
+  unit,
+}: {
+  rating: EnergyRating
+  variant: 'energy' | 'ges'
+  unit: string
+}) {
+  const activeClass = rating.class?.toUpperCase()
+  return (
+    <div className={`energy-scale energy-scale--${variant}`}>
+      <p className="energy-scale__caption">
+        {variant === 'energy' ? 'Classe énergie' : 'Classe climat'}
+      </p>
+      {rating.value !== undefined ? (
+        <p className="energy-scale__value">
+          {new Intl.NumberFormat('fr-FR').format(rating.value)} <span>{unit}</span>
+        </p>
+      ) : null}
+      <ul className="energy-scale__bars">
+        {ENERGY_CLASSES.map((letter) => {
+          const isActive = letter === activeClass
+          return (
+            <li
+              key={letter}
+              className={`energy-scale__bar energy-scale__bar--${letter} ${isActive ? 'is-active' : ''}`}
+            >
+              <span className="energy-scale__letter">{letter}</span>
+              {isActive ? <span className="energy-scale__marker" aria-hidden>◄</span> : null}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
 
 type RequiredContactField = 'name' | 'email' | 'phone'
 
@@ -310,6 +356,32 @@ export function PropertyDetailPage() {
       : fullDescription
   const descriptionBlocks = parseDescriptionBlocks(visibleDescription)
 
+  const details = property.details
+  const summaryRows: Array<[string, string]> = [
+    ...(details?.reference ? [['Référence', details.reference] as [string, string]] : []),
+    ...(property.rooms ? [['Pièces', `${property.rooms} pièce${property.rooms > 1 ? 's' : ''}`] as [string, string]] : []),
+    ...(property.surface ? [['Surface habitable', `${property.surface} m²`] as [string, string]] : []),
+    ...(details?.surfaceTotal ? [['Surface totale', `${details.surfaceTotal} m²`] as [string, string]] : []),
+    ...(property.bedrooms ? [['Chambres', String(property.bedrooms)] as [string, string]] : []),
+    ...(details?.floorLabel
+      ? [['Étage', details.floorsTotal ? `${details.floorLabel} / ${details.floorsTotal}` : details.floorLabel] as [string, string]]
+      : []),
+    ...(details?.condition ? [['État', details.condition] as [string, string]] : []),
+    ...(details?.exposures?.length ? [['Exposition', details.exposures.join(', ')] as [string, string]] : []),
+    ...(details?.view ? [['Vue', details.view] as [string, string]] : []),
+    ...(details?.heatingType ? [['Type de chauffage', details.heatingType] as [string, string]] : []),
+    ...(details?.heatingEnergy ? [['Énergie de chauffage', details.heatingEnergy] as [string, string]] : []),
+    ...(details?.heatingMode ? [['Moyen de chauffage', details.heatingMode] as [string, string]] : []),
+    ...(details?.hotWaterDevice ? [["Type d'eau chaude", details.hotWaterDevice] as [string, string]] : []),
+    ...(details?.hotWaterMode ? [["Moyen d'eau chaude", details.hotWaterMode] as [string, string]] : []),
+    ...(details?.wasteWater ? [['Eaux usées', details.wasteWater] as [string, string]] : []),
+  ]
+
+  const areaEntries = (property.areas ?? []).filter((entry) => entry.surface !== undefined)
+  const proximities = property.proximities ?? []
+  const hasEnergy = Boolean(property.energy?.class || property.energy?.value !== undefined)
+  const hasGes = Boolean(property.ges?.class || property.ges?.value !== undefined)
+
   const goToPreviousImage = () => {
     if (!imagesCount) return
     setActiveImage((prev) => (prev - 1 + imagesCount) % imagesCount)
@@ -393,22 +465,63 @@ export function PropertyDetailPage() {
                 </button>
               ) : null}
 
-              <h3>Caracteristiques detaillees</h3>
-              <div className="detail-pills">
-                {[
-                  ['Surface', `${property.surface} m²`],
-                  ['Pièces', String(property.rooms)],
-                  ['Chambres', String(property.bedrooms)],
-                  ['Ville', property.city],
-                  ['Type', property.type],
-                ].map(([label, value]) => (
-                  <div key={label} className="detail-pill">
-                    <span>{label}</span>
-                    <strong>{value}</strong>
-                  </div>
-                ))}
-              </div>
             </section>
+
+            {summaryRows.length ? (
+              <section className="detail-card">
+                <h2>Sommaire</h2>
+                <dl className="detail-summary">
+                  {summaryRows.map(([label, value]) => (
+                    <div key={label} className="detail-summary__row">
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            ) : null}
+
+            {areaEntries.length ? (
+              <section className="detail-card">
+                <h2>Surfaces</h2>
+                <ul className="detail-areas">
+                  {areaEntries.map((entry, idx) => (
+                    <li key={`${entry.label}-${idx}`} className="detail-areas__row">
+                      <span>
+                        {entry.count > 1 ? `${entry.count} ` : ''}
+                        {entry.label}
+                      </span>
+                      <strong>{entry.surface} m²</strong>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {proximities.length ? (
+              <section className="detail-card">
+                <h2>Proximités</h2>
+                <ul className="detail-proximities">
+                  {proximities.map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {hasEnergy || hasGes ? (
+              <section className="detail-card">
+                <h2>Efficacité énergétique</h2>
+                <div className="detail-energy">
+                  {hasEnergy ? (
+                    <EnergyRatingScale rating={property.energy!} variant="energy" unit="kWh/m².an" />
+                  ) : null}
+                  {hasGes ? (
+                    <EnergyRatingScale rating={property.ges!} variant="ges" unit="kg CO₂/m².an" />
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
 
             <section className="detail-card">
               <h2>Localisation</h2>

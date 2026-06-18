@@ -1,9 +1,57 @@
 import { supabase } from '../lib/supabase'
+import {
+  AREATYPE_LABELS,
+  CONDITION_LABELS,
+  FLOOR_LABELS,
+  HEATINGACCESS_LABELS,
+  HEATINGDEVICE_LABELS,
+  HEATINGTYPE_LABELS,
+  HOTWATERACCESS_LABELS,
+  HOTWATERDEVICE_LABELS,
+  ORIENTATION_LABELS,
+  PROXIMITY_LABELS,
+  VIEWTYPE_LABELS,
+  WASTEWATER_LABELS,
+  type ApimoLabelMap,
+} from './apimoCatalogs'
 
 const isSupabaseConfigured = () =>
   Boolean(import.meta.env.VITE_SUPABASE_URL?.trim() && import.meta.env.VITE_SUPABASE_ANON_KEY?.trim())
 
 export type ApimoPropertyType = 'appartement' | 'maison' | 'terrain' | 'commerce' | 'bureau' | 'garage' | 'immeuble'
+
+/** Étiquette DPE ou GES : classe (A→G) et/ou valeur chiffrée. */
+export type EnergyRating = {
+  class?: string
+  value?: number
+}
+
+/** Une pièce du bien (section « Surfaces »). */
+export type PropertyAreaEntry = {
+  label: string
+  count: number
+  surface?: number
+}
+
+/** Caractéristiques détaillées (section « Sommaire »). */
+export type PropertyDetails = {
+  reference?: string
+  surfaceTotal?: number
+  floorLabel?: string
+  floorsTotal?: string
+  condition?: string
+  exposures?: string[]
+  view?: string
+  /** Appareil de chauffage (« Type de chauffage »). */
+  heatingType?: string
+  /** Énergie de chauffage (« Énergie de chauffage »). */
+  heatingEnergy?: string
+  /** Mode de chauffage : individuel / collectif (« Moyen de chauffage »). */
+  heatingMode?: string
+  hotWaterDevice?: string
+  hotWaterMode?: string
+  wasteWater?: string
+}
 
 export type FeaturedProperty = {
   slug: string
@@ -30,6 +78,12 @@ export type FeaturedProperty = {
   // Useful later for map sync if we ever feed these into Leaflet.
   lat?: number
   lng?: number
+  // Détails enrichis (fiche bien)
+  details?: PropertyDetails
+  areas?: PropertyAreaEntry[]
+  proximities?: string[]
+  energy?: EnergyRating
+  ges?: EnergyRating
 }
 
 type ApimoRawProperty = Record<string, unknown>
@@ -94,6 +148,138 @@ function mapTypeFromApimoType(apimoType: unknown): ApimoPropertyType {
   if (n === 6) return 'garage'
   if (n === 7) return 'immeuble'
   return 'maison'
+}
+
+function labelFrom(map: ApimoLabelMap, code: unknown): string | undefined {
+  if (code === null || code === undefined) return undefined
+  if (typeof code === 'object') return undefined
+  return map[String(code)]
+}
+
+function isEnergyClass(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-G]$/i.test(value.trim())
+}
+
+/** DPE (type 1 valeur, 166 classe) + GES (type 2 valeur, 167 classe). */
+function extractRatings(raw: ApimoRawProperty): { energy?: EnergyRating; ges?: EnergyRating } {
+  const regsRaw = raw.regulations
+  if (!Array.isArray(regsRaw)) return {}
+  const regs = regsRaw.filter((r): r is Record<string, unknown> => Boolean(r) && typeof r === 'object')
+
+  const find = (type: number) => regs.find((r) => toOptionalNumber(r.type) === type)
+
+  const resolveClass = (classReg?: Record<string, unknown>, valueReg?: Record<string, unknown>) => {
+    if (classReg && isEnergyClass(classReg.value)) return String(classReg.value).toUpperCase()
+    if (valueReg && isEnergyClass(valueReg.label)) return String(valueReg.label).toUpperCase()
+    return undefined
+  }
+
+  const resolveValue = (valueReg?: Record<string, unknown>) => {
+    const n = valueReg ? toOptionalNumber(valueReg.value) : undefined
+    return n !== undefined && n > 0 ? n : undefined
+  }
+
+  const energyValueReg = find(1)
+  const gesValueReg = find(2)
+
+  const energyRating: EnergyRating = {
+    class: resolveClass(find(166), energyValueReg),
+    value: resolveValue(energyValueReg),
+  }
+  const gesRating: EnergyRating = {
+    class: resolveClass(find(167), gesValueReg),
+    value: resolveValue(gesValueReg),
+  }
+
+  return {
+    energy: energyRating.class || energyRating.value !== undefined ? energyRating : undefined,
+    ges: gesRating.class || gesRating.value !== undefined ? gesRating : undefined,
+  }
+}
+
+function extractAreaEntries(raw: ApimoRawProperty): PropertyAreaEntry[] {
+  const areasRaw = raw.areas
+  if (!Array.isArray(areasRaw)) return []
+
+  const entries: PropertyAreaEntry[] = []
+  for (const item of areasRaw) {
+    if (!item || typeof item !== 'object') continue
+    const area = item as Record<string, unknown>
+    const label = labelFrom(AREATYPE_LABELS, area.type)
+    if (!label) continue
+    const surface = toOptionalNumber(area.area)
+    const count = toOptionalNumber(area.number) ?? 1
+    entries.push({ label, count, surface })
+  }
+  return entries
+}
+
+function extractProximities(raw: ApimoRawProperty): string[] {
+  const proximitiesRaw = raw.proximities
+  if (!Array.isArray(proximitiesRaw)) return []
+  const labels = proximitiesRaw
+    .map((code) => labelFrom(PROXIMITY_LABELS, code))
+    .filter((label): label is string => Boolean(label))
+  return Array.from(new Set(labels))
+}
+
+function extractDetails(raw: ApimoRawProperty, surfaceValue?: number): PropertyDetails {
+  const details: PropertyDetails = {}
+
+  const reference = raw.reference
+  if (typeof reference === 'string' && reference.trim()) details.reference = reference.trim()
+
+  const areaObj = (raw.area && typeof raw.area === 'object' ? raw.area : null) as { total?: unknown } | null
+  const totalSurface = toOptionalNumber(areaObj?.total)
+  if (totalSurface !== undefined && totalSurface > 0 && totalSurface !== surfaceValue) {
+    details.surfaceTotal = totalSurface
+  }
+
+  const floorObj = (raw.floor && typeof raw.floor === 'object' ? raw.floor : null) as
+    | { type?: unknown; floors?: unknown }
+    | null
+  const floorLabel = labelFrom(FLOOR_LABELS, floorObj?.type)
+  if (floorLabel) details.floorLabel = floorLabel
+  const floorsTotal = floorObj?.floors
+  if (typeof floorsTotal === 'string' && floorsTotal.trim()) details.floorsTotal = floorsTotal.trim()
+  else if (typeof floorsTotal === 'number' && Number.isFinite(floorsTotal)) details.floorsTotal = String(floorsTotal)
+
+  const condition = labelFrom(CONDITION_LABELS, raw.condition)
+  if (condition) details.condition = condition
+
+  const orientationsRaw = raw.orientations
+  if (Array.isArray(orientationsRaw)) {
+    const exposures = orientationsRaw
+      .map((code) => labelFrom(ORIENTATION_LABELS, code))
+      .filter((label): label is string => Boolean(label))
+    if (exposures.length) details.exposures = Array.from(new Set(exposures))
+  }
+
+  const viewObj = (raw.view && typeof raw.view === 'object' ? raw.view : null) as { type?: unknown } | null
+  const view = labelFrom(VIEWTYPE_LABELS, viewObj?.type)
+  if (view) details.view = view
+
+  const heatingObj = (raw.heating && typeof raw.heating === 'object' ? raw.heating : null) as
+    | { device?: unknown; type?: unknown; access?: unknown }
+    | null
+  const heatingType = labelFrom(HEATINGDEVICE_LABELS, heatingObj?.device)
+  if (heatingType) details.heatingType = heatingType
+  const heatingEnergy = labelFrom(HEATINGTYPE_LABELS, heatingObj?.type)
+  if (heatingEnergy) details.heatingEnergy = heatingEnergy
+  const heatingMode = labelFrom(HEATINGACCESS_LABELS, heatingObj?.access)
+  if (heatingMode) details.heatingMode = heatingMode
+
+  const waterObj = (raw.water && typeof raw.water === 'object' ? raw.water : null) as
+    | { hot_device?: unknown; hot_access?: unknown; waste?: unknown }
+    | null
+  const hotWaterDevice = labelFrom(HOTWATERDEVICE_LABELS, waterObj?.hot_device)
+  if (hotWaterDevice) details.hotWaterDevice = hotWaterDevice
+  const hotWaterMode = labelFrom(HOTWATERACCESS_LABELS, waterObj?.hot_access)
+  if (hotWaterMode) details.hotWaterMode = hotWaterMode
+  const wasteWater = labelFrom(WASTEWATER_LABELS, waterObj?.waste)
+  if (wasteWater) details.wasteWater = wasteWater
+
+  return details
 }
 
 function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
@@ -235,6 +421,12 @@ function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
     // Detail-only fields
     description,
     agent,
+
+    // Détails enrichis (fiche bien)
+    details: extractDetails(property, surfaceValue),
+    areas: extractAreaEntries(property),
+    proximities: extractProximities(property),
+    ...extractRatings(property),
   }
 }
 

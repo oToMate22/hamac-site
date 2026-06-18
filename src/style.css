@@ -1298,6 +1298,172 @@ a {
   font-size: 0.75rem;
 }
 
+/* Sommaire (clé / valeur) */
+.detail-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1.5rem;
+  margin: 0;
+}
+
+.detail-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee7dc;
+}
+
+.detail-summary__row dt {
+  color: var(--navy-soft, #5c6b73);
+  font-size: 0.88rem;
+}
+
+.detail-summary__row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  color: var(--navy-deep, #142a38);
+  font-size: 0.9rem;
+}
+
+/* Surfaces */
+.detail-areas,
+.detail-proximities {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.detail-areas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 1.5rem;
+}
+
+.detail-areas__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #eee7dc;
+  font-size: 0.9rem;
+}
+
+.detail-proximities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail-proximities li {
+  background: #faf8f5;
+  border: 1px solid #eee7dc;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  color: var(--navy-deep, #142a38);
+}
+
+/* Efficacité énergétique (DPE / GES) */
+.detail-energy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.energy-scale__caption {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--navy-soft, #5c6b73);
+}
+
+.energy-scale__value {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--navy-deep, #142a38);
+}
+
+.energy-scale__value span {
+  font-family: var(--font-sans, inherit);
+  font-size: 0.75rem;
+  color: var(--navy-soft, #5c6b73);
+}
+
+.energy-scale__bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.energy-scale__bar {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  padding-left: 0.6rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  opacity: 0.55;
+  width: 55%;
+  transition: opacity 0.2s ease, width 0.2s ease;
+}
+
+/* Largeur croissante A -> G */
+.energy-scale__bar--A { width: 45%; }
+.energy-scale__bar--B { width: 52%; }
+.energy-scale__bar--C { width: 59%; }
+.energy-scale__bar--D { width: 66%; }
+.energy-scale__bar--E { width: 73%; }
+.energy-scale__bar--F { width: 80%; }
+.energy-scale__bar--G { width: 87%; }
+
+.energy-scale__bar.is-active {
+  opacity: 1;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(20, 42, 56, 0.18);
+}
+
+.energy-scale__marker {
+  position: absolute;
+  right: -1.3rem;
+  color: var(--navy-deep, #142a38);
+  font-size: 0.9rem;
+}
+
+/* Couleurs DPE (énergie) */
+.energy-scale--energy .energy-scale__bar--A { background: #319834; }
+.energy-scale--energy .energy-scale__bar--B { background: #33cc31; }
+.energy-scale--energy .energy-scale__bar--C { background: #cbea35; color: #2c3a18; }
+.energy-scale--energy .energy-scale__bar--D { background: #fef200; color: #4a4400; }
+.energy-scale--energy .energy-scale__bar--E { background: #fdb814; color: #4a3500; }
+.energy-scale--energy .energy-scale__bar--F { background: #ef7d00; }
+.energy-scale--energy .energy-scale__bar--G { background: #e30613; }
+
+/* Couleurs GES (climat) — dégradé violet/gris */
+.energy-scale--ges .energy-scale__bar--A { background: #d6c9e8; color: #3a2c52; }
+.energy-scale--ges .energy-scale__bar--B { background: #b9a3d6; color: #33244d; }
+.energy-scale--ges .energy-scale__bar--C { background: #9c7ec4; }
+.energy-scale--ges .energy-scale__bar--D { background: #7f5ab1; }
+.energy-scale--ges .energy-scale__bar--E { background: #63389f; }
+.energy-scale--ges .energy-scale__bar--F { background: #4a1f86; }
+.energy-scale--ges .energy-scale__bar--G { background: #34145e; }
+
+@media (max-width: 640px) {
+  .detail-summary,
+  .detail-areas {
+    grid-template-columns: 1fr;
+  }
+}
+
 .detail-map {
   width: 100%;
   height: 320px;
