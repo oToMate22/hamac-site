@@ -1821,17 +1821,107 @@ a {
   }
 }
 
+.estimation-page {
+  background: var(--cream);
+}
+
 .estimation-hero {
-  margin-bottom: 1.1rem;
+  position: relative;
+  min-height: calc(58vh + var(--header-h));
+  display: flex;
+  flex-direction: column;
+}
+
+.estimation-hero__image,
+.estimation-hero__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.estimation-hero__image {
+  object-fit: cover;
+  object-position: center 42%;
+}
+
+.estimation-hero__overlay {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(197, 169, 106, 0.22) 0, transparent 38%),
+    linear-gradient(
+      180deg,
+      rgba(20, 42, 56, 0.78) 0%,
+      rgba(20, 42, 56, 0.58) 38%,
+      rgba(20, 42, 56, 0.48) 100%
+    );
+}
+
+.estimation-hero__content {
+  position: relative;
+  z-index: 2;
+  color: var(--white);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: calc(var(--header-h) + clamp(2.5rem, 6vw, 5rem));
+  padding-bottom: clamp(3.5rem, 8vw, 5.5rem);
+}
+
+.estimation-hero__content .eyebrow {
+  color: rgba(253, 252, 250, 0.82);
 }
 
 .estimation-hero__title {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.8rem;
+  max-width: 54rem;
+  color: var(--white);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 1.08;
+  font-style: italic;
+  font-weight: 400;
 }
 
 .estimation-hero__lead {
   margin: 0;
-  max-width: 50rem;
+  max-width: 44rem;
+  color: rgba(253, 252, 250, 0.92);
+}
+
+.estimation-highlights {
+  position: relative;
+  z-index: 3;
+  margin-top: -1.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.estimation-highlights__grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.estimation-highlights__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
+  background: #fff;
+  border: 1px solid rgba(20, 42, 56, 0.08);
+  box-shadow: var(--shadow-card);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-heading);
+}
+
+.estimation-highlights__item svg {
+  flex: none;
+  color: var(--gold);
+}
+
+.estimation-body {
+  padding-top: clamp(1.5rem, 4vw, 2.4rem);
 }
 
 .estimation-layout {
@@ -1843,10 +1933,71 @@ a {
 .estimation-form-card,
 .estimation-reassurance {
   background: #fff;
-  border-radius: 1rem;
+  border-radius: 1.15rem;
   border: 1px solid rgba(20, 42, 56, 0.08);
   box-shadow: var(--shadow-card);
-  padding: 1rem;
+  overflow: hidden;
+}
+
+.estimation-form-card {
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+}
+
+.estimation-progress-bar {
+  position: relative;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(20, 42, 56, 0.08);
+  overflow: hidden;
+  margin-bottom: 0.55rem;
+}
+
+.estimation-progress-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--navy-soft) 100%);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.estimation-progress-bar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(20, 42, 56, 0.62);
+}
+
+.estimation-progress-bar__label svg {
+  color: var(--navy);
+}
+
+.estimation-live-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.95rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(20, 42, 56, 0.06);
+  border: 1px solid rgba(20, 42, 56, 0.1);
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.estimation-live-preview svg {
+  flex: none;
+  color: var(--navy-soft);
+}
+
+.estimation-reassurance {
+  display: grid;
+  gap: 0;
 }
 
 .estimation-progress {
@@ -1880,11 +2031,13 @@ a {
 }
 
 .estimation-progress__item.is-active {
-  border-color: var(--gold);
+  border-color: var(--navy);
+  background: rgba(20, 42, 56, 0.04);
+  box-shadow: 0 8px 22px rgba(20, 42, 56, 0.08);
 }
 
 .estimation-progress__item.is-active span {
-  background: var(--gold);
+  background: var(--navy);
   color: var(--white);
 }
 
@@ -1927,6 +2080,23 @@ a {
   line-height: 1.5;
 }
 
+.estimation-step-header__encouragement {
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(20, 42, 56, 0.05);
+  border-left: 3px solid var(--navy);
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.estimation-step-panel {
+  display: grid;
+  gap: 1.15rem;
+}
+
 .estimation-form {
   display: grid;
   gap: 1.15rem;
@@ -1934,24 +2104,115 @@ a {
 
 .estimation-type-grid {
   display: grid;
-  gap: 0.65rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
 }
 
 .estimation-type-card {
+  position: relative;
   border: 1px solid rgba(20, 42, 56, 0.12);
-  background: #faf8f5;
-  border-radius: 0.85rem;
-  padding: 0.85rem 0.5rem;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 0;
+  overflow: hidden;
   display: grid;
-  justify-items: center;
-  gap: 0.35rem;
+  grid-template-rows: auto 1fr;
   font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.estimation-type-card:hover {
+  border-color: rgba(20, 42, 56, 0.22);
+  box-shadow: 0 12px 28px rgba(20, 42, 56, 0.1);
 }
 
 .estimation-type-card.is-active {
-  border-color: var(--gold);
-  background: rgba(20, 42, 56, 0.06);
+  border-color: var(--navy);
+  box-shadow:
+    0 0 0 2px rgba(20, 42, 56, 0.12),
+    0 14px 32px rgba(20, 42, 56, 0.14);
+}
+
+.estimation-type-card__illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 11;
+  padding: 0.65rem 0.5rem 0.55rem;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(20, 42, 56, 0.03) 0, transparent 48%),
+    linear-gradient(180deg, #fff 0%, #f8f5f0 100%);
+  border-bottom: 1px solid rgba(20, 42, 56, 0.06);
+}
+
+.estimation-type-card__illustration svg {
+  width: min(100%, 10.5rem);
+  height: auto;
+  color: var(--navy);
+  opacity: 0.92;
+  transition:
+    transform 0.35s ease,
+    opacity 0.25s ease;
+}
+
+.estimation-type-card:hover .estimation-type-card__illustration svg,
+.estimation-type-card.is-active .estimation-type-card__illustration svg {
+  transform: scale(1.07);
+  opacity: 1;
+}
+
+.estimation-type-card.is-active .estimation-type-card__illustration {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(20, 42, 56, 0.06) 0, transparent 50%),
+    linear-gradient(180deg, #f5f1ea 0%, #ebe4da 100%);
+}
+
+.estimation-type-card__body {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem 0.85rem 0.95rem;
+}
+
+.estimation-type-card__body strong {
+  font-size: 0.98rem;
+  color: var(--text-heading);
+}
+
+.estimation-type-card__body small {
+  color: rgba(74, 69, 64, 0.78);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.estimation-type-card__check {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--navy);
+  box-shadow: 0 6px 18px rgba(20, 42, 56, 0.18);
+}
+
+.estimation-city-reveal {
+  overflow: hidden;
+}
+
+.estimation-city-reveal__prompt {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--navy);
 }
 
 .estimation-field {
@@ -2216,6 +2477,26 @@ a {
   box-shadow: none;
 }
 
+.estimation-cta.is-ready:not(:disabled) {
+  animation: estimation-cta-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes estimation-cta-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 18px rgba(20, 42, 56, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 28px rgba(20, 42, 56, 0.38),
+      0 0 0 4px rgba(20, 42, 56, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
 .estimation-cta-hint {
   margin: -0.35rem 0 0;
   font-size: 0.88rem;
@@ -2240,6 +2521,10 @@ a {
 }
 
 @media (min-width: 640px) {
+  .estimation-type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .estimation-cta {
     min-width: 14rem;
     max-width: 22rem;
@@ -2256,6 +2541,36 @@ a {
   margin: 0 0 0.8rem;
   font-family: var(--font-serif);
   color: var(--text-heading);
+}
+
+.estimation-reassurance__photo {
+  margin: 0;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.estimation-reassurance__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.estimation-reassurance__photo figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 1.35rem 1rem 0.85rem;
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 42, 56, 0.82) 100%);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.estimation-reassurance__content {
+  padding: clamp(1rem, 2.5vw, 1.25rem);
 }
 
 .estimation-reassurance ul {
@@ -2301,14 +2616,17 @@ a {
 }
 
 @media (min-width: 1024px) {
+  .estimation-highlights__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .estimation-layout {
     grid-template-columns: 1.2fr 1fr;
     gap: 1.5rem;
   }
 
-  .estimation-form-card,
-  .estimation-reassurance {
-    padding: 1.25rem;
+  .estimation-form-card {
+    padding: 1.35rem;
   }
 
   .estimation-grid {
@@ -3945,7 +4263,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .neighborhood-info-card svg {
-  color: var(--gold);
+  color: var(--white);
 }
 
 .neighborhood-info-card h3 {
@@ -6120,10 +6438,10 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   padding-block: clamp(2.35rem, 6vw, 4rem);
 }
 
-/* padding-top ici : .section--cream écrase sinon une règle plus haute dans le fichier */
+/* Estimation page uses hero + wave layout (no extra top padding on main) */
 .estimation-page.section--cream {
-  padding-top: calc(var(--header-h) + clamp(2rem, 4vw, 3rem));
-  padding-bottom: clamp(2.35rem, 6vw, 4rem);
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 /* Lien estimation discret — entre hero et Notre maison */

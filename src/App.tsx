@@ -205,6 +205,7 @@ function SiteLayout() {
   const transparentHeaderRoutes = pathname === '/'
     || pathname === '/agence'
     || pathname === '/vendre'
+    || pathname === '/estimation'
     || pathname === '/off-market'
     || pathname === '/investir'
     || pathname.startsWith('/quartiers/')
@@ -358,10 +359,10 @@ function SiteLayout() {
           <div>
             <h3 className="site-footer__heading">Contact</h3>
             <address className="site-footer__address">
-              12 avenue de la Liberation<br />
-              69110 Sainte-Foy-les-Lyon<br />
-              <a href="tel:+33400000000">04 00 00 00 00</a><br />
-              <a href="mailto:contact@hamac-immo.fr">contact@hamac-immo.fr</a>
+              19 Boulevard Baron du Marais<br />
+              69110 Sainte-Foy-lès-Lyon<br />
+              <a href="tel:+33478850827">04 78 85 08 27</a><br />
+              <a href="mailto:agence@hamacpatrimoine.com">agence@hamacpatrimoine.com</a>
             </address>
           </div>
           <div>

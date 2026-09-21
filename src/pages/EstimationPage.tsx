@@ -1,7 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
-import { ArrowRight, Check, ChevronDown, Home, Building2, LandPlot, ShieldCheck, Clock3, MapPinHouse } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowRight, Check, ChevronDown, ShieldCheck, Clock3, MapPinHouse, Sparkles } from 'lucide-react'
 import { CitySearchField } from '../components/CitySearchField'
+import { EstimationTypeIllustration } from '../components/EstimationTypeIllustration'
 import type { PropertyType } from '../data/properties'
 import { submitEstimation } from '../services/estimations'
 import { usePageMeta } from '../utils/seo'
@@ -20,10 +22,30 @@ type EstimationForm = {
   message: string
 }
 
-const TYPE_OPTIONS: Array<{ value: PropertyType; label: string; icon: typeof Home }> = [
-  { value: 'maison', label: 'Maison', icon: Home },
-  { value: 'appartement', label: 'Appartement', icon: Building2 },
-  { value: 'terrain', label: 'Terrain', icon: LandPlot },
+const TYPE_OPTIONS: Array<{
+  value: PropertyType
+  label: string
+  hint: string
+  illustration: 'maison' | 'appartement' | 'terrain'
+}> = [
+  {
+    value: 'maison',
+    label: 'Maison',
+    hint: 'Villa, pavillon, propriété',
+    illustration: 'maison',
+  },
+  {
+    value: 'appartement',
+    label: 'Appartement',
+    hint: 'T2, T3, duplex, loft',
+    illustration: 'appartement',
+  },
+  {
+    value: 'terrain',
+    label: 'Terrain',
+    hint: 'Constructible ou viabilisé',
+    illustration: 'terrain',
+  },
 ]
 
 const STEPS = [
@@ -49,6 +71,38 @@ const STEPS = [
     hint: 'Complétez vos coordonnées pour envoyer la demande.',
   },
 ] as const
+
+function getTypeLabel(type: PropertyType | ''): string {
+  return TYPE_OPTIONS.find((option) => option.value === type)?.label ?? 'Votre bien'
+}
+
+function getStepEncouragement(step: number, form: EstimationForm): string | null {
+  if (step === 1) {
+    if (form.type && form.city) return 'Parfait — votre bien est identifié. Passez à l’étape suivante.'
+    if (form.type) return 'Très bien. Indiquez maintenant la commune pour personnaliser l’estimation.'
+    return 'Commencez par sélectionner le type de bien à estimer.'
+  }
+  if (step === 2) {
+    if (form.surface) return 'Encore quelques détails optionnels, puis nous vous recontactons sous 24 h.'
+    return 'La surface habitable suffit pour continuer — le reste affinera l’analyse.'
+  }
+  return null
+}
+
+function computeFormProgress(step: number, form: EstimationForm): number {
+  const step1 = (form.type ? 0.55 : 0) + (form.city ? 0.45 : 0)
+  const step2 =
+    (form.surface ? 0.7 : 0) +
+    (form.rooms ? 0.1 : 0) +
+    (form.bedrooms ? 0.1 : 0) +
+    (form.type === 'maison' && form.land ? 0.1 : 0)
+  const contactFields = [form.lastName, form.firstName, form.email, form.phone]
+  const step3 = contactFields.filter(Boolean).length / contactFields.length
+
+  if (step === 1) return Math.round(step1 * 33.3)
+  if (step === 2) return Math.round(33.3 + step2 * 33.3)
+  return Math.round(66.6 + step3 * 33.4)
+}
 
 function FieldSelect({
   label,
@@ -127,6 +181,15 @@ export function EstimationPage() {
     return Boolean(form.lastName && form.firstName && form.email && form.phone)
   }, [form, step])
 
+  const formProgress = useMemo(() => computeFormProgress(step, form), [form, step])
+  const encouragement = useMemo(() => getStepEncouragement(step, form), [form, step])
+  const livePreview = useMemo(() => {
+    if (!form.type && !form.city) return null
+    const typeLabel = form.type ? getTypeLabel(form.type) : 'Votre bien'
+    if (form.city) return `${typeLabel} · ${form.city}`
+    return typeLabel
+  }, [form.city, form.type])
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!isLastStep) {
@@ -180,18 +243,57 @@ export function EstimationPage() {
   }
 
   return (
-    <main className="section section--cream estimation-page">
+    <main className="estimation-page">
       <section className="estimation-hero">
-        <div className="container">
-          <h1 className="section-title estimation-hero__title">Connaître la valeur de votre bien</h1>
+        <img
+          src="/images/Biens/maison-jardin.jpg"
+          alt="Maison avec jardin dans l'Ouest lyonnais"
+          className="estimation-hero__image"
+          loading="eager"
+        />
+        <div className="estimation-hero__overlay" />
+        <div className="container estimation-hero__content">
+          <p className="eyebrow">ESTIMATION GRATUITE</p>
+          <h1 className="estimation-hero__title">Connaître la valeur de votre bien</h1>
           <p className="estimation-hero__lead">
             Recevez une estimation précise et argumentée sous 24 h, réalisée par un expert de votre quartier.
           </p>
         </div>
+        <div className="wave wave--hero-bottom" aria-hidden="true">
+          <svg viewBox="0 0 1440 100" preserveAspectRatio="none" focusable="false">
+            <path className="wave__path" d="M0,58 C230,44 470,70 760,50 C1010,34 1240,62 1440,46 L1440,100 L0,100 Z" />
+          </svg>
+        </div>
       </section>
 
-      <section className="container estimation-layout">
+      <section className="estimation-highlights" aria-label="Avantages de l'estimation Hamac">
+        <div className="container estimation-highlights__grid">
+          <div className="estimation-highlights__item">
+            <ShieldCheck size={20} aria-hidden />
+            <span>Gratuite et sans engagement</span>
+          </div>
+          <div className="estimation-highlights__item">
+            <Clock3 size={20} aria-hidden />
+            <span>Réponse sous 24 h</span>
+          </div>
+          <div className="estimation-highlights__item">
+            <MapPinHouse size={20} aria-hidden />
+            <span>Expertise locale de l&apos;Ouest Lyonnais</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--cream estimation-body">
+        <div className="container estimation-layout">
         <div className="estimation-form-card">
+          <div className="estimation-progress-bar" aria-hidden="true">
+            <span className="estimation-progress-bar__fill" style={{ width: `${formProgress}%` }} />
+          </div>
+          <p className="estimation-progress-bar__label">
+            <Sparkles size={14} aria-hidden />
+            <span>{formProgress}% complété · environ 2 min</span>
+          </p>
+
           <div className="estimation-progress" aria-label="Progression du formulaire">
             {STEPS.map((entry) => {
               const isActive = step === entry.id
@@ -209,6 +311,22 @@ export function EstimationPage() {
             })}
           </div>
 
+          <AnimatePresence mode="wait">
+            {livePreview ? (
+              <motion.div
+                key={livePreview}
+                className="estimation-live-preview"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25 }}
+              >
+                <MapPinHouse size={16} aria-hidden />
+                <span>{livePreview}</span>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
           <form onSubmit={submit} className="estimation-form">
             <header className="estimation-step-header">
               <p className="estimation-step-header__eyebrow">
@@ -216,32 +334,70 @@ export function EstimationPage() {
               </p>
               <h2 className="estimation-step-header__title">{currentStep.title}</h2>
               <p className="estimation-step-header__desc">{currentStep.description}</p>
+              {encouragement ? (
+                <p className="estimation-step-header__encouragement">{encouragement}</p>
+              ) : null}
             </header>
 
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                className="estimation-step-panel"
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
             {step === 1 ? (
               <>
                 <div className="estimation-type-grid">
                   {TYPE_OPTIONS.map((option) => {
-                    const Icon = option.icon
+                    const isSelected = form.type === option.value
                     return (
-                      <button
+                      <motion.button
                         key={option.value}
                         type="button"
-                        className={`estimation-type-card ${form.type === option.value ? 'is-active' : ''}`}
+                        className={`estimation-type-card ${isSelected ? 'is-active' : ''}`}
                         onClick={() => setForm((current) => ({ ...current, type: option.value }))}
+                        whileHover={{ y: -3 }}
+                        whileTap={{ scale: 0.98 }}
+                        layout
                       >
-                        <Icon size={18} />
-                        <span>{option.label}</span>
-                      </button>
+                        <span className="estimation-type-card__illustration" aria-hidden>
+                          <EstimationTypeIllustration kind={option.illustration} />
+                        </span>
+                        <span className="estimation-type-card__body">
+                          <strong>{option.label}</strong>
+                          <small>{option.hint}</small>
+                        </span>
+                        {isSelected ? (
+                          <span className="estimation-type-card__check" aria-hidden>
+                            <Check size={14} />
+                          </span>
+                        ) : null}
+                      </motion.button>
                     )
                   })}
                 </div>
-                <CitySearchField
-                  label="Ville"
-                  value={form.city}
-                  onValueChange={(value) => setForm((current) => ({ ...current, city: value }))}
-                  placeholder="Rechercher une commune"
-                />
+                <AnimatePresence>
+                  {form.type ? (
+                    <motion.div
+                      className="estimation-city-reveal"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <p className="estimation-city-reveal__prompt">Où se situe votre bien ?</p>
+                      <CitySearchField
+                        label="Ville"
+                        value={form.city}
+                        onValueChange={(value) => setForm((current) => ({ ...current, city: value }))}
+                        placeholder="Rechercher une commune"
+                      />
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               </>
             ) : null}
 
@@ -316,6 +472,8 @@ export function EstimationPage() {
                 </label>
               </div>
             ) : null}
+              </motion.div>
+            </AnimatePresence>
 
             <div className="estimation-actions">
               {step > 1 ? (
@@ -325,7 +483,11 @@ export function EstimationPage() {
               ) : (
                 <span className="estimation-actions__spacer" aria-hidden />
               )}
-              <button type="submit" className="estimation-cta" disabled={!canContinue || isSubmitting}>
+              <button
+                type="submit"
+                className={`estimation-cta ${canContinue ? 'is-ready' : ''}`}
+                disabled={!canContinue || isSubmitting}
+              >
                 <span>
                   {isSubmitting ? 'Envoi en cours...' : isLastStep ? 'Recevoir mon estimation' : 'Continuer'}
                 </span>
@@ -351,22 +513,34 @@ export function EstimationPage() {
         </div>
 
         <aside className="estimation-reassurance">
-          <h2>Pourquoi estimer avec Hamac ?</h2>
-          <ul>
-            <li><ShieldCheck size={18} /> Estimation gratuite et sans engagement</li>
-            <li><Clock3 size={18} /> Reponse sous 24h par un expert local</li>
-            <li><MapPinHouse size={18} /> Connaissance precise des prix de l&apos;Ouest Lyonnais</li>
-          </ul>
+          <figure className="estimation-reassurance__photo">
+            <img
+              src="/images/Biens/appartement-interieur-1.jpg"
+              alt="Intérieur lumineux d'un bien immobilier dans l'Ouest lyonnais"
+              loading="lazy"
+            />
+            <figcaption>Un regard expert sur chaque typologie de bien</figcaption>
+          </figure>
 
-          <article className="estimation-testimonial">
-            <p>
-              « Estimation claire, argumentee et tres juste par rapport au marche. Nous avons vendu sereinement, au bon prix. »
-            </p>
-            <strong>Claire &amp; Marc D. — Sainte-Foy-les-Lyon</strong>
-          </article>
+          <div className="estimation-reassurance__content">
+            <h2>Pourquoi estimer avec Hamac ?</h2>
+            <ul>
+              <li><ShieldCheck size={18} /> Estimation gratuite et sans engagement</li>
+              <li><Clock3 size={18} /> Réponse sous 24 h par un expert local</li>
+              <li><MapPinHouse size={18} /> Connaissance précise des prix de l&apos;Ouest Lyonnais</li>
+            </ul>
 
-          <p className="estimation-privacy">Vos donnees sont protegees et ne seront jamais partagees.</p>
+            <article className="estimation-testimonial">
+              <p>
+                « Estimation claire, argumentée et très juste par rapport au marché. Nous avons vendu sereinement, au bon prix. »
+              </p>
+              <strong>Claire &amp; Marc D. — Sainte-Foy-lès-Lyon</strong>
+            </article>
+
+            <p className="estimation-privacy">Vos données sont protégées et ne seront jamais partagées.</p>
+          </div>
         </aside>
+        </div>
       </section>
     </main>
   )
