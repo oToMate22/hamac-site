@@ -155,6 +155,14 @@ export function PropertyDetailPage() {
       return listingPath
     }
   })()
+  const backFromMap = (() => {
+    try {
+      const target = backToListing.includes('?') ? backToListing.slice(backToListing.indexOf('?') + 1) : ''
+      return new URLSearchParams(target).get('view') === 'map'
+    } catch {
+      return false
+    }
+  })()
 
   const [property, setProperty] = useState<FeaturedProperty | null>(null)
   const [similar, setSimilar] = useState<Property[]>([])
@@ -419,7 +427,7 @@ export function PropertyDetailPage() {
     <main className="detail-page section section--cream">
       <div className="container">
         <p className="detail-back">
-          <Link to={backToListing}>← Retour aux biens</Link>
+          <Link to={backToListing}>{backFromMap ? '← Retour à la carte' : '← Retour aux biens'}</Link>
         </p>
 
         <div className="detail-layout">

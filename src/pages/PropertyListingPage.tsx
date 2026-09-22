@@ -1,10 +1,10 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
 import * as Slider from '@radix-ui/react-slider'
-import { Check, ChevronDown, MapPin, Maximize2, Minimize2, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { Command } from 'cmdk'
 import { PropertyCard } from '../components/PropertyCard'
 import { type Amenity, type Property } from '../data/properties'
@@ -16,6 +16,38 @@ import { usePageMeta } from '../utils/seo'
 import { getProperties, getRentalProperties, type FeaturedProperty } from '../services/apimo'
 import { type PropertySort } from '../hooks/useProperties'
 const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) => ({ default: mod.PropertyMap })))
+
+const MAP_VIEW_STORAGE_KEY = 'hamac:catalog-map-view'
+
+type SavedMapView = { center: [number, number]; zoom: number }
+
+function readSavedMapView(): SavedMapView | null {
+  try {
+    const raw = sessionStorage.getItem(MAP_VIEW_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as SavedMapView
+    if (
+      !Array.isArray(parsed.center) ||
+      parsed.center.length !== 2 ||
+      !Number.isFinite(parsed.center[0]) ||
+      !Number.isFinite(parsed.center[1]) ||
+      !Number.isFinite(parsed.zoom)
+    ) {
+      return null
+    }
+    return { center: [parsed.center[0], parsed.center[1]], zoom: parsed.zoom }
+  } catch {
+    return null
+  }
+}
+
+function writeSavedMapView(view: SavedMapView) {
+  try {
+    sessionStorage.setItem(MAP_VIEW_STORAGE_KEY, JSON.stringify(view))
+  } catch {
+    // sessionStorage indisponible
+  }
+}
 
 type PropertyListingPageProps = {
   searchParams: URLSearchParams
@@ -79,11 +111,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const [visibleCount, setVisibleCount] = useState(32)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [mobileMapOpen, setMobileMapOpen] = useState(false)
-  const [mapExpanded, setMapExpanded] = useState(false)
   const [hoveredPropertySlug, setHoveredPropertySlug] = useState<string | null>(null)
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
   const [cityFilterQuery, setCityFilterQuery] = useState('')
+  const [widePreview, setWidePreview] = useState(false)
+  const openedAsMapViewRef = useRef(searchParams.get('view') === 'map')
   const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
   const budgetSliderStep = mode === 'rent' ? 100 : 50_000
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
@@ -117,6 +149,19 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (!Array.from(searchParams.keys()).length) return
+    persistFilters(searchParams)
+  }, [filtersStorageKey, searchParams])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const sync = () => setWidePreview(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
   const type = searchParams.get('type') ?? 'all'
   const city = searchParams.get('city') ?? 'all'
   const budgetParam = searchParams.get('budget')
@@ -134,6 +179,24 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null)
   const sort = (searchParams.get('sort') as PropertySort) ?? 'recent'
   const amenities = (searchParams.get('amenities')?.split(',').filter(Boolean) ?? []) as Amenity[]
+  const isMapView = searchParams.get('view') === 'map'
+  const listingPath = mode === 'rent' ? '/louer' : '/acheter'
+  const listSearch = (() => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('view')
+    const qs = next.toString()
+    return qs ? `?${qs}` : ''
+  })()
+  const mapSearch = (() => {
+    const next = new URLSearchParams(searchParams)
+    next.set('view', 'map')
+    return `?${next.toString()}`
+  })()
+  const restoreMapFrame = isMapView && openedAsMapViewRef.current ? readSavedMapView() : null
+
+  useEffect(() => {
+    if (!isMapView) openedAsMapViewRef.current = false
+  }, [isMapView])
 
   /** Plafond appliqué au filtre : absent de l’URL = défaut vente/location ; `all` = aucun plafond */
   const budgetMaxForFilter = (() => {
@@ -327,32 +390,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   useEffect(() => {
     setCityFilterQuery(city === 'all' ? '' : city)
   }, [city])
-  useEffect(() => {
-    if (!mobileMapOpen) return
-    const timeoutId = window.setTimeout(() => {
-      window.dispatchEvent(new Event('resize'))
-    }, 150)
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [mobileMapOpen])
 
   const isLoading = apiProperties === null && apiError === null
   const propertiesForMap = !isLoading && !apiError ? properties : []
 
-  useEffect(() => {
-    if (!mapExpanded) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMapExpanded(false)
-    }
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [mapExpanded])
+  const handleMapViewChange = useCallback((view: SavedMapView) => {
+    writeSavedMapView(view)
+  }, [])
 
   const renderCatalogMap = (expanded: boolean, visible: boolean) => {
     if (apiError || isLoading) {
@@ -366,6 +410,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           onHoverChange={setHoveredPropertySlug}
           isVisible={visible}
           isExpanded={expanded}
+          initialCenter={expanded ? restoreMapFrame?.center : undefined}
+          initialZoom={expanded ? restoreMapFrame?.zoom : undefined}
+          onViewChange={expanded ? handleMapViewChange : undefined}
         />
       </Suspense>
     )
@@ -639,26 +686,28 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </div>
               </div>
             </div>
-            {!mapExpanded ? (
+            {!isMapView && widePreview ? (
               <aside className="catalog-map-panel">
-                <button
-                  type="button"
-                  className="catalog-map-expand"
-                  aria-label="Agrandir la carte"
-                  onClick={() => setMapExpanded(true)}
-                >
-                  <Maximize2 size={15} />
-                </button>
-                {renderCatalogMap(false, !mobileMapOpen)}
+                {renderCatalogMap(false, true)}
               </aside>
             ) : null}
           </aside>
           <div className="catalog-main">
             <div className="catalog-toolbar">
               <p>{isLoading ? 'Chargement...' : apiError ? 'Erreur lors du chargement' : `${properties.length} biens trouves`}</p>
-              <FilterSelect label="Trier" value={sort} onValueChange={(value) => updateParam('sort', value)} options={[
-                { value: 'recent', label: 'Plus recents' }, { value: 'price-asc', label: 'Prix croissant' }, { value: 'price-desc', label: 'Prix decroissant' }, { value: 'surface', label: 'Surface' },
-              ]} />
+              <div className="catalog-toolbar__end">
+                <nav className="catalog-view-toggle" aria-label="Affichage des biens">
+                  <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
+                    Liste
+                  </Link>
+                  <Link to={`${listingPath}${mapSearch}`} aria-current={isMapView ? 'page' : undefined}>
+                    Carte
+                  </Link>
+                </nav>
+                <FilterSelect label="Trier" value={sort} onValueChange={(value) => updateParam('sort', value)} options={[
+                  { value: 'recent', label: 'Plus recents' }, { value: 'price-asc', label: 'Prix croissant' }, { value: 'price-desc', label: 'Prix decroissant' }, { value: 'surface', label: 'Surface' },
+                ]} />
+              </div>
             </div>
             {apiError ? (
               <div className="catalog-grid">
@@ -674,6 +723,22 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             ) : isLoading ? (
               <div className="catalog-grid">
                 <div className="catalog-map-loading">Chargement des biens...</div>
+              </div>
+            ) : isMapView ? (
+              <div className="catalog-map-view" role="region" aria-label="Carte des biens">
+                <div className="catalog-map-results">
+                  {properties.slice(0, visibleCount).map((property, index) => (
+                    <PropertyCard
+                      key={property.slug}
+                      property={property}
+                      light
+                      highlighted={hoveredPropertySlug === property.slug}
+                      onHoverChange={setHoveredPropertySlug}
+                      priorityImage={index < 3}
+                    />
+                  ))}
+                </div>
+                <div className="catalog-map-stage">{renderCatalogMap(true, true)}</div>
               </div>
             ) : (
               <div className="catalog-grid">
@@ -699,57 +764,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           </div>
         </div>
       </section>
-      <button
-        type="button"
-        className="catalog-map-toggle"
-        aria-label="Voir les biens sur la carte"
-        onClick={() => setMobileMapOpen(true)}
-      >
-        <MapPin size={16} />
-        <span>Voir sur la carte</span>
-      </button>
-      {mobileMapOpen ? (
-        <div className="catalog-map-overlay" role="dialog" aria-label="Carte des biens">
-          <button type="button" className="catalog-map-overlay__close" onClick={() => setMobileMapOpen(false)}>
-            Voir la liste
-          </button>
-          <div
-            className="catalog-map-overlay__map"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-          >
-            {renderCatalogMap(true, mobileMapOpen)}
-          </div>
-        </div>
-      ) : null}
-      {mapExpanded
-        ? createPortal(
-            <div className="catalog-map-expanded-root" role="dialog" aria-modal="true" aria-label="Carte agrandie des biens">
-              <button
-                type="button"
-                className="catalog-map-expanded-backdrop"
-                aria-label="Fermer la carte agrandie"
-                onClick={() => setMapExpanded(false)}
-              />
-              <aside
-                className="catalog-map-panel is-expanded"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  className="catalog-map-expand"
-                  aria-label="Reduire la carte"
-                  onClick={() => setMapExpanded(false)}
-                >
-                  <Minimize2 size={15} />
-                </button>
-                {renderCatalogMap(true, true)}
-              </aside>
-            </div>,
-            document.body,
-          )
-        : null}
     </main>
   )
 }

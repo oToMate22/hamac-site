@@ -833,8 +833,81 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.2rem;
+}
+
+.catalog-toolbar__end {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.catalog-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.catalog-view-toggle a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  padding: 0 0.9rem;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(20, 42, 56, 0.13);
+  background: #fdfcfa;
+  color: rgba(20, 42, 56, 0.88);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.catalog-view-toggle a[aria-current='page'] {
+  background: #234d63;
+  border-color: #234d63;
+  color: #fdfcfa;
+}
+
+.catalog-view-toggle a:focus-visible {
+  outline: 2px solid #c5a96a;
+  outline-offset: 2px;
+}
+
+.catalog-map-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: calc(100vh - var(--header-h) - 9rem);
+}
+
+.catalog-map-stage {
+  flex: 1;
+  min-height: 22rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.catalog-map-stage .property-map,
+.catalog-map-stage .property-map__canvas {
+  min-height: 22rem;
+  height: 100%;
+}
+
+.catalog-map-results {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  padding: 0.15rem 0 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.catalog-map-results > * {
+  flex: 0 0 min(78vw, 18.5rem);
 }
 
 .catalog-grid {
@@ -1804,6 +1877,42 @@ a {
 
   .catalog-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .catalog-map-view {
+    display: grid;
+    grid-template-columns: minmax(340px, 380px) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+    min-height: calc(100vh - var(--header-h) - 8rem);
+  }
+
+  .catalog-map-results {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - var(--header-h) - 10rem);
+    padding: 0;
+    gap: 0.85rem;
+  }
+
+  .catalog-map-results > * {
+    flex: none;
+    width: 100%;
+  }
+
+  .catalog-map-stage {
+    min-height: 0;
+    height: auto;
+    position: sticky;
+    top: calc(var(--header-h) + 1rem);
+  }
+
+  .catalog-map-stage .property-map,
+  .catalog-map-stage .property-map__canvas {
+    min-height: calc(100vh - var(--header-h) - 10rem);
+    height: calc(100vh - var(--header-h) - 10rem);
   }
 
   .catalog-sidebar .catalog-map-panel {

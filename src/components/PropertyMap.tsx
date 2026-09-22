@@ -6,13 +6,18 @@ import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 're
 import type { Property } from '../data/properties'
 import 'leaflet/dist/leaflet.css'
 
+type MapViewState = { center: [number, number]; zoom: number }
+
 type PropertyMapProps = {
   properties: Property[]
   hoveredSlug: string | null
   onHoverChange: (slug: string | null) => void
   isVisible?: boolean
-  /** When the map container resizes (e.g. catalogue expanded mode), Leaflet must invalidate its layout. */
+  /** When the map container resizes (e.g. catalogue map view), Leaflet must invalidate its layout. */
   isExpanded?: boolean
+  initialCenter?: [number, number]
+  initialZoom?: number
+  onViewChange?: (view: MapViewState) => void
 }
 
 const formatPriceCompact = (value: number) => `${Math.round(value / 1000)}k€`
@@ -105,16 +110,20 @@ function FitBounds({
   properties,
   isExpanded,
   fitBoundsKey,
+  skipFitOnMount,
+  programmaticFitRef,
 }: {
   properties: Property[]
   isExpanded: boolean
   fitBoundsKey: string
+  skipFitOnMount: boolean
+  programmaticFitRef: { current: boolean }
 }) {
   const map = useMap()
   const lastFittedKeyRef = useRef<string | null>(null)
   const expandedFitKeyRef = useRef<string | null>(null)
   const userAdjustedViewRef = useRef(false)
-  const programmaticFitRef = useRef(false)
+  const skippedInitialFitRef = useRef(false)
 
   useEffect(() => {
     const markUserAdjusted = (event: LeafletEvent) => {
@@ -129,13 +138,20 @@ function FitBounds({
       map.off('zoomstart', markUserAdjusted)
       map.off('dragstart', markUserAdjusted)
     }
-  }, [map])
+  }, [map, programmaticFitRef])
 
   useEffect(() => {
     if (!properties.length) {
       lastFittedKeyRef.current = null
       expandedFitKeyRef.current = null
-      userAdjustedViewRef.current = false
+      if (!skipFitOnMount) userAdjustedViewRef.current = false
+      return
+    }
+
+    if (skipFitOnMount && !skippedInitialFitRef.current) {
+      skippedInitialFitRef.current = true
+      lastFittedKeyRef.current = fitBoundsKey
+      if (isExpanded) expandedFitKeyRef.current = fitBoundsKey
       return
     }
 
@@ -167,7 +183,46 @@ function FitBounds({
     if (isNewDataset) {
       run()
     }
-  }, [map, fitBoundsKey, isExpanded, properties.length])
+  }, [map, fitBoundsKey, isExpanded, properties.length, skipFitOnMount, programmaticFitRef])
+  return null
+}
+
+function MapViewReporter({
+  onViewChange,
+  programmaticFitRef,
+}: {
+  onViewChange?: (view: MapViewState) => void
+  programmaticFitRef: { current: boolean }
+}) {
+  const map = useMap()
+  const timerRef = useRef<number | null>(null)
+
+  useMapEvents({
+    moveend: () => {
+      if (!onViewChange || programmaticFitRef.current) return
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+      timerRef.current = window.setTimeout(() => {
+        const center = map.getCenter()
+        onViewChange({ center: [center.lat, center.lng], zoom: map.getZoom() })
+      }, 200)
+    },
+    zoomend: () => {
+      if (!onViewChange || programmaticFitRef.current) return
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+      timerRef.current = window.setTimeout(() => {
+        const center = map.getCenter()
+        onViewChange({ center: [center.lat, center.lng], zoom: map.getZoom() })
+      }, 200)
+    },
+  })
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current)
+    },
+    [],
+  )
+
   return null
 }
 
@@ -362,7 +417,19 @@ export function PropertyMap({
   onHoverChange,
   isVisible = true,
   isExpanded = false,
+  initialCenter,
+  initialZoom,
+  onViewChange,
 }: PropertyMapProps) {
+  const programmaticFitRef = useRef(false)
+  const hasInitialView =
+    Array.isArray(initialCenter) &&
+    initialCenter.length === 2 &&
+    Number.isFinite(initialCenter[0]) &&
+    Number.isFinite(initialCenter[1]) &&
+    typeof initialZoom === 'number' &&
+    Number.isFinite(initialZoom)
+
   const validProperties = useMemo(() => {
     return properties.filter(
       (p) => Number.isFinite(p.lat) && Number.isFinite(p.lng) && p.lat !== 0 && p.lng !== 0,
@@ -374,8 +441,8 @@ export function PropertyMap({
   return (
     <div className="property-map">
       <MapContainer
-        center={[45.75, 4.79]}
-        zoom={12}
+        center={hasInitialView && initialCenter ? initialCenter : [45.75, 4.79]}
+        zoom={hasInitialView && initialZoom != null ? initialZoom : 12}
         className="property-map__canvas"
         scrollWheelZoom={isExpanded}
         dragging={isExpanded}
@@ -390,7 +457,16 @@ export function PropertyMap({
           className="property-map__tiles"
         />
         <InvalidateMapLayout isVisible={isVisible} isExpanded={isExpanded} />
-        <FitBounds properties={validProperties} isExpanded={isExpanded} fitBoundsKey={fitBoundsKey} />
+        <FitBounds
+          properties={validProperties}
+          isExpanded={isExpanded}
+          fitBoundsKey={fitBoundsKey}
+          skipFitOnMount={hasInitialView}
+          programmaticFitRef={programmaticFitRef}
+        />
+        {onViewChange ? (
+          <MapViewReporter onViewChange={onViewChange} programmaticFitRef={programmaticFitRef} />
+        ) : null}
         <PropertyMapMarkers
           properties={validProperties}
           hoveredSlug={hoveredSlug}
