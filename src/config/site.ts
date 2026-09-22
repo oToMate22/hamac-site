@@ -13,7 +13,7 @@ export const canonicalUrl = (pathname: string) => `${SITE_URL}${pathname === '/'
 
 export const SITE_NAME = 'Hamac Investissements & Patrimoine'
 
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/Biens/maison-homepage.webp`
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/og/hamac-og-1200x630.jpg`
 
 export const AGENCY = {
   legalName: 'Hamac Investissements & Patrimoine',
@@ -38,4 +38,12 @@ export const toAbsoluteUrl = (value: string) => {
   if (value.startsWith(BASE_PATH)) return `${SITE_ORIGIN}${value}`
   if (value.startsWith('/')) return `${SITE_ORIGIN}${value}`
   return `${SITE_URL}/${value}`
+}
+
+/** JPEG 1200×630 pour les réseaux sociaux ; les .webp locaux sont refusés par Facebook / WhatsApp. */
+export const socialOgImage = (value?: string) => {
+  if (!value) return DEFAULT_OG_IMAGE
+  const abs = toAbsoluteUrl(value)
+  const isLocalWebp = /\.webp(\?|$)/i.test(abs) && abs.startsWith(SITE_ORIGIN)
+  return isLocalWebp ? DEFAULT_OG_IMAGE : abs
 }

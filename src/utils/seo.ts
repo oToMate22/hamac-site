@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, toAbsoluteUrl } from '../config/site'
+import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, socialOgImage } from '../config/site'
 
 type PageMeta = {
   title: string
@@ -119,7 +119,8 @@ export const applyPageMeta = ({
   robots = 'index,follow',
 }: PageMeta) => {
   const url = canonicalUrl(canonicalPath)
-  const image = toAbsoluteUrl(ogImage || DEFAULT_OG_IMAGE)
+  const image = socialOgImage(ogImage)
+  const isDefaultOg = image === DEFAULT_OG_IMAGE
 
   document.title = title
   upsertMetaByName('description', description)
@@ -131,6 +132,15 @@ export const applyPageMeta = ({
   upsertMetaByProperty('og:site_name', SITE_NAME)
   upsertMetaByProperty('og:locale', 'fr_FR')
   upsertMetaByProperty('og:image', image)
+  if (isDefaultOg) {
+    upsertMetaByProperty('og:image:width', '1200')
+    upsertMetaByProperty('og:image:height', '630')
+    upsertMetaByProperty('og:image:type', 'image/jpeg')
+  } else {
+    document.head.querySelector('meta[property="og:image:width"]')?.remove()
+    document.head.querySelector('meta[property="og:image:height"]')?.remove()
+    document.head.querySelector('meta[property="og:image:type"]')?.remove()
+  }
   upsertMetaByName('twitter:card', 'summary_large_image')
   upsertMetaByName('twitter:title', title)
   upsertMetaByName('twitter:description', description)

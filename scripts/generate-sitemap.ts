@@ -29,8 +29,9 @@ ${urls}
 </urlset>
 `
 
+const indexable = process.env.INDEXABLE === '1'
 const robots = `User-agent: *
-Allow: /
+${indexable ? 'Allow: /' : 'Disallow: /'}
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `
