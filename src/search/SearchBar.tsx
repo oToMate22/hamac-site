@@ -4,6 +4,8 @@ import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Building2, Home, LandPlot, Plus, Search } from 'lucide-react'
 import { Command } from 'cmdk'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
+import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
+import { formatCommuneLabel } from '../utils/frenchCommunes'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Tous', icon: Home },
@@ -114,6 +116,7 @@ export function SearchBar({
   const [cityOpen, setCityOpen] = useState(false)
 
   const effectiveCityOptions = cityOptions.length > 0 ? cityOptions : DEFAULT_CITY_OPTIONS
+  const { results: communeResults, loading: communeLoading } = useFrenchCommuneSearch(cityQuery, cityOpen)
 
   const filteredCities = useMemo(() => {
     return effectiveCityOptions
@@ -122,6 +125,11 @@ export function SearchBar({
       .sort((a, b) => b.score - a.score || a.entry.localeCompare(b.entry, 'fr'))
       .map((item) => item.entry)
   }, [effectiveCityOptions, cityQuery])
+
+  const remoteCommunes = useMemo(() => {
+    const local = new Set(filteredCities.map((entry) => normalize(entry)))
+    return communeResults.filter((entry) => !local.has(normalize(entry.name)))
+  }, [communeResults, filteredCities])
 
   const chevronSize = variant === 'hero-glass' ? 12 : 14
 
@@ -213,15 +221,12 @@ export function SearchBar({
                 </Popover.Trigger>
                 <Popover.Portal>
                   <Popover.Content className="premium-search__popover" sideOffset={8} align="start">
-                    <Command
-                      className="premium-search__command"
-                      filter={(value, search) => (normalize(value).includes(normalize(search)) ? 1 : 0)}
-                    >
+                    <Command className="premium-search__command" shouldFilter={false}>
                       <div className="premium-search__command-input-wrap">
                         <Search size={14} className="premium-search__search-icon" />
                         <Command.Input
                           className="premium-search__command-input"
-                          placeholder="Quartier, ville…"
+                          placeholder="Quartier, ville, arrondissement…"
                           value={cityQuery}
                           onValueChange={setCityQuery}
                         />
@@ -240,7 +245,15 @@ export function SearchBar({
                         ) : null}
                       </div>
                       <Command.List className="premium-search__command-list">
-                        <Command.Empty className="premium-search__empty">Aucune ville trouvée.</Command.Empty>
+                        {communeLoading ? (
+                          <p className="premium-search__empty">Recherche en cours…</p>
+                        ) : null}
+                        {!communeLoading &&
+                        cityQuery.trim().length >= 2 &&
+                        filteredCities.length === 0 &&
+                        remoteCommunes.length === 0 ? (
+                          <Command.Empty className="premium-search__empty">Aucune ville trouvée.</Command.Empty>
+                        ) : null}
                         {filteredCities.map((entry) => (
                           <Command.Item
                             key={entry}
@@ -254,6 +267,21 @@ export function SearchBar({
                           >
                             <span>{highlightMatch(entry, cityQuery)}</span>
                             {city === entry ? <Check size={14} /> : null}
+                          </Command.Item>
+                        ))}
+                        {remoteCommunes.map((entry) => (
+                          <Command.Item
+                            key={entry.code}
+                            value={`${entry.name}-${entry.code}`}
+                            className="premium-search__command-item"
+                            onSelect={() => {
+                              setCity(entry.name)
+                              setCityQuery(entry.name)
+                              setCityOpen(false)
+                            }}
+                          >
+                            <span>{highlightMatch(formatCommuneLabel(entry), cityQuery)}</span>
+                            {city === entry.name ? <Check size={14} /> : null}
                           </Command.Item>
                         ))}
                       </Command.List>

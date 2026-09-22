@@ -10,6 +10,8 @@ import { PropertyCard } from '../components/PropertyCard'
 import { type Amenity, type Property } from '../data/properties'
 import { SearchBar } from '../search/SearchBar'
 import { applyQuartierParamToSearch } from '../utils/catalogSearch'
+import { formatCommuneLabel, lookupCommuneCenter, matchesCitySearch, distanceKm } from '../utils/frenchCommunes'
+import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
 import { usePageMeta } from '../utils/seo'
 import { getProperties, getRentalProperties, type FeaturedProperty } from '../services/apimo'
 import { type PropertySort } from '../hooks/useProperties'
@@ -26,17 +28,19 @@ function FilterSelect({
   value,
   options,
   onValueChange,
+  disabled = false,
 }: {
   label: string
   value: string
   options: Array<{ value: string; label: string }>
   onValueChange: (value: string) => void
+  disabled?: boolean
 }) {
   return (
-    <label className="catalog-filter__group">
+    <label className={`catalog-filter__group${disabled ? ' is-disabled' : ''}`}>
       <span className="catalog-filter__label">{label}</span>
-      <Select.Root value={value} onValueChange={onValueChange}>
-        <Select.Trigger className="catalog-filter__trigger" aria-label={label}>
+      <Select.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+        <Select.Trigger className="catalog-filter__trigger" aria-label={label} disabled={disabled}>
           <Select.Value />
           <Select.Icon>
             <ChevronDown size={14} />
@@ -120,6 +124,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const surface = searchParams.get('surface') ?? 'all'
   const rooms = searchParams.get('rooms') ?? 'all'
   const q = searchParams.get('q') ?? ''
+  const radiusParam = searchParams.get('radius')
+  const radiusKm = (() => {
+    const n = Number(radiusParam)
+    if (!Number.isFinite(n) || n <= 0) return 0
+    return Math.min(n, 50)
+  })()
+  const locationQuery = city !== 'all' ? city : q
+  const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null)
   const sort = (searchParams.get('sort') as PropertySort) ?? 'recent'
   const amenities = (searchParams.get('amenities')?.split(',').filter(Boolean) ?? []) as Amenity[]
 
@@ -150,6 +162,22 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [apiProperties, setApiProperties] = useState<Property[] | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!locationQuery || radiusKm <= 0) {
+      setOrigin(null)
+      return
+    }
+    const controller = new AbortController()
+    void lookupCommuneCenter(locationQuery, controller.signal)
+      .then((center) => {
+        if (!controller.signal.aborted) setOrigin(center)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setOrigin(null)
+      })
+    return () => controller.abort()
+  }, [locationQuery, radiusKm])
+
   const normalize = (value: string) =>
     value
       .normalize('NFD')
@@ -160,13 +188,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       .trim()
 
   const toTokens = (value: string) => normalize(value).split(' ').filter(Boolean)
-
-  const matchesAllTokens = (source: string, query: string) => {
-    const sourceTokens = toTokens(source)
-    const queryTokens = toTokens(query)
-    if (!queryTokens.length) return true
-    return queryTokens.every((token) => sourceTokens.some((sourceToken) => sourceToken.includes(token)))
-  }
 
   const mapFeaturedToProperty = (p: FeaturedProperty): Property => {
     const fallbackImage = '/fr/images/Biens/maison-homepage.webp'
@@ -219,6 +240,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       type: type.toLowerCase(),
       city,
       q,
+      radiusKm,
+      origin,
       budgetMin: budgetMinValue > 0 ? budgetMinValue : undefined,
       budgetMax: budgetMaxForFilter,
       surfaceMin: surface !== 'all' ? Number(surface) : undefined,
@@ -226,14 +249,22 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       amenities,
     }
 
+    const useRadius = Boolean(filters.radiusKm > 0 && filters.origin)
+    const center = filters.origin
+
     const filtered = apiProperties.filter((property) => {
       if (filters.type && filters.type !== 'all' && property.type.toLowerCase() !== filters.type) return false
-      if (filters.city && filters.city !== 'all' && !matchesAllTokens(property.city, filters.city)) return false
+      if (useRadius && center) {
+        if (!Number.isFinite(property.lat) || !Number.isFinite(property.lng)) return false
+        if (distanceKm(center, { lat: property.lat, lng: property.lng }) > filters.radiusKm) return false
+      } else {
+        if (filters.city && filters.city !== 'all' && !matchesCitySearch(property.city, filters.city)) return false
+        if (filters.q && !matchesCitySearch(property.city, filters.q)) return false
+      }
       if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
       if (filters.budgetMax !== undefined && property.price > filters.budgetMax) return false
       if (filters.surfaceMin && property.surface < filters.surfaceMin) return false
       if (filters.bedroomsMin && property.bedrooms < filters.bedroomsMin) return false
-      if (filters.q && !matchesAllTokens(property.city, filters.q)) return false
       if (filters.amenities?.length && !filters.amenities.every((entry) => property.amenities.includes(entry))) return false
       return true
     })
@@ -252,13 +283,18 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     return Array.from(new Set(apiProperties.map((property) => property.city).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'fr'))
   })()
 
+  const { results: communeResults, loading: communeLoading } = useFrenchCommuneSearch(
+    cityFilterQuery,
+    cityFilterOpen,
+  )
+
   const sidebarCityMatches = (() => {
     const query = normalize(cityFilterQuery)
     return availableCities
       .map((entry) => {
         const normalizedCity = normalize(entry)
         if (!query) return { entry, score: 1 }
-        if (!matchesAllTokens(normalizedCity, query)) return { entry, score: 0 }
+        if (!matchesCitySearch(normalizedCity, query)) return { entry, score: 0 }
 
         const queryTokens = toTokens(query)
         const cityTokens = toTokens(normalizedCity)
@@ -272,6 +308,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       .map((item) => item.entry)
   })()
 
+  const sidebarRemoteCommunes = communeResults.filter((entry) => {
+    const name = normalize(entry.name)
+    return !sidebarCityMatches.some((cityName) => normalize(cityName) === name)
+  })
+
   useEffect(() => {
     const quartierSlug = searchParams.get('quartier')
     if (!quartierSlug) return
@@ -282,7 +323,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next, { replace: true })
   }, [mode, searchParams, setSearchParams])
 
-  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q])
+  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q, radiusKm])
   useEffect(() => {
     setCityFilterQuery(city === 'all' ? '' : city)
   }, [city])
@@ -416,12 +457,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   </Popover.Trigger>
                   <Popover.Portal>
                     <Popover.Content className="catalog-filter__city-popover" sideOffset={8} align="start">
-                      <Command className="catalog-filter__city-command">
+                      <Command className="catalog-filter__city-command" shouldFilter={false}>
                         <div className="catalog-filter__city-input-wrap">
                           <Search size={14} />
                           <Command.Input
                             className="catalog-filter__city-input"
-                            placeholder="Rechercher une ville"
+                            placeholder="Ville, commune, arrondissement…"
                             value={cityFilterQuery}
                             onValueChange={setCityFilterQuery}
                           />
@@ -431,7 +472,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                               className="catalog-filter__city-clear"
                               aria-label="Réinitialiser la ville"
                               onClick={() => {
-                                updateParam('city', 'all')
+                                updateParams([
+                                  { key: 'city', value: 'all' },
+                                  { key: 'radius', value: 'all' },
+                                ])
                                 setCityFilterQuery('')
                                 setCityFilterOpen(false)
                               }}
@@ -445,7 +489,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             value="Toutes les villes"
                             className="catalog-filter__city-item"
                             onSelect={() => {
-                              updateParam('city', 'all')
+                              updateParams([
+                                { key: 'city', value: 'all' },
+                                { key: 'radius', value: 'all' },
+                              ])
                               setCityFilterQuery('')
                               setCityFilterOpen(false)
                             }}
@@ -453,7 +500,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             <span>Toutes les villes</span>
                             {city === 'all' ? <Check size={14} /> : null}
                           </Command.Item>
-                          <Command.Empty className="catalog-filter__city-empty">Aucune ville trouvée.</Command.Empty>
+                          {communeLoading ? (
+                            <p className="catalog-filter__city-empty">Recherche en cours…</p>
+                          ) : null}
+                          {!communeLoading &&
+                          cityFilterQuery.trim().length >= 2 &&
+                          sidebarCityMatches.length === 0 &&
+                          sidebarRemoteCommunes.length === 0 ? (
+                            <Command.Empty className="catalog-filter__city-empty">Aucune ville trouvée.</Command.Empty>
+                          ) : null}
                           {sidebarCityMatches.map((entry) => (
                             <Command.Item
                               key={entry}
@@ -469,12 +524,41 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                               {city === entry ? <Check size={14} /> : null}
                             </Command.Item>
                           ))}
+                          {sidebarRemoteCommunes.map((entry) => (
+                            <Command.Item
+                              key={entry.code}
+                              value={`${entry.name}-${entry.code}`}
+                              className="catalog-filter__city-item"
+                              onSelect={() => {
+                                updateParam('city', entry.name)
+                                setCityFilterQuery(entry.name)
+                                setCityFilterOpen(false)
+                              }}
+                            >
+                              <span>{formatCommuneLabel(entry)}</span>
+                              {city === entry.name ? <Check size={14} /> : null}
+                            </Command.Item>
+                          ))}
                         </Command.List>
                       </Command>
                     </Popover.Content>
                   </Popover.Portal>
                 </Popover.Root>
               </label>
+              <FilterSelect
+                label="Rayon"
+                value={String(radiusKm || 0)}
+                disabled={!locationQuery}
+                onValueChange={(value) => updateParam('radius', value === '0' ? 'all' : value)}
+                options={[
+                  { value: '0', label: 'Ville uniquement' },
+                  { value: '5', label: '5 km autour' },
+                  { value: '10', label: '10 km autour' },
+                  { value: '15', label: '15 km autour' },
+                  { value: '20', label: '20 km autour' },
+                  { value: '30', label: '30 km autour' },
+                ]}
+              />
               <label className="catalog-filter__group">
                 <span className="catalog-filter__label">
                   {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}

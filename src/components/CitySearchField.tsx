@@ -3,7 +3,8 @@ import * as Popover from '@radix-ui/react-popover'
 import { Check, ChevronDown, Search, X } from 'lucide-react'
 import { Command } from 'cmdk'
 import { CITIES } from '../data/properties'
-import { formatCommuneLabel, searchFrenchCommunes, type FrenchCommune } from '../utils/frenchCommunes'
+import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
+import { formatCommuneLabel } from '../utils/frenchCommunes'
 
 const normalize = (value: string) =>
   value
@@ -27,45 +28,11 @@ export function CitySearchField({
 }: CitySearchFieldProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState(value)
-  const [results, setResults] = useState<FrenchCommune[]>([])
-  const [loading, setLoading] = useState(false)
+  const { results, loading } = useFrenchCommuneSearch(query, open, 14)
 
   useEffect(() => {
     setQuery(value)
   }, [value])
-
-  useEffect(() => {
-    if (!open) return
-
-    const trimmed = query.trim()
-    if (trimmed.length < 2) {
-      setResults([])
-      setLoading(false)
-      return
-    }
-
-    const controller = new AbortController()
-    setLoading(true)
-
-    const timer = window.setTimeout(() => {
-      void searchFrenchCommunes(trimmed, 14, controller.signal)
-        .then((entries) => {
-          if (!controller.signal.aborted) setResults(entries)
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) setResults([])
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false)
-        })
-    }, 280)
-
-    return () => {
-      controller.abort()
-      window.clearTimeout(timer)
-      setLoading(false)
-    }
-  }, [open, query])
 
   const localMatches = useMemo(() => {
     const trimmed = normalize(query)
@@ -82,7 +49,6 @@ export function CitySearchField({
   const clearCity = () => {
     onValueChange('')
     setQuery('')
-    setResults([])
   }
 
   const customQuery = query.trim()
