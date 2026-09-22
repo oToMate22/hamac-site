@@ -62,7 +62,24 @@ async function renderRoute(
   }
 }
 
+async function writeSpaShells() {
+  const shellHtml = path.join(DIST, 'index.html')
+  if (!existsSync(shellHtml)) throw new Error('dist/index.html absent après vite build')
+  const frDir = path.join(DIST, BASE_PATH)
+  await mkdir(frDir, { recursive: true })
+  await copyFile(shellHtml, path.join(frDir, 'index.html'))
+  await copyFile(shellHtml, path.join(frDir, '200.html'))
+  await copyFile(shellHtml, path.join(frDir, '404.html'))
+  await copyFile(shellHtml, path.join(DIST, '404.html'))
+}
+
 const routes = await collectRoutes()
+
+if (process.env.VERCEL) {
+  console.warn('Vercel : pré-rendu Puppeteer ignoré (Chrome système absent sur l’image de build).')
+  await writeSpaShells()
+  console.log(`${routes.size} routes conservées pour le sitemap ; HTML servi par le shell SPA.`)
+} else {
 const server = spawn(
   'npx',
   ['vite', 'preview', '--host', '127.0.0.1', '--port', PREVIEW_PORT, '--strictPort'],
@@ -140,4 +157,5 @@ if (failures.length) {
   }
   console.error(`Routes en échec : ${failures.join(', ')}`)
   process.exit(1)
+}
 }
