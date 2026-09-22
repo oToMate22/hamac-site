@@ -9,11 +9,21 @@ import { Command } from 'cmdk'
 import { PropertyCard } from '../components/PropertyCard'
 import { type Amenity, type Property } from '../data/properties'
 import { SearchBar } from '../search/SearchBar'
+import {
+  TYPE_OPTIONS,
+  BUDGET_SLIDER_CAP,
+  BUDGET_SLIDER_STEP,
+  applyCatalogParam,
+  formatEuroAmount,
+  parseBudgetMax,
+  parseBudgetMin,
+  searchBarBudgetValue,
+} from '../search/criteria'
 import { applyQuartierParamToSearch } from '../utils/catalogSearch'
 import { formatCommuneLabel, lookupCommuneCenter, matchesCitySearch, distanceKm } from '../utils/frenchCommunes'
 import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
 import { usePageMeta } from '../utils/seo'
-import { getProperties, getRentalProperties, type FeaturedProperty } from '../services/apimo'
+import { fetchCatalogProperties, CatalogLoadError, type FeaturedProperty } from '../services/apimo'
 import { type PropertySort } from '../hooks/useProperties'
 import type { MapViewState } from '../components/PropertyMap'
 const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) => ({ default: mod.PropertyMap })))
@@ -123,15 +133,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const openedAsMapViewRef = useRef(searchParams.get('view') === 'map')
   const mapResultsRef = useRef<HTMLDivElement>(null)
   const hoverOriginRef = useRef<'list' | 'map' | null>(null)
-  const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
-  const budgetSliderStep = mode === 'rent' ? 100 : 50_000
+  const budgetSliderCap = BUDGET_SLIDER_CAP[mode]
+  const budgetSliderStep = BUDGET_SLIDER_STEP[mode]
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
-  const defaultBudgetMin = mode === 'rent' ? 0 : 450_000
-  const defaultBudgetMax = mode === 'rent' ? 3000 : 1_500_000
 
-  // Mémorise les filtres par mode pour une navigation fluide (retour fiche → catalogue).
+  // Mémorise les filtres pour le lien « retour au catalogue » de la fiche.
   const filtersStorageKey = `hamac:catalog-filters:${mode}`
-  const restoredFiltersRef = useRef(false)
 
   const persistFilters = (params: URLSearchParams) => {
     try {
@@ -141,23 +148,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     }
   }
 
-  // Au montage : si on arrive sans aucun filtre dans l'URL, on restaure la
-  // dernière recherche de ce mode (sale/rent) mémorisée pendant la session.
   useEffect(() => {
-    if (restoredFiltersRef.current) return
-    restoredFiltersRef.current = true
-    if (Array.from(searchParams.keys()).length > 0) return
-    try {
-      const saved = sessionStorage.getItem(filtersStorageKey)
-      if (saved) setSearchParams(new URLSearchParams(saved), { replace: true })
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    if (!Array.from(searchParams.keys()).length) return
     persistFilters(searchParams)
   }, [filtersStorageKey, searchParams])
 
@@ -178,19 +169,20 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }, [])
 
   const type = searchParams.get('type') ?? 'all'
-  const city = searchParams.get('city') ?? 'all'
-  const budgetParam = searchParams.get('budget')
-  const budgetMin = searchParams.get('budgetMin') ?? String(defaultBudgetMin)
+  const q = searchParams.get('q') ?? ''
+  const locationQuery = q
+  const budgetMaxForFilter = parseBudgetMax(searchParams)
+  const budgetMinValue = Math.min(parseBudgetMin(searchParams), budgetSliderCap)
+  const budgetMaxThumb = budgetMaxForFilter == null ? budgetSliderCap : Math.min(budgetMaxForFilter, budgetSliderCap)
+  const budgetForSearchBar = searchBarBudgetValue(searchParams)
   const surface = searchParams.get('surface') ?? 'all'
   const rooms = searchParams.get('rooms') ?? 'all'
-  const q = searchParams.get('q') ?? ''
   const radiusParam = searchParams.get('radius')
   const radiusKm = (() => {
     const n = Number(radiusParam)
     if (!Number.isFinite(n) || n <= 0) return 0
     return Math.min(n, 50)
   })()
-  const locationQuery = city !== 'all' ? city : q
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null)
   const sort = (searchParams.get('sort') as PropertySort) ?? 'recent'
   const amenities = (searchParams.get('amenities')?.split(',').filter(Boolean) ?? []) as Amenity[]
@@ -213,32 +205,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     if (!isMapView) openedAsMapViewRef.current = false
   }, [isMapView])
 
-  /** Plafond appliqué au filtre : absent de l’URL = défaut vente/location ; `all` = aucun plafond */
-  const budgetMaxForFilter = (() => {
-    if (budgetParam === 'all') return undefined
-    if (budgetParam == null || budgetParam === '') return defaultBudgetMax
-    const n = Number(budgetParam)
-    if (!Number.isFinite(n)) return defaultBudgetMax
-    return Math.min(Math.max(0, n), budgetSliderCap)
-  })()
-
-  const budgetMinValue = (() => {
-    if (budgetMin === 'all') return 0
-    const n = Number(budgetMin)
-    if (!Number.isFinite(n)) return 0
-    return Math.min(Math.max(0, n), budgetSliderCap)
-  })()
-
-  /** Position du curseur droit : tout à droite = sans plafond (`all`) */
-  const budgetMaxThumb = budgetParam === 'all' ? budgetSliderCap : (budgetMaxForFilter ?? defaultBudgetMax)
-
-  /** Valeur affichée dans la barre de recherche (Select budget max) */
-  const budgetForSearchBar = budgetParam === 'all' ? 'all' : budgetParam == null || budgetParam === '' ? String(defaultBudgetMax) : budgetParam
-
   const surfaceValue = surface !== 'all' ? Number(surface) : 0
 
   const [apiProperties, setApiProperties] = useState<Property[] | null>(null)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [apiError, setApiError] = useState<'quota' | 'timeout' | 'network' | null>(null)
+  const [cacheServedAt, setCacheServedAt] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     if (!locationQuery || radiusKm <= 0) {
@@ -294,15 +265,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const reloadProperties = async () => {
     setApiError(null)
-    setApiProperties(null) // loading
+    setCacheServedAt(undefined)
+    setApiProperties(null)
     try {
-      const featured = mode === 'rent'
-        ? await getRentalProperties()
-        : (await getProperties()).filter((property) => property.agreementType !== 2)
-      const mapped = featured.map(mapFeaturedToProperty)
-      setApiProperties(mapped)
+      const result = await fetchCatalogProperties(mode)
+      setApiProperties(result.properties.map(mapFeaturedToProperty))
+      setCacheServedAt(result.cacheServedAt)
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : String(err))
+      const kind = err instanceof CatalogLoadError ? err.kind : 'network'
+      setApiError(kind === 'timeout' ? 'timeout' : kind)
     }
   }
 
@@ -316,7 +287,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
     const filters = {
       type: type.toLowerCase(),
-      city,
       q,
       radiusKm,
       origin,
@@ -335,9 +305,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       if (useRadius && center) {
         if (!Number.isFinite(property.lat) || !Number.isFinite(property.lng)) return false
         if (distanceKm(center, { lat: property.lat, lng: property.lng }) > filters.radiusKm) return false
-      } else {
-        if (filters.city && filters.city !== 'all' && !matchesCitySearch(property.city, filters.city)) return false
-        if (filters.q && !matchesCitySearch(property.city, filters.q)) return false
+      } else if (filters.q && !matchesCitySearch(property.city, filters.q)) {
+        return false
       }
       if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
       if (filters.budgetMax !== undefined && property.price > filters.budgetMax) return false
@@ -408,16 +377,16 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     const quartierSlug = searchParams.get('quartier')
     if (!quartierSlug) return
 
-    const next = applyQuartierParamToSearch(searchParams, quartierSlug, mode)
+    const next = applyQuartierParamToSearch(searchParams, quartierSlug)
     if (!next) return
 
     setSearchParams(next, { replace: true })
   }, [mode, searchParams, setSearchParams])
 
-  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q, radiusKm, visibleZone])
+  useEffect(() => setVisibleCount(32), [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone])
   useEffect(() => {
-    setCityFilterQuery(city === 'all' ? '' : city)
-  }, [city])
+    setCityFilterQuery(q)
+  }, [q])
 
   const isLoading = apiProperties === null && apiError === null
   const zoneActive = Boolean(visibleZone && isMapView)
@@ -478,18 +447,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)
-    if (!value || value === 'all') next.delete(key)
-    else next.set(key, value)
+    applyCatalogParam(next, key, value)
     persistFilters(next)
     setSearchParams(next)
   }
 
   const updateParams = (entries: Array<{ key: string; value: string }>) => {
     const next = new URLSearchParams(searchParams)
-    entries.forEach(({ key, value }) => {
-      if (!value || value === 'all') next.delete(key)
-      else next.set(key, value)
-    })
+    entries.forEach(({ key, value }) => applyCatalogParam(next, key, value))
     persistFilters(next)
     setSearchParams(next)
   }
@@ -505,7 +470,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next)
   }
 
-  const formatEuro = (value: number) => `${new Intl.NumberFormat('fr-FR').format(value)} €`
+  const formatEuro = (value: number) => formatEuroAmount(value)
 
   return (
     <main className="catalog-page">
@@ -525,8 +490,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             onSearch={(filters) => {
               updateParams([
                 { key: 'type', value: filters.type },
-                { key: 'budget', value: filters.budget },
-                { key: 'budgetMin', value: budgetMin },
+                { key: 'budgetMax', value: filters.budgetMax },
                 { key: 'q', value: filters.city },
               ])
             }}
@@ -536,27 +500,23 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       <section className="catalog-body section section--cream">
         <div className="container catalog-layout">
           <button className="catalog-filter-toggle" type="button" onClick={() => setMobileFiltersOpen((value) => !value)}>
-            Filtres avances
+            Filtres avancés
           </button>
           <aside className={`catalog-sidebar ${mobileFiltersOpen ? 'is-open' : ''}`}>
             <div className="catalog-filter-card">
-              <FilterSelect label="Type" value={type} onValueChange={(value) => updateParam('type', value)} options={[
-                { value: 'all', label: 'Tous' },
-                { value: 'appartement', label: 'Appartement' },
-                { value: 'maison', label: 'Maison' },
-                { value: 'terrain', label: 'Terrain' },
-                { value: 'commerce', label: 'Commerce' },
-                { value: 'bureau', label: 'Bureau' },
-                { value: 'garage', label: 'Garage / Parking' },
-                { value: 'immeuble', label: 'Immeuble' },
-              ]} />
+              <FilterSelect
+                label="Type"
+                value={type}
+                onValueChange={(value) => updateParam('type', value)}
+                options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+              />
               <label className="catalog-filter__group">
                 <span className="catalog-filter__label">Ville</span>
                 <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
                   <Popover.Trigger asChild>
                     <button type="button" className="catalog-filter__city-trigger" aria-label="Filtrer par ville">
                       <Search size={14} />
-                      <span>{city === 'all' ? 'Toutes les villes' : city}</span>
+                      <span>{q ? q : 'Toutes les villes'}</span>
                       <ChevronDown size={14} />
                     </button>
                   </Popover.Trigger>
@@ -571,14 +531,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             value={cityFilterQuery}
                             onValueChange={setCityFilterQuery}
                           />
-                          {city !== 'all' ? (
+                          {q ? (
                             <button
                               type="button"
                               className="catalog-filter__city-clear"
                               aria-label="Réinitialiser la ville"
                               onClick={() => {
                                 updateParams([
-                                  { key: 'city', value: 'all' },
+                                  { key: 'q', value: 'all' },
                                   { key: 'radius', value: 'all' },
                                 ])
                                 setCityFilterQuery('')
@@ -595,7 +555,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             className="catalog-filter__city-item"
                             onSelect={() => {
                               updateParams([
-                                { key: 'city', value: 'all' },
+                                { key: 'q', value: 'all' },
                                 { key: 'radius', value: 'all' },
                               ])
                               setCityFilterQuery('')
@@ -603,7 +563,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             }}
                           >
                             <span>Toutes les villes</span>
-                            {city === 'all' ? <Check size={14} /> : null}
+                            {q ? null : <Check size={14} />}
                           </Command.Item>
                           {communeLoading ? (
                             <p className="catalog-filter__city-empty">Recherche en cours…</p>
@@ -620,13 +580,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                               value={entry}
                               className="catalog-filter__city-item"
                               onSelect={() => {
-                                updateParam('city', entry)
+                                updateParam('q', entry)
                                 setCityFilterQuery(entry)
                                 setCityFilterOpen(false)
                               }}
                             >
                               <span>{entry}</span>
-                              {city === entry ? <Check size={14} /> : null}
+                              {q === entry ? <Check size={14} /> : null}
                             </Command.Item>
                           ))}
                           {sidebarRemoteCommunes.map((entry) => (
@@ -635,13 +595,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                               value={`${entry.name}-${entry.code}`}
                               className="catalog-filter__city-item"
                               onSelect={() => {
-                                updateParam('city', entry.name)
+                                updateParam('q', entry.name)
                                 setCityFilterQuery(entry.name)
                                 setCityFilterOpen(false)
                               }}
                             >
                               <span>{formatCommuneLabel(entry)}</span>
-                              {city === entry.name ? <Check size={14} /> : null}
+                              {q === entry.name ? <Check size={14} /> : null}
                             </Command.Item>
                           ))}
                         </Command.List>
@@ -675,9 +635,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       ? 'Sans Plancher'
                       : 'Sans Minimum'}
                   {' — '}
-                  {budgetParam === 'all' || (budgetMaxForFilter ?? defaultBudgetMax) >= budgetSliderCap
+                  {budgetMaxForFilter == null
                     ? 'Sans Budget Max'
-                    : `jusqu'à ${formatEuro(budgetMaxForFilter ?? defaultBudgetMax)}${rentBudgetSuffix}`}
+                    : `jusqu'à ${formatEuro(budgetMaxForFilter)}${rentBudgetSuffix}`}
                 </p>
                 <Slider.Root
                   className="catalog-slider"
@@ -700,7 +660,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     const maxParam = maxAtCap ? 'all' : String(maxV)
                     updateParams([
                       { key: 'budgetMin', value: minParam },
-                      { key: 'budget', value: maxParam },
+                      { key: 'budgetMax', value: maxParam },
                     ])
                   }}
                   aria-label={mode === 'rent' ? 'Fourchette de loyer' : 'Fourchette de budget'}
@@ -736,7 +696,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 { value: 'all', label: 'Toutes' }, { value: '1', label: '1+' }, { value: '2', label: '2+' }, { value: '3', label: '3+' }, { value: '4', label: '4+' },
               ]} />
               <div className="catalog-filter__group">
-                <span className="catalog-filter__label">Criteres</span>
+                <span className="catalog-filter__label">Critères</span>
                 <div className="catalog-chips">
                   {(['jardin', 'piscine', 'terrasse', 'garage'] as Amenity[]).map((amenity) => (
                     <button key={amenity} type="button" className={`catalog-chip ${amenities.includes(amenity) ? 'is-active' : ''}`} onClick={() => toggleAmenity(amenity)}>{amenity}</button>
@@ -755,8 +715,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               <p>
                 {isLoading
                   ? 'Chargement...'
-                  : apiError
-                    ? 'Erreur lors du chargement'
+                  : apiError === 'quota'
+                    ? 'Catalogue indisponible'
+                    : apiError
+                    ? 'Les biens ne se chargent pas'
                     : zoneActive
                       ? (
                           <>
@@ -764,7 +726,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
                           </>
                         )
-                      : `${listedProperties.length} biens trouvés`}
+                      : listedProperties.length === 0
+                        ? 'Aucun bien'
+                        : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`}
               </p>
               <div className="catalog-toolbar__end">
                 <nav className="catalog-view-toggle" aria-label="Affichage des biens">
@@ -776,16 +740,32 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   </Link>
                 </nav>
                 <FilterSelect label="Trier" value={sort} onValueChange={(value) => updateParam('sort', value)} options={[
-                  { value: 'recent', label: 'Plus recents' }, { value: 'price-asc', label: 'Prix croissant' }, { value: 'price-desc', label: 'Prix decroissant' }, { value: 'surface', label: 'Surface' },
+                  { value: 'recent', label: 'Plus récents' }, { value: 'price-asc', label: 'Prix croissant' }, { value: 'price-desc', label: 'Prix décroissant' }, { value: 'surface', label: 'Surface' },
                 ]} />
               </div>
             </div>
+            {cacheServedAt && !apiError && !isLoading ? (
+              <p className="catalog-toolbar__hint" role="status">
+                Version enregistrée de{' '}
+                {new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cacheServedAt))}
+              </p>
+            ) : null}
             {apiError ? (
               <div className="catalog-grid">
-                <div className="catalog-map-loading">
-                  <div>
-                    <p style={{ marginBottom: 12 }}>Impossible de charger les biens.</p>
-                    <button type="button" className="btn btn--outline-light catalog-load-more" onClick={() => void reloadProperties()}>
+                <div className="catalog-map-empty">
+                  {apiError === 'quota' ? (
+                    <p>
+                      Le catalogue est momentanément indisponible, réessayez plus tard ou appelez le{' '}
+                      <a href="tel:+33478850827">04 78 85 08 27</a>.
+                    </p>
+                  ) : (
+                    <p>
+                      Les biens ne se chargent pas.{' '}
+                      <a href="tel:+33478850827">04 78 85 08 27</a>
+                    </p>
+                  )}
+                  <div className="catalog-map-empty__actions">
+                    <button type="button" className="is-primary" onClick={() => void reloadProperties()}>
                       Réessayer
                     </button>
                   </div>
@@ -793,7 +773,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               </div>
             ) : isLoading ? (
               <div className="catalog-grid">
-                <div className="catalog-map-loading">Chargement des biens...</div>
+                <div className="catalog-map-loading">Chargement des biens…</div>
               </div>
             ) : isMapView ? (
               <div className="catalog-map-view" role="region" aria-label="Carte des biens">
@@ -832,6 +812,36 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   )}
                 </div>
                 <div className="catalog-map-stage">{renderCatalogMap(true, true)}</div>
+              </div>
+            ) : listedProperties.length === 0 ? (
+              <div className="catalog-map-empty">
+                <p>Aucun bien ne correspond à votre recherche</p>
+                <div className="catalog-map-empty__actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = new URLSearchParams()
+                      persistFilters(next)
+                      setSearchParams(next)
+                    }}
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                  <button
+                    type="button"
+                    className="is-primary"
+                    onClick={() => {
+                      const next = new URLSearchParams()
+                      persistFilters(next)
+                      setSearchParams(next)
+                    }}
+                  >
+                    Voir tous les biens
+                  </button>
+                </div>
+                <p>
+                  <Link to="/contact">Contacter l&apos;agence</Link>
+                </p>
               </div>
             ) : (
               <div className="catalog-grid">

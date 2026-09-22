@@ -1,29 +1,40 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
-import { Check, ChevronDown, Building2, Home, LandPlot, Plus, Search } from 'lucide-react'
+import {
+  Briefcase,
+  Building,
+  Building2,
+  Car,
+  Check,
+  ChevronDown,
+  Home,
+  LandPlot,
+  Plus,
+  Search,
+  Store,
+} from 'lucide-react'
 import { Command } from 'cmdk'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
 import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
 import { formatCommuneLabel } from '../utils/frenchCommunes'
+import {
+  TYPE_OPTIONS,
+  budgetMaxOptions,
+  catalogModeFromAction,
+  formatBudgetMaxLabel,
+} from './criteria'
 
-const TYPE_OPTIONS = [
-  { value: 'all', label: 'Tous', icon: Home },
-  { value: 'maison', label: 'Maison', icon: Home },
-  { value: 'appartement', label: 'Appartement', icon: Building2 },
-  { value: 'terrain', label: 'Terrain', icon: LandPlot },
-]
-
-const BUDGET_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: '250000', label: 'Jusqu\'à 250 000 €' },
-  { value: '500000', label: 'Jusqu\'à 500 000 €' },
-  { value: '750000', label: 'Jusqu\'à 750 000 €' },
-  { value: '800000', label: 'Jusqu\'à 800 000 €' },
-  { value: '1000000', label: 'Jusqu\'à 1 000 000 €' },
-  { value: '1500000', label: '1 000 000 € et +' },
-  { value: '1950000', label: 'Sans budget max' },
-]
+const TYPE_ICONS: Record<string, typeof Home> = {
+  all: Home,
+  maison: Home,
+  appartement: Building2,
+  terrain: LandPlot,
+  commerce: Store,
+  bureau: Briefcase,
+  garage: Car,
+  immeuble: Building,
+}
 
 const normalize = (value: string) =>
   value
@@ -98,7 +109,7 @@ type SearchBarProps = {
     budget?: string
     city?: string
   }
-  onSearch?: (filters: { type: string; budget: string; city: string }) => void
+  onSearch?: (filters: { type: string; budgetMax: string; city: string }) => void
 }
 
 export function SearchBar({
@@ -114,6 +125,25 @@ export function SearchBar({
   const [city, setCity] = useState(initialValues?.city ?? '')
   const [cityQuery, setCityQuery] = useState('')
   const [cityOpen, setCityOpen] = useState(false)
+  const catalogMode = catalogModeFromAction(action)
+
+  useEffect(() => {
+    setType(initialValues?.type ?? 'all')
+    setBudget(initialValues?.budget ?? 'all')
+    setCity(initialValues?.city ?? '')
+  }, [initialValues?.type, initialValues?.budget, initialValues?.city])
+
+  const budgetOptions = useMemo(() => {
+    const list = budgetMaxOptions(catalogMode).map((option) => ({ ...option }))
+    if (budget && budget !== 'all' && !list.some((option) => option.value === budget)) {
+      const n = Number(budget)
+      list.splice(1, 0, {
+        value: budget,
+        label: Number.isFinite(n) ? formatBudgetMaxLabel(n, catalogMode) : budget,
+      })
+    }
+    return list
+  }, [budget, catalogMode])
 
   const effectiveCityOptions = cityOptions.length > 0 ? cityOptions : DEFAULT_CITY_OPTIONS
   const { results: communeResults, loading: communeLoading } = useFrenchCommuneSearch(cityQuery, cityOpen)
@@ -136,13 +166,13 @@ export function SearchBar({
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (onSearch) {
-      onSearch({ type, budget, city })
+      onSearch({ type, budgetMax: budget, city })
       return
     }
     const params = new URLSearchParams()
     if (type !== 'all') params.set('type', type)
     if (city) params.set('q', city)
-    if (budget !== 'all') params.set('budget', budget)
+    if (budget !== 'all') params.set('budgetMax', budget)
 
     const target = params.toString() ? `${action}?${params.toString()}` : action
     window.location.assign(target)
@@ -180,7 +210,7 @@ export function SearchBar({
                   <Select.Content className="premium-search__select-content" position="popper" sideOffset={8}>
                     <Select.Viewport className="premium-search__select-viewport">
                       {TYPE_OPTIONS.map((option) => {
-                        const Icon = option.icon
+                        const Icon = TYPE_ICONS[option.value] ?? Home
                         return (
                           <Select.Item key={option.value} value={option.value} className="premium-search__select-item">
                             <div className="premium-search__item-main">
@@ -306,7 +336,7 @@ export function SearchBar({
                 <Select.Portal>
                   <Select.Content className="premium-search__select-content" position="popper" sideOffset={8}>
                     <Select.Viewport className="premium-search__select-viewport">
-                      {BUDGET_OPTIONS.map((option) => (
+                      {budgetOptions.map((option) => (
                         <Select.Item key={option.value} value={option.value} className="premium-search__select-item">
                           <div className="premium-search__item-main">
                             <Select.ItemText>{option.label}</Select.ItemText>
