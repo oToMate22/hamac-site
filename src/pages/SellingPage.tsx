@@ -38,7 +38,7 @@ export function SellingPage() {
     <main className="selling-page">
       <section className="selling-hero">
         <img
-          src="/images/Biens/maison-homepage.jpg"
+          src="/fr/images/Biens/maison-homepage.webp"
           alt="Maison familiale de standing dans l'Ouest lyonnais"
           className="selling-hero__image"
           loading="eager"
@@ -112,12 +112,12 @@ export function SellingPage() {
       <section className="section section--cream selling-actions">
         <div className="container selling-actions__grid">
           <Link to="/estimation" className="selling-action-card">
-            <img src="/images/Biens/maison-moderne.jpg" alt="Interieur contemporain pour estimer un bien" loading="lazy" />
+            <img src="/fr/images/Biens/maison-moderne.webp" alt="Interieur contemporain pour estimer un bien" loading="lazy" />
             <span className="selling-action-card__overlay" />
             <strong>Estimer mon bien</strong>
           </Link>
           <Link to="/contact" className="selling-action-card">
-            <img src="/images/Biens/maison-piscine-1.jpg" alt="Maison avec jardin pour prise de rendez-vous immobilier" loading="lazy" />
+            <img src="/fr/images/Biens/maison-piscine-1.webp" alt="Maison avec jardin pour prise de rendez-vous immobilier" loading="lazy" />
             <span className="selling-action-card__overlay" />
             <strong>Prendre rendez-vous</strong>
           </Link>

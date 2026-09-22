@@ -5,12 +5,20 @@ import { BLOG_POSTS } from '../data/blogPosts'
 import { mountPrivateVisits, unmountPrivateVisits } from '../components/home/mountPrivateVisits'
 import { mountSearchBars } from '../search/mount'
 import { getProperties, type FeaturedProperty } from '../services/apimo'
+import { realEstateAgentJsonLd } from '../seo/jsonld'
+import { usePageMeta } from '../utils/seo'
 
 type HomePageProps = {
   homeMainHtml: string
 }
 
 export function HomePage({ homeMainHtml }: HomePageProps) {
+  usePageMeta({
+    title: 'Hamac — Immobilier premium | Ouest Lyonnais',
+    description:
+      "Hamac Investissements & Patrimoine — agence immobilière premium dans l'Ouest Lyonnais. Immobilier de confiance, sur-mesure et humain.",
+    jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
+  })
   const { scrollY } = useScroll()
   const heroParallaxY = useTransform(scrollY, (value) => value * 0.3)
 
@@ -76,6 +84,9 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
   const html = useMemo(
     () =>
       homeMainHtml
+        .replaceAll('/fr/biens?', '/fr/acheter?')
+        .replaceAll('/fr/biens/', '/fr/acheter/')
+        .replaceAll('href="/fr/biens"', 'href="/fr/acheter"')
         .replaceAll('/biens?', '/acheter?')
         .replaceAll('/biens/', '/acheter/')
         .replaceAll('href="/biens"', 'href="/acheter"')
@@ -97,14 +108,18 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       'Architecture & confort',
     ]
 
-    // Preload hero backgrounds to avoid stutter during slide changes.
-    slideBackgrounds.forEach((slide) => {
+    // Preload the visible hero immediately; the other slides wait 2s so the first paint stays light.
+    const preloadBackground = (slide: HTMLElement) => {
       const bg = slide.style.backgroundImage
       const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '')
       if (!url) return
       const image = new Image()
       image.decoding = 'async'
       image.src = url
+    }
+    slideBackgrounds.forEach((slide, index) => {
+      if (index === 0) preloadBackground(slide)
+      else window.setTimeout(() => preloadBackground(slide), 2000)
     })
 
     let interval: number | undefined
@@ -630,7 +645,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
             const price = `${new Intl.NumberFormat('fr-FR').format(p.price)} €`
             const bedrooms = p.bedrooms
             const loading = i === 0 ? 'eager' : 'lazy'
-            const img = p.images[0] ?? '/images/Biens/maison-homepage.jpg'
+            const img = p.images[0] ?? '/fr/images/Biens/maison-homepage.webp'
             const alt = `Photo du bien ${p.title} à ${p.city}`
 
             return `
@@ -705,5 +720,5 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     }
   }, [])
 
-  return <div dangerouslySetInnerHTML={{ __html: html }} />
+  return <main dangerouslySetInnerHTML={{ __html: html }} />
 }

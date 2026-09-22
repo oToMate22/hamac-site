@@ -4,6 +4,7 @@ import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
 import { submitLead } from '@/services/leads'
+import { realEstateAgentJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
 type ContactForm = {
@@ -23,6 +24,7 @@ export function ContactPage() {
   usePageMeta({
     title: 'Contact — Hamac Investissements & Patrimoine',
     description: 'Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24h.',
+    jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
   })
 
   const [form, setForm] = useState<ContactForm>({

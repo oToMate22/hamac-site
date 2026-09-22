@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import { getNeighborhoodBySlug, NEIGHBORHOODS } from '../data/neighborhoods'
 import { useProperties } from '../hooks/useProperties'
+import { realEstateAgentJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
 export function NeighborhoodPage() {
@@ -14,6 +15,8 @@ export function NeighborhoodPage() {
   usePageMeta({
     title: `Immobilier à ${neighborhood.name} — Hamac Investissements & Patrimoine`,
     description: `${neighborhood.tagline}. Prix moyen : ${neighborhood.pricePerSqm}. Découvrez nos biens disponibles à ${neighborhood.name} dans l'Ouest Lyonnais.`,
+    ogImage: neighborhood.heroImage,
+    jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd(neighborhood.name) }],
   })
 
   const properties = useProperties({ city: neighborhood.name }, 'recent')

@@ -169,7 +169,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }
 
   const mapFeaturedToProperty = (p: FeaturedProperty): Property => {
-    const fallbackImage = '/images/Biens/maison-homepage.jpg'
+    const fallbackImage = '/fr/images/Biens/maison-homepage.webp'
     return {
       slug: p.slug,
       title: p.title,

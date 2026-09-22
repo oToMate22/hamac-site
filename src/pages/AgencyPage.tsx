@@ -1,29 +1,31 @@
 import { Link } from 'react-router-dom'
+import { realEstateAgentJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
 export function AgencyPage() {
   usePageMeta({
     title: "L'agence Hamac — Hamac Investissements & Patrimoine",
     description: "Découvrez l'histoire, l'équipe et la vision de Hamac, agence immobilière spécialisée dans l’Ouest lyonnais.",
+    jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
   })
 
   const team = [
-    ['Sebastien Garnier', 'Gerant', '/images/team/sebastien.jpg'],
-    ['Romain Monneri-Fons', 'Agent commercial independant', '/images/team/romain.jpg'],
-    ['Victor Bonazza', 'Agent commercial independant', '/images/team/victor.jpg'],
-    ['Elodie Renard', 'Agent commercial independant', '/images/team/elodie.jpg'],
-    ['Raphael Lasbatx', 'Agent commercial independant', '/images/team/raphael.jpg'],
-    ['Samuel Ribes', 'Agent commercial independant', '/images/team/samuel.jpg'],
-    ['Ana Sanabria', 'Agent commercial independant', '/images/team/ana-sanabria.jpg'],
-    ['Anthony Ribeiro', 'Agent commercial independant', '/images/team/anthony.jpg'],
-    ['Pauline Rodriguez', 'Agent commercial independant', '/images/team/pauline.jpg'],
-    ['Axel Bernard', 'Agent commercial independant', '/images/team/AXELBERNARD.png'],
+    ['Sebastien Garnier', 'Gerant', '/fr/images/team/sebastien.webp'],
+    ['Romain Monneri-Fons', 'Agent commercial independant', '/fr/images/team/romain.webp'],
+    ['Victor Bonazza', 'Agent commercial independant', '/fr/images/team/victor.webp'],
+    ['Elodie Renard', 'Agent commercial independant', '/fr/images/team/elodie.webp'],
+    ['Raphael Lasbatx', 'Agent commercial independant', '/fr/images/team/raphael.webp'],
+    ['Samuel Ribes', 'Agent commercial independant', '/fr/images/team/samuel.webp'],
+    ['Ana Sanabria', 'Agent commercial independant', '/fr/images/team/ana-sanabria.webp'],
+    ['Anthony Ribeiro', 'Agent commercial independant', '/fr/images/team/anthony.webp'],
+    ['Pauline Rodriguez', 'Agent commercial independant', '/fr/images/team/pauline.webp'],
+    ['Axel Bernard', 'Agent commercial independant', '/fr/images/team/AXELBERNARD.webp'],
   ] as const
   return (
     <main className="agency-page">
       <section className="agency-hero">
         <img
-          src="/images/Biens/pont-photo-page-agence.png"
+          src="/fr/images/Biens/pont-photo-page-agence.webp"
           alt="Vue du pont de Sainte-Foy-les-Lyon, territoire de l'agence Hamac"
           loading="eager"
         />

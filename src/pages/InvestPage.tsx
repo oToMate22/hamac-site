@@ -30,7 +30,7 @@ export function InvestPage() {
     <main className="invest-page">
       <section className="invest-hero">
         <img
-          src="/images/Biens/maison-moderne.jpg"
+          src="/fr/images/Biens/maison-moderne.webp"
           alt="Maison contemporaine dans l'Ouest lyonnais"
           className="invest-hero__image"
           loading="eager"

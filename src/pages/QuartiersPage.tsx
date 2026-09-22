@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
+import { usePageMeta } from '../utils/seo'
 
 export function QuartiersPage() {
+  usePageMeta({
+    title: 'Communes de l’Ouest Lyonnais — Hamac Investissements & Patrimoine',
+    description:
+      'Découvrez nos communes, leurs atouts et les biens disponibles dans chaque secteur de l’Ouest lyonnais.',
+  })
   const featured = NEIGHBORHOODS.find((entry) => entry.slug === 'sainte-foy-les-lyon')
   const tassin = NEIGHBORHOODS.find((entry) => entry.slug === 'tassin-la-demi-lune')
   const ecully = NEIGHBORHOODS.find((entry) => entry.slug === 'ecully')

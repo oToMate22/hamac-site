@@ -10,10 +10,11 @@ import {
   type EnergyRating,
   type FeaturedProperty,
 } from '../services/apimo'
+import { listingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 import { PagePlaceholder } from './PagePlaceholder'
 
-const fallbackMainImage = '/images/Biens/maison-homepage.jpg'
+const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
 const DESCRIPTION_PREVIEW_LIMIT = 300
 const DEFAULT_CONTACT_MESSAGE = 'Je souhaite etre recontacte au sujet de ce bien...'
 
@@ -178,6 +179,9 @@ export function PropertyDetailPage() {
       return {
         title: 'Bien immobilier — Hamac Investissements & Patrimoine',
         description: 'Découvrez nos biens immobiliers dans l’Ouest lyonnais.',
+        robots: loading ? 'index,follow' : 'noindex,follow',
+        jsonLd: undefined as Array<{ id: string; data: object | null }> | undefined,
+        ogImage: undefined as string | undefined,
       }
     }
 
@@ -186,10 +190,20 @@ export function PropertyDetailPage() {
       description:
         property.description?.slice(0, 160) ??
         `${property.title} à ${property.city}. Contactez Hamac pour visiter ce bien.`,
+      robots: 'index,follow',
+      ogImage: property.images[0],
+      jsonLd: [{ id: 'ld-listing', data: listingJsonLd(property, `${listingPath}/${propertyId}`) }],
     }
-  }, [property])
+  }, [loading, listingPath, property, propertyId])
 
-  usePageMeta({ title: meta.title, description: meta.description })
+  usePageMeta({
+    title: meta.title,
+    description: meta.description,
+    ogType: 'article',
+    ogImage: meta.ogImage,
+    robots: meta.robots,
+    jsonLd: meta.jsonLd,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -296,7 +310,7 @@ export function PropertyDetailPage() {
   }, [property?.slug])
 
   const agent = property?.agent
-  const agentPicture = agent?.picture ?? '/images/team/anthony.jpg'
+  const agentPicture = agent?.picture ?? '/fr/images/team/anthony.webp'
   const agentName = agent?.name ?? 'Équipe Hamac'
 
   const mapUrl = useMemo(() => {

@@ -177,7 +177,7 @@ export function OffMarketPage() {
     <main className="offmarket-page">
       <section className="offmarket-hero">
         <img
-          src="/images/Biens/maison-piscine-2.jpg"
+          src="/fr/images/Biens/maison-piscine-2.webp"
           alt="Maison de prestige proposee en off-market"
           className="offmarket-hero__image"
           loading="eager"

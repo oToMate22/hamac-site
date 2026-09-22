@@ -12,7 +12,7 @@ type LegalDocumentProps = {
 }
 
 export function LegalDocument({ title, metaDescription, heading, intro, lastUpdated, children }: LegalDocumentProps) {
-  usePageMeta({ title, description: metaDescription })
+  usePageMeta({ title, description: metaDescription, robots: 'noindex,follow' })
 
   return (
     <main className="legal-page section section--cream">

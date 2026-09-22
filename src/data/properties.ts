@@ -53,9 +53,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.8028,
     amenities: ['jardin', 'piscine', 'terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-moderne.jpg',
-      '/images/Biens/maison-jardin.jpg',
-      '/images/Biens/maison-bleu-1.jpg',
+      '/fr/images/Biens/maison-moderne.webp',
+      '/fr/images/Biens/maison-jardin.webp',
+      '/fr/images/Biens/maison-bleu-1.webp',
     ],
   },
   {
@@ -78,9 +78,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7822,
     amenities: ['terrasse', 'garage'],
     images: [
-      '/images/Biens/appartement-interieur-1.jpg',
-      '/images/Biens/appartement-interieur-2.jpg',
-      '/images/Biens/maison-city.jpg',
+      '/fr/images/Biens/appartement-interieur-1.webp',
+      '/fr/images/Biens/appartement-interieur-2.webp',
+      '/fr/images/Biens/maison-city.webp',
     ],
   },
   {
@@ -103,9 +103,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7752,
     amenities: ['jardin', 'terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-art.jpg',
-      '/images/Biens/maison-bleu-2.jpg',
-      '/images/Biens/maison-courbe.jpg',
+      '/fr/images/Biens/maison-art.webp',
+      '/fr/images/Biens/maison-bleu-2.webp',
+      '/fr/images/Biens/maison-courbe.webp',
     ],
   },
   {
@@ -128,9 +128,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7643,
     amenities: ['terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-city.jpg',
-      '/images/Biens/maison-jardin.jpg',
-      '/images/Biens/maison-moderne.jpg',
+      '/fr/images/Biens/maison-city.webp',
+      '/fr/images/Biens/maison-jardin.webp',
+      '/fr/images/Biens/maison-moderne.webp',
     ],
   },
   {
@@ -153,9 +153,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7249,
     amenities: ['terrasse', 'garage'],
     images: [
-      '/images/Biens/appartement-interieur-1.jpg',
-      '/images/Biens/appartement-interieur-2.jpg',
-      '/images/Biens/maison-city.jpg',
+      '/fr/images/Biens/appartement-interieur-1.webp',
+      '/fr/images/Biens/appartement-interieur-2.webp',
+      '/fr/images/Biens/maison-city.webp',
     ],
   },
   {
@@ -178,9 +178,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.8078,
     amenities: ['garage'],
     images: [
-      '/images/Biens/appartement-interieur-2.jpg',
-      '/images/Biens/appartement-interieur-1.jpg',
-      '/images/Biens/maison-city.jpg',
+      '/fr/images/Biens/appartement-interieur-2.webp',
+      '/fr/images/Biens/appartement-interieur-1.webp',
+      '/fr/images/Biens/maison-city.webp',
     ],
   },
   {
@@ -203,9 +203,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7862,
     amenities: ['jardin', 'terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-jardin.jpg',
-      '/images/Biens/maison-bleu-2.jpg',
-      '/images/Biens/maison-moderne.jpg',
+      '/fr/images/Biens/maison-jardin.webp',
+      '/fr/images/Biens/maison-bleu-2.webp',
+      '/fr/images/Biens/maison-moderne.webp',
     ],
   },
   {
@@ -228,9 +228,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.763,
     amenities: ['jardin'],
     images: [
-      '/images/Biens/maison-homepage.jpg',
-      '/images/Biens/maison-feu-1.jpg',
-      '/images/Biens/maison-feu-2.jpg',
+      '/fr/images/Biens/maison-homepage.webp',
+      '/fr/images/Biens/maison-feu-1.webp',
+      '/fr/images/Biens/maison-feu-2.webp',
     ],
   },
   {
@@ -253,9 +253,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7703,
     amenities: ['terrasse', 'garage'],
     images: [
-      '/images/Biens/appartement-interieur-1.jpg',
-      '/images/Biens/appartement-interieur-2.jpg',
-      '/images/Biens/maison-bleu-1.jpg',
+      '/fr/images/Biens/appartement-interieur-1.webp',
+      '/fr/images/Biens/appartement-interieur-2.webp',
+      '/fr/images/Biens/maison-bleu-1.webp',
     ],
   },
   {
@@ -278,9 +278,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.8044,
     amenities: ['jardin', 'terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-bleu-1.jpg',
-      '/images/Biens/maison-jardin.jpg',
-      '/images/Biens/maison-city.jpg',
+      '/fr/images/Biens/maison-bleu-1.webp',
+      '/fr/images/Biens/maison-jardin.webp',
+      '/fr/images/Biens/maison-city.webp',
     ],
   },
   {
@@ -303,9 +303,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7996,
     amenities: ['terrasse', 'garage'],
     images: [
-      '/images/Biens/appartement-interieur-1.jpg',
-      '/images/Biens/appartement-interieur-2.jpg',
-      '/images/Biens/maison-courbe.jpg',
+      '/fr/images/Biens/appartement-interieur-1.webp',
+      '/fr/images/Biens/appartement-interieur-2.webp',
+      '/fr/images/Biens/maison-courbe.webp',
     ],
   },
   {
@@ -328,9 +328,9 @@ export const PROPERTIES: Property[] = [
     lng: 4.7309,
     amenities: ['jardin', 'piscine', 'terrasse', 'garage'],
     images: [
-      '/images/Biens/maison-piscine-1.jpg',
-      '/images/Biens/maison-piscine-2.jpg',
-      '/images/Biens/maison-bleu-2.jpg',
+      '/fr/images/Biens/maison-piscine-1.webp',
+      '/fr/images/Biens/maison-piscine-2.webp',
+      '/fr/images/Biens/maison-bleu-2.webp',
     ],
   },
 ]

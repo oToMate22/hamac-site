@@ -246,7 +246,7 @@ export function EstimationPage() {
     <main className="estimation-page">
       <section className="estimation-hero">
         <img
-          src="/images/Biens/maison-jardin.jpg"
+          src="/fr/images/Biens/maison-jardin.webp"
           alt="Maison avec jardin dans l'Ouest lyonnais"
           className="estimation-hero__image"
           loading="eager"
@@ -515,7 +515,7 @@ export function EstimationPage() {
         <aside className="estimation-reassurance">
           <figure className="estimation-reassurance__photo">
             <img
-              src="/images/Biens/appartement-interieur-1.jpg"
+              src="/fr/images/Biens/appartement-interieur-1.webp"
               alt="Intérieur lumineux d'un bien immobilier dans l'Ouest lyonnais"
               loading="lazy"
             />

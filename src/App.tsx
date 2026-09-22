@@ -15,6 +15,7 @@ import { NeighborhoodPage } from './pages/NeighborhoodPage'
 import { OffMarketPage } from './pages/OffMarketPage'
 import { PropertyDetailPage } from './pages/PropertyDetailPage'
 import { PropertyListingPage } from './pages/PropertyListingPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { QuartiersPage } from './pages/QuartiersPage'
 import { SellingPage } from './pages/SellingPage'
 
@@ -212,7 +213,7 @@ function SiteLayout() {
   const isLightPage =
     lightPages.some((entry) => pathname === entry || pathname.startsWith(`${entry}/`))
     && !transparentHeaderRoutes
-  const logoSrc = '/images/Logo/logo-hamac-dark.png?v=20260507-6'
+  const logoSrc = '/fr/images/Logo/logo-hamac-dark.webp?v=20260922'
   const footerMergedWithCta = pathname === '/' || pathname === '/quartiers'
 
   return (
@@ -343,7 +344,7 @@ function SiteLayout() {
                 <p className="logo logo--footer">
                   <img
                     className="logo__image logo__image--footer"
-                    src="/images/Logo/logo-hamac.png"
+                    src="/fr/images/Logo/logo-hamac.webp"
                     alt="Hamac Investissements & Patrimoine"
                     loading="lazy"
                   />
@@ -426,6 +427,7 @@ export function App({ homeMainHtml }: AppProps) {
           <Route path="/mentions-legales" element={<LegalPage />} />
           <Route path="/honoraires" element={<FeesPage />} />
           <Route path="/confidentialite" element={<PrivacyPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </ErrorBoundary>

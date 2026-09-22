@@ -22,7 +22,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'sainte-foy-les-lyon',
     name: 'Sainte-Foy-lès-Lyon',
-    heroImage: '/images/Biens/maison-city.jpg',
+    heroImage: '/fr/images/Biens/maison-city.webp',
     tagline: 'Le bourg historique aux portes de Lyon',
     pricePerSqm: '4 850 EUR/m²',
     priceEvolution: '+3.2% sur 12 mois',
@@ -39,13 +39,13 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Sébastien Garnier',
       role: 'Gérant',
-      photo: '/images/team/sebastien.jpg'
+      photo: '/fr/images/team/sebastien.webp'
     }
   },
   {
     slug: 'tassin-la-demi-lune',
     name: 'Tassin-la-Demi-Lune',
-    heroImage: '/images/Biens/appartement-interieur-1.jpg',
+    heroImage: '/fr/images/Biens/appartement-interieur-1.webp',
     tagline: "Le carrefour dynamique de l'Ouest",
     pricePerSqm: '4 200 EUR/m²',
     priceEvolution: '+2.6% sur 12 mois',
@@ -62,13 +62,13 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Romain Monneri-Fons',
       role: 'Agent commercial indépendant',
-      photo: '/images/team/romain.jpg'
+      photo: '/fr/images/team/romain.webp'
     }
   },
   {
     slug: 'ecully',
     name: 'Écully',
-    heroImage: '/images/Biens/maison-art.jpg',
+    heroImage: '/fr/images/Biens/maison-art.webp',
     tagline: 'Prestige discret et grandes écoles',
     pricePerSqm: '5 100 EUR/m²',
     priceEvolution: '+2.1% sur 12 mois',
@@ -85,13 +85,13 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Victor Bonazza',
       role: 'Agent commercial indépendant',
-      photo: '/images/team/victor.jpg'
+      photo: '/fr/images/team/victor.webp'
     }
   },
   {
     slug: 'francheville',
     name: 'Francheville',
-    heroImage: '/images/Biens/maison-homepage.jpg',
+    heroImage: '/fr/images/Biens/maison-homepage.webp',
     tagline: 'Nature et tranquillité',
     pricePerSqm: '3 600 EUR/m²',
     priceEvolution: '+3.9% sur 12 mois',
@@ -108,13 +108,13 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Élodie Renard',
       role: 'Agent commercial indépendant',
-      photo: '/images/team/elodie.jpg'
+      photo: '/fr/images/team/elodie.webp'
     }
   },
   {
     slug: 'craponne',
     name: 'Craponne',
-    heroImage: '/images/Biens/maison-bleu-2.jpg',
+    heroImage: '/fr/images/Biens/maison-bleu-2.webp',
     tagline: 'La campagne aux portes de Lyon',
     pricePerSqm: '3 800 EUR/m²',
     priceEvolution: '+4.1% sur 12 mois',
@@ -131,13 +131,13 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Raphaël Lasbatx',
       role: 'Agent commercial indépendant',
-      photo: '/images/team/raphael.jpg'
+      photo: '/fr/images/team/raphael.webp'
     }
   },
   {
     slug: 'oullins',
     name: 'Oullins',
-    heroImage: '/images/Biens/appartement-interieur-2.jpg',
+    heroImage: '/fr/images/Biens/appartement-interieur-2.webp',
     tagline: "L'énergie du sud-ouest lyonnais",
     pricePerSqm: '3 400 EUR/m²',
     priceEvolution: '+3.5% sur 12 mois',
@@ -154,7 +154,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Samuel Ribes',
       role: 'Agent commercial indépendant',
-      photo: '/images/team/samuel.jpg'
+      photo: '/fr/images/team/samuel.webp'
     }
   }
 ]

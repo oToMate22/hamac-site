@@ -1,27 +1,28 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { BLOG_CATEGORIES, BLOG_POSTS, getBlogPostBySlug, type BlogPost } from '../data/blogPosts'
+import { blogPostingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
 const AUTHOR_DATA: Record<string, { role: string; photo: string; bio: string }> = {
   'Sébastien Garnier': {
     role: 'Gérant',
-    photo: '/images/team/sebastien.jpg',
+    photo: '/fr/images/team/sebastien.webp',
     bio: "Spécialiste du marché résidentiel de l'Ouest lyonnais, Sébastien accompagne vendeurs et acquéreurs avec une lecture fine des micro-secteurs.",
   },
   'Romain Monneri-Fons': {
     role: 'Agent commercial indépendant',
-    photo: '/images/team/romain.jpg',
+    photo: '/fr/images/team/romain.webp',
     bio: 'Romain conseille les primo-accédants et structure des parcours d’achat clairs, efficaces et sécurisés.',
   },
   'Élodie Renard': {
     role: 'Agent commercial indépendant',
-    photo: '/images/team/elodie.jpg',
+    photo: '/fr/images/team/elodie.webp',
     bio: 'Élodie accompagne les familles dans leurs projets de vie, avec une attention particulière aux quartiers et aux écoles.',
   },
   'Samuel Ribes': {
     role: 'Agent commercial indépendant',
-    photo: '/images/team/samuel.jpg',
+    photo: '/fr/images/team/samuel.webp',
     bio: 'Samuel accompagne les investisseurs avec une approche patrimoniale, orientée rendement durable et valorisation.',
   },
 }
@@ -102,13 +103,16 @@ export function BlogPostPage() {
   usePageMeta({
     title: post ? `${post.title} — Hamac Investissements & Patrimoine` : 'Article — Hamac Investissements & Patrimoine',
     description: post ? post.excerpt : "Découvrez les analyses et guides du Journal Hamac sur l'Ouest lyonnais.",
+    ogType: 'article',
+    ogImage: post?.coverImage,
+    jsonLd: post ? [{ id: 'ld-article', data: blogPostingJsonLd(post) }] : undefined,
   })
 
   if (!post) return <Navigate to="/blog" replace />
 
   const author = AUTHOR_DATA[post.author] ?? {
     role: 'Agent commercial indépendant',
-    photo: '/images/team/anthony.jpg',
+    photo: '/fr/images/team/anthony.webp',
     bio: 'Expert immobilier de proximité dans l’Ouest lyonnais.',
   }
 
