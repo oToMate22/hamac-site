@@ -77,7 +77,7 @@ try {
   await waitForServer(`${BASE}${BASE_PATH}/`)
   browser = await puppeteer.launch({ headless: true })
   const queue = [...routes]
-  const workers = 3
+  const workers = 2
   await Promise.all(
     Array.from({ length: workers }, async () => {
       while (queue.length) {
@@ -131,6 +131,13 @@ try {
 
 console.log(`\n${ok}/${routes.size} routes pré-rendues`)
 if (failures.length) {
+  const quotaHint = failures.length > 3
+  console.error(`Pré-rendu incomplet (${failures.length} route(s) en échec). Le dossier dist/ du build Vite est conservé.`)
+  if (quotaHint) {
+    console.error(
+      'Si Apimo renvoie 429, relancer `npm run sync:routes` hors quota puis reconstruire. Les pages déjà écrites dans dist/ restent utilisables.',
+    )
+  }
   console.error(`Routes en échec : ${failures.join(', ')}`)
   process.exit(1)
 }

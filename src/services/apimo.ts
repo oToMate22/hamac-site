@@ -514,26 +514,63 @@ function extractList<T>(payload: unknown): T[] {
   return []
 }
 
+const LOCAL_PROPERTIES_CACHE = 'hamac:apimo-properties'
+
+function readLocalPropertiesCache(): FeaturedProperty[] | null {
+  try {
+    const raw = sessionStorage.getItem(LOCAL_PROPERTIES_CACHE)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as FeaturedProperty[]
+    return Array.isArray(parsed) && parsed.length ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function writeLocalPropertiesCache(properties: FeaturedProperty[]) {
+  try {
+    sessionStorage.setItem(LOCAL_PROPERTIES_CACHE, JSON.stringify(properties))
+  } catch {
+    // quota / private mode
+  }
+}
+
+function mapRawList(payload: unknown): FeaturedProperty[] {
+  const rawList = extractList<ApimoRawProperty>(payload)
+  return rawList.map(mapFeaturedProperty).filter((p) => p.images.length > 0 || p.title)
+}
+
 async function getAllMappedProperties(): Promise<FeaturedProperty[]> {
   if (!isSupabaseConfigured()) {
     return []
   }
 
-  const res = await supabase.functions.invoke('apimo-proxy', {
-    body: { route: 'properties' },
-  })
+  try {
+    const res = await supabase.functions.invoke('apimo-proxy', {
+      body: { route: 'properties' },
+    })
 
-  // supabase-js returns { data, error } depending on version; keep tolerant parsing
-  if ('error' in res && res.error) throw res.error
+    const payload = (res as { data?: unknown }).data ?? res
+    const mapped = mapRawList(payload)
+    if (mapped.length) {
+      writeLocalPropertiesCache(mapped)
+      return mapped
+    }
 
-  const payload = (res as any).data ?? (res as any)
+    if ('error' in res && res.error) {
+      const cached = readLocalPropertiesCache()
+      if (cached) return cached
+      throw res.error
+    }
 
-  const rawList = extractList<ApimoRawProperty>(payload)
-
-  const mapped = rawList.map(mapFeaturedProperty)
-  const filtered = mapped.filter((p) => p.images.length > 0 || p.title)
-
-  return filtered
+    const cached = readLocalPropertiesCache()
+    if (cached) return cached
+    return []
+  } catch (error) {
+    const cached = readLocalPropertiesCache()
+    if (cached) return cached
+    throw error
+  }
 }
 
 export async function getProperties(): Promise<FeaturedProperty[]> {

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && tsx scripts/prerender.ts && tsx scripts/generate-sitemap.ts",
+    "sync:routes": "tsx scripts/sync-routes.ts",
     "preview": "vite preview"
   },
   "devDependencies": {
