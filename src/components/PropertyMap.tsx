@@ -18,16 +18,17 @@ type PropertyMapProps = {
   initialCenter?: [number, number]
   initialZoom?: number
   onViewChange?: (view: MapViewState) => void
+  fitPadding?: { topLeft: [number, number]; bottomRight: [number, number] }
 }
 
-const formatPriceCompact = (value: number) => `${Math.round(value / 1000)}k€`
+const formatPriceLabel = (value: number) => `${new Intl.NumberFormat('fr-FR').format(value)} €`
 
 const markerIcon = (label: string, highlighted = false, isCluster = false) =>
   divIcon({
     className: '',
     html: `<span class="property-map__price-pill ${isCluster ? 'is-cluster' : ''} ${highlighted ? 'is-highlighted' : ''}">${label}</span>`,
-    iconSize: [68, 28],
-    iconAnchor: [34, 14],
+    iconSize: [100, 32],
+    iconAnchor: [50, 16],
   })
 
 function boundsKeyFromProperties(properties: Property[]) {
@@ -112,12 +113,14 @@ function FitBounds({
   fitBoundsKey,
   skipFitOnMount,
   programmaticFitRef,
+  fitPadding,
 }: {
   properties: Property[]
   isExpanded: boolean
   fitBoundsKey: string
   skipFitOnMount: boolean
   programmaticFitRef: { current: boolean }
+  fitPadding?: { topLeft: [number, number]; bottomRight: [number, number] }
 }) {
   const map = useMap()
   const lastFittedKeyRef = useRef<string | null>(null)
@@ -162,12 +165,13 @@ function FitBounds({
     if (userAdjustedViewRef.current && !isNewDataset) return
 
     const bounds = latLngBounds(properties.map((entry) => [entry.lat, entry.lng] as [number, number]))
-    const padding: [number, number] = isExpanded ? [18, 18] : [40, 40]
+    const paddingTopLeft = fitPadding?.topLeft ?? [24, 24]
+    const paddingBottomRight = fitPadding?.bottomRight ?? [24, 24]
     const maxZoom = isExpanded ? 17 : 14
 
     const run = () => {
       programmaticFitRef.current = true
-      map.flyToBounds(bounds, { padding, duration: 0.45, maxZoom })
+      map.flyToBounds(bounds, { paddingTopLeft, paddingBottomRight, duration: 0.45, maxZoom })
       lastFittedKeyRef.current = fitBoundsKey
       if (isExpanded) expandedFitKeyRef.current = fitBoundsKey
       window.setTimeout(() => {
@@ -183,7 +187,18 @@ function FitBounds({
     if (isNewDataset) {
       run()
     }
-  }, [map, fitBoundsKey, isExpanded, properties.length, skipFitOnMount, programmaticFitRef])
+  }, [
+    map,
+    fitBoundsKey,
+    isExpanded,
+    properties.length,
+    skipFitOnMount,
+    programmaticFitRef,
+    fitPadding?.topLeft[0],
+    fitPadding?.topLeft[1],
+    fitPadding?.bottomRight[0],
+    fitPadding?.bottomRight[1],
+  ])
   return null
 }
 
@@ -242,6 +257,22 @@ function InvalidateMapLayout({ isVisible, isExpanded }: { isVisible: boolean; is
     }
   }, [isVisible, isExpanded, map])
 
+  useEffect(() => {
+    const el = map.getContainer()
+    let timer: number | null = null
+    const observer = new ResizeObserver(() => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        map.invalidateSize({ pan: false })
+      }, 100)
+    })
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [map])
+
   return null
 }
 
@@ -262,7 +293,7 @@ function PropertyMapMarker({
   const first = group[0]
   if (!first) return null
 
-  const label = isCluster ? `${group.length} biens` : formatPriceCompact(first.price)
+  const label = isCluster ? `${group.length} biens` : formatPriceLabel(first.price)
   const isHighlighted = group.some((entry) => entry.slug === hoveredSlug)
 
   const clearCloseTimer = () => {
@@ -363,7 +394,7 @@ function PropertyMapMarker({
           >
             <img src={first.images[0]} alt={`Photo du bien ${first.title} à ${first.city}`} loading="lazy" />
             <h4>{first.title}</h4>
-            <p className="price">{new Intl.NumberFormat('fr-FR').format(first.price)} €</p>
+            <p className="price">{formatPriceLabel(first.price)}</p>
             <p>
               {first.surface} m² · {first.rooms} pièces
             </p>
@@ -420,6 +451,7 @@ export function PropertyMap({
   initialCenter,
   initialZoom,
   onViewChange,
+  fitPadding,
 }: PropertyMapProps) {
   const programmaticFitRef = useRef(false)
   const hasInitialView =
@@ -463,6 +495,7 @@ export function PropertyMap({
           fitBoundsKey={fitBoundsKey}
           skipFitOnMount={hasInitialView}
           programmaticFitRef={programmaticFitRef}
+          fitPadding={fitPadding}
         />
         {onViewChange ? (
           <MapViewReporter onViewChange={onViewChange} programmaticFitRef={programmaticFitRef} />

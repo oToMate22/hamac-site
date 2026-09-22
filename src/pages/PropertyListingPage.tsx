@@ -115,6 +115,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
   const [cityFilterQuery, setCityFilterQuery] = useState('')
   const [widePreview, setWidePreview] = useState(false)
+  const [desktopMapLayout, setDesktopMapLayout] = useState(false)
   const openedAsMapViewRef = useRef(searchParams.get('view') === 'map')
   const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
   const budgetSliderStep = mode === 'rent' ? 100 : 50_000
@@ -155,11 +156,19 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }, [filtersStorageKey, searchParams])
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const sync = () => setWidePreview(mq.matches)
+    const preview = window.matchMedia('(min-width: 768px)')
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const sync = () => {
+      setWidePreview(preview.matches)
+      setDesktopMapLayout(desktop.matches)
+    }
     sync()
-    mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
+    preview.addEventListener('change', sync)
+    desktop.addEventListener('change', sync)
+    return () => {
+      preview.removeEventListener('change', sync)
+      desktop.removeEventListener('change', sync)
+    }
   }, [])
 
   const type = searchParams.get('type') ?? 'all'
@@ -413,6 +422,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           initialCenter={expanded ? restoreMapFrame?.center : undefined}
           initialZoom={expanded ? restoreMapFrame?.zoom : undefined}
           onViewChange={expanded ? handleMapViewChange : undefined}
+          fitPadding={
+            expanded && desktopMapLayout
+              ? { topLeft: [380, 24], bottomRight: [24, 24] }
+              : { topLeft: [24, 24], bottomRight: [24, 24] }
+          }
         />
       </Suspense>
     )
@@ -451,7 +465,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   return (
     <main className="catalog-page">
-      <section className="catalog-hero">
+      <section className={isMapView ? 'catalog-hero is-collapsed' : 'catalog-hero'}>
         <div className="container">
           <h1 className="section-title">Nos biens dans l&apos;Ouest Lyonnais</h1>
           <p className="catalog-hero__intro">
@@ -694,7 +708,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           </aside>
           <div className="catalog-main">
             <div className="catalog-toolbar">
-              <p>{isLoading ? 'Chargement...' : apiError ? 'Erreur lors du chargement' : `${properties.length} biens trouves`}</p>
+              <p>{isLoading ? 'Chargement...' : apiError ? 'Erreur lors du chargement' : `${properties.length} biens trouvés`}</p>
               <div className="catalog-toolbar__end">
                 <nav className="catalog-view-toggle" aria-label="Affichage des biens">
                   <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
