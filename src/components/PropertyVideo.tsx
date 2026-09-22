@@ -26,7 +26,7 @@ function buildStreamEmbedUrl(
   options: { poster?: string; muted: boolean; autoplay: boolean },
 ): string {
   const params = new URLSearchParams()
-  params.set('primaryColor', 'C5A96A')
+  params.set('primaryColor', '142A38')
   params.set('letterboxColor', 'transparent')
 
   const posterUrl = resolvePosterUrl(options.poster)

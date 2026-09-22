@@ -663,7 +663,7 @@ a {
 }
 
 .catalog-filter__trigger:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
 }
 
 .catalog-filter__content {
@@ -685,7 +685,7 @@ a {
 }
 
 .catalog-filter__item[data-highlighted] {
-  background: rgba(197, 169, 106, 0.12);
+  background: rgba(20, 42, 56, 0.12);
   outline: none;
 }
 
@@ -703,7 +703,7 @@ a {
 }
 
 .catalog-filter__city-trigger:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
 }
 
 .catalog-filter__city-popover {
@@ -765,7 +765,7 @@ a {
 }
 
 .catalog-filter__city-item[data-selected='true'] {
-  background: rgba(197, 169, 106, 0.12);
+  background: rgba(20, 42, 56, 0.12);
 }
 
 .catalog-filter__city-empty {
@@ -815,7 +815,7 @@ a {
 }
 
 .catalog-slider__thumb:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
   outline-offset: 2px;
 }
 
@@ -898,7 +898,7 @@ a {
 }
 
 .catalog-map-empty__actions button:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
   outline-offset: 2px;
 }
 
@@ -947,7 +947,7 @@ a {
 }
 
 .catalog-view-toggle a:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
   outline-offset: 2px;
 }
 
@@ -1405,7 +1405,7 @@ a {
 }
 
 .detail-thumb.is-active {
-  border-color: #c5a96a;
+  border-color: #142a38;
 }
 
 .detail-thumb img {
@@ -1739,14 +1739,14 @@ a {
 .detail-price__value {
   margin: 0.3rem 0;
   font-family: var(--font-serif);
-  color: #c5a96a;
+  color: #142a38;
   font-size: clamp(1.8rem, 3vw, 2.4rem);
 }
 
 .detail-badge {
   display: inline-block;
   border-radius: 999px;
-  background: rgba(197, 169, 106, 0.2);
+  background: rgba(20, 42, 56, 0.2);
   color: var(--navy-soft);
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
@@ -1841,7 +1841,7 @@ a {
 
 .detail-contact input:focus-visible,
 .detail-contact textarea:focus-visible {
-  outline: 2px solid #c5a96a;
+  outline: 2px solid #142a38;
 }
 
 .detail-similar {
@@ -1948,7 +1948,7 @@ a {
   margin: 0;
   font-family: var(--font-serif);
   font-size: clamp(2rem, 4vw, 2.8rem);
-  color: #c5a96a;
+  color: #142a38;
 }
 
 .agency-team__grid {
@@ -1981,7 +1981,7 @@ a {
 
 .agency-agent__role {
   margin: 0;
-  color: #c5a96a;
+  color: #1a1614;
 }
 
 .agency-agent__tagline {
@@ -2153,7 +2153,7 @@ a {
 
 .estimation-hero__overlay {
   background:
-    radial-gradient(circle at 18% 24%, rgba(197, 169, 106, 0.22) 0, transparent 38%),
+    radial-gradient(circle at 18% 24%, rgba(20, 42, 56, 0.22) 0, transparent 38%),
     linear-gradient(
       180deg,
       rgba(20, 42, 56, 0.78) 0%,
@@ -3286,7 +3286,7 @@ a {
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 999px;
-  background: rgba(197, 169, 106, 0.18);
+  background: rgba(20, 42, 56, 0.18);
   color: var(--navy-soft);
   font-family: var(--font-serif);
   font-size: 1.1rem;
@@ -3422,7 +3422,7 @@ a {
 
 .invest-hero__overlay {
   background:
-    radial-gradient(circle at 78% 28%, rgba(197, 169, 106, 0.26) 0, transparent 34%),
+    radial-gradient(circle at 78% 28%, rgba(20, 42, 56, 0.26) 0, transparent 34%),
     linear-gradient(180deg, rgba(14, 30, 40, 0.78) 0%, rgba(20, 42, 56, 0.58) 42%, rgba(20, 42, 56, 0.48) 100%);
 }
 
@@ -3514,7 +3514,7 @@ a {
   width: 8rem;
   height: 8rem;
   border-radius: 50%;
-  background: rgba(197, 169, 106, 0.13);
+  background: rgba(20, 42, 56, 0.13);
 }
 
 .invest-pillar-card span {
@@ -3755,7 +3755,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .home-team-preview__button {
-  border: 2px solid rgba(197, 169, 106, 0.75);
+  border: 2px solid rgba(20, 42, 56, 0.75);
   color: var(--gold);
   background: transparent;
   border-radius: 0.95rem;
@@ -3764,7 +3764,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .home-team-preview__button:hover {
-  background: rgba(197, 169, 106, 0.1);
+  background: rgba(20, 42, 56, 0.1);
 }
 
 .home-journal {
@@ -3813,7 +3813,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 /* ——— Visites privées (homepage) ——— */
 .home-private-visits {
-  --private-visits-gold: #c5a96a;
+  --private-visits-gold: #142a38;
   padding-top: clamp(2rem, 5vw, 3rem);
   padding-bottom: clamp(2.75rem, 6vw, 4.25rem);
   overflow: hidden;
@@ -4084,7 +4084,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   z-index: 2;
   display: grid;
   place-items: center;
-  color: var(--private-visits-gold);
+  color: #f7f4ef;
   background: rgba(20, 42, 56, 0.12);
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -4105,7 +4105,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   z-index: 2;
   padding: 0.22rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--private-visits-gold);
+  border: 1px solid #f7f4ef;
   background: var(--navy);
   color: var(--cream);
   font-family: var(--font-sans);
@@ -4189,7 +4189,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   z-index: 3;
   width: 2.75rem;
   height: 2.75rem;
-  border: 1px solid rgba(197, 169, 106, 0.35);
+  border: 1px solid #f7f4ef;
   border-radius: 999px;
   background: rgba(20, 42, 56, 0.55);
   color: var(--cream);
@@ -4205,8 +4205,8 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .private-visits-lightbox__close:hover {
   background: rgba(20, 42, 56, 0.85);
-  border-color: var(--private-visits-gold);
-  color: var(--private-visits-gold);
+  border-color: #f7f4ef;
+  color: #f7f4ef;
 }
 
 .private-visits-lightbox__nav {
@@ -4216,12 +4216,12 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   z-index: 3;
   width: 3rem;
   height: 3rem;
-  border: 1px solid rgba(197, 169, 106, 0.28);
+  border: 1px solid #f7f4ef;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: var(--private-visits-gold);
+  color: #f7f4ef;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4233,7 +4233,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .private-visits-lightbox__nav:hover {
   background: rgba(255, 255, 255, 0.14);
-  border-color: var(--private-visits-gold);
+  border-color: #f7f4ef;
 }
 
 .private-visits-lightbox__nav--prev {
@@ -4289,7 +4289,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 999px;
-  border: 2px solid var(--private-visits-gold);
+  border: 2px solid #f7f4ef;
   background: rgba(20, 42, 56, 0.55);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   position: relative;
@@ -4303,7 +4303,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   transform: translate(-50%, -50%);
   border-style: solid;
   border-width: 0.55rem 0 0.55rem 0.95rem;
-  border-color: transparent transparent transparent var(--private-visits-gold);
+  border-color: transparent transparent transparent #f7f4ef;
 }
 
 .private-visits-lightbox__missing {
@@ -4327,7 +4327,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   z-index: 3;
   width: 2.35rem;
   height: 2.35rem;
-  border: 1px solid rgba(197, 169, 106, 0.35);
+  border: 1px solid #f7f4ef;
   border-radius: 999px;
   background: rgba(20, 42, 56, 0.65);
   color: var(--cream);
@@ -4357,7 +4357,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--private-visits-gold);
+  color: #f7f4ef;
 }
 
 .private-visits-lightbox__facts {
@@ -4849,7 +4849,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   width: 2rem;
   height: 2rem;
   border-radius: 999px;
-  background: rgba(197, 169, 106, 0.2);
+  background: rgba(20, 42, 56, 0.2);
   color: var(--white);
   font-family: var(--font-serif);
 }
@@ -5108,7 +5108,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 .blog-card__badge {
   display: inline-flex;
   border-radius: 999px;
-  background: rgba(197, 169, 106, 0.2);
+  background: rgba(20, 42, 56, 0.2);
   color: var(--navy-soft);
   font-size: 0.72rem;
   font-weight: 600;
@@ -5296,7 +5296,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   width: min(7rem, 40%);
   height: 2px;
   margin-top: 0.55rem;
-  background: rgba(197, 169, 106, 0.9);
+  background: rgba(20, 42, 56, 0.9);
 }
 
 .section-title--reveal {
@@ -6689,7 +6689,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   padding: 0.75rem 0.9rem;
   border-left: 3px solid var(--gold);
   border-radius: 0 0.4rem 0.4rem 0;
-  background: rgba(197, 169, 106, 0.12);
+  background: rgba(20, 42, 56, 0.12);
   font-size: 0.92rem;
   color: rgba(27, 42, 74, 0.85);
 }
@@ -7529,7 +7529,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .temoignage-card__star--empty {
-  color: rgba(197, 169, 106, 0.3);
+  color: rgba(20, 42, 56, 0.3);
 }
 
 .temoignage-card__star--half {
@@ -7540,7 +7540,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .temoignage-card__star-half__track {
-  color: rgba(197, 169, 106, 0.3);
+  color: rgba(20, 42, 56, 0.3);
 }
 
 .temoignage-card__star-half__fill {
