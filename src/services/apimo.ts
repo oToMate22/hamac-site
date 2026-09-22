@@ -515,13 +515,35 @@ function extractList<T>(payload: unknown): T[] {
 }
 
 const LOCAL_PROPERTIES_CACHE = 'hamac:apimo-properties'
+const LOCAL_PROPERTIES_CACHE_AT = 'hamac:apimo-properties-at'
+const CATALOG_FETCH_TIMEOUT_MS = 10_000
 
-function readLocalPropertiesCache(): FeaturedProperty[] | null {
+export class CatalogLoadError extends Error {
+  readonly status?: number
+  readonly kind: 'quota' | 'timeout' | 'network'
+
+  constructor(kind: 'quota' | 'timeout' | 'network', message: string, status?: number) {
+    super(message)
+    this.name = 'CatalogLoadError'
+    this.kind = kind
+    this.status = status
+  }
+}
+
+export type CatalogFetchResult = {
+  properties: FeaturedProperty[]
+  cacheServedAt?: number
+}
+
+function readLocalPropertiesCache(): { properties: FeaturedProperty[]; savedAt?: number } | null {
   try {
     const raw = sessionStorage.getItem(LOCAL_PROPERTIES_CACHE)
     if (!raw) return null
     const parsed = JSON.parse(raw) as FeaturedProperty[]
-    return Array.isArray(parsed) && parsed.length ? parsed : null
+    if (!Array.isArray(parsed) || !parsed.length) return null
+    const savedRaw = sessionStorage.getItem(LOCAL_PROPERTIES_CACHE_AT)
+    const savedAt = savedRaw ? Number(savedRaw) : undefined
+    return { properties: parsed, savedAt: Number.isFinite(savedAt) ? savedAt : undefined }
   } catch {
     return null
   }
@@ -530,9 +552,55 @@ function readLocalPropertiesCache(): FeaturedProperty[] | null {
 function writeLocalPropertiesCache(properties: FeaturedProperty[]) {
   try {
     sessionStorage.setItem(LOCAL_PROPERTIES_CACHE, JSON.stringify(properties))
+    sessionStorage.setItem(LOCAL_PROPERTIES_CACHE_AT, String(Date.now()))
   } catch {
     // quota / private mode
   }
+}
+
+function extractHttpStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object') return undefined
+  const record = error as {
+    context?: { status?: number }
+    status?: number
+    data?: { status?: number }
+    message?: string
+  }
+  if (typeof record.context?.status === 'number') return record.context.status
+  if (typeof record.status === 'number') return record.status
+  if (typeof record.data?.status === 'number') return record.data.status
+  try {
+    const raw = JSON.stringify(error)
+    if (raw.includes('"status":429') || raw.includes('Too Many Requests')) return 429
+  } catch {
+    /* ignore */
+  }
+  if (typeof record.message === 'string' && record.message.includes('429')) return 429
+  return undefined
+}
+
+function toCatalogLoadError(error: unknown): CatalogLoadError {
+  if (error instanceof CatalogLoadError) return error
+  const status = extractHttpStatus(error)
+  if (status === 429) {
+    return new CatalogLoadError('quota', 'Quota Apimo atteint', 429)
+  }
+  return new CatalogLoadError('network', error instanceof Error ? error.message : 'Impossible de charger les biens', status)
+}
+
+async function invokeWithTimeout(ms: number) {
+  const timeoutSignal = AbortSignal.timeout(ms)
+  const invoke = supabase.functions.invoke('apimo-proxy', {
+    body: { route: 'properties' },
+  })
+  return Promise.race([
+    invoke,
+    new Promise<never>((_, reject) => {
+      const fail = () => reject(new CatalogLoadError('timeout', 'Délai de chargement dépassé', 408))
+      if (timeoutSignal.aborted) fail()
+      else timeoutSignal.addEventListener('abort', fail, { once: true })
+    }),
+  ])
 }
 
 function mapRawList(payload: unknown): FeaturedProperty[] {
@@ -540,47 +608,67 @@ function mapRawList(payload: unknown): FeaturedProperty[] {
   return rawList.map(mapFeaturedProperty).filter((p) => p.images.length > 0 || p.title)
 }
 
-async function getAllMappedProperties(): Promise<FeaturedProperty[]> {
+async function getAllMappedProperties(): Promise<CatalogFetchResult> {
   if (!isSupabaseConfigured()) {
-    return []
+    return { properties: [] }
   }
 
   try {
-    const res = await supabase.functions.invoke('apimo-proxy', {
-      body: { route: 'properties' },
-    })
-
+    const res = await invokeWithTimeout(CATALOG_FETCH_TIMEOUT_MS)
     const payload = (res as { data?: unknown }).data ?? res
+    const statusFromBody =
+      payload && typeof payload === 'object' && 'status' in payload
+        ? Number((payload as { status?: unknown }).status)
+        : undefined
+
+    if ('error' in res && res.error) {
+      const status = extractHttpStatus(res.error) ?? (statusFromBody === 429 ? 429 : undefined)
+      const cached = readLocalPropertiesCache()
+      if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
+      throw toCatalogLoadError(
+        status === 429 ? new CatalogLoadError('quota', 'Quota Apimo atteint', 429) : res.error,
+      )
+    }
+
+    if (statusFromBody === 429) {
+      const cached = readLocalPropertiesCache()
+      if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
+      throw new CatalogLoadError('quota', 'Quota Apimo atteint', 429)
+    }
+
     const mapped = mapRawList(payload)
     if (mapped.length) {
       writeLocalPropertiesCache(mapped)
-      return mapped
-    }
-
-    if ('error' in res && res.error) {
-      const cached = readLocalPropertiesCache()
-      if (cached) return cached
-      throw res.error
+      return { properties: mapped }
     }
 
     const cached = readLocalPropertiesCache()
-    if (cached) return cached
-    return []
+    if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
+    return { properties: [] }
   } catch (error) {
     const cached = readLocalPropertiesCache()
-    if (cached) return cached
-    throw error
+    if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
+    throw toCatalogLoadError(error)
   }
 }
 
 export async function getProperties(): Promise<FeaturedProperty[]> {
-  const filtered = await getAllMappedProperties()
+  const filtered = (await getAllMappedProperties()).properties
   return filtered.filter((p) => !p.isRental)
 }
 
 export async function getRentalProperties(): Promise<FeaturedProperty[]> {
-  const filtered = await getAllMappedProperties()
+  const filtered = (await getAllMappedProperties()).properties
   return filtered.filter((p) => p.isRental)
+}
+
+export async function fetchCatalogProperties(mode: 'sale' | 'rent'): Promise<CatalogFetchResult> {
+  const result = await getAllMappedProperties()
+  const properties =
+    mode === 'rent'
+      ? result.properties.filter((property) => property.isRental)
+      : result.properties.filter((property) => !property.isRental && property.agreementType !== 2)
+  return { properties, cacheServedAt: result.cacheServedAt }
 }
 
 export async function getPropertyById(id: string | number): Promise<FeaturedProperty | null> {
