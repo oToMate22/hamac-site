@@ -16,7 +16,7 @@ import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
 const DESCRIPTION_PREVIEW_LIMIT = 300
-const DEFAULT_CONTACT_MESSAGE = 'Je souhaite etre recontacte au sujet de ce bien...'
+const DEFAULT_CONTACT_MESSAGE = 'Je souhaite être recontacté au sujet de ce bien...'
 
 const ENERGY_CLASSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const
 
@@ -582,7 +582,7 @@ export function PropertyDetailPage() {
                 ) : null}
                 {property.rooms ? (
                   <div>
-                    <span>Pieces</span>
+                    <span>Pièces</span>
                     <strong>{property.rooms}</strong>
                   </div>
                 ) : null}
@@ -596,7 +596,7 @@ export function PropertyDetailPage() {
             </section>
 
             <section className="detail-card">
-              <h2>Interesse par ce bien ?</h2>
+              <h2>Intéressé par ce bien ?</h2>
 
               <div className="detail-contact-agent">
                 <img src={agentPicture} alt={`Portrait de ${agentName}`} loading="lazy" />
@@ -658,7 +658,7 @@ export function PropertyDetailPage() {
                         clearFieldError('phone')
                         setSubmitError(null)
                       }}
-                      placeholder="Telephone"
+                      placeholder="Téléphone"
                       aria-invalid={Boolean(fieldErrors.phone)}
                       aria-describedby={fieldErrors.phone ? 'detail-contact-phone-error' : undefined}
                     />

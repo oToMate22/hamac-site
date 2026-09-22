@@ -479,8 +479,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           <h1 className="section-title">Nos biens dans l&apos;Ouest Lyonnais</h1>
           <p className="catalog-hero__intro">
             {mode === 'rent'
-              ? 'Des biens en location choisis pour leur emplacement, leur confort et leur qualite de vie.'
-              : 'Des maisons et appartements choisis pour leur adresse, leur potentiel et leur qualite de vie.'}
+              ? 'Des biens en location choisis pour leur emplacement, leur confort et leur qualité de vie.'
+              : 'Des maisons et appartements choisis pour leur adresse, leur potentiel et leur qualité de vie.'}
           </p>
           <SearchBar
             action={mode === 'rent' ? '/louer' : '/acheter'}

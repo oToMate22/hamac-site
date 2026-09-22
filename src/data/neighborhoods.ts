@@ -24,7 +24,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Sainte-Foy-lès-Lyon',
     heroImage: '/fr/images/Biens/maison-city.webp',
     tagline: 'Le bourg historique aux portes de Lyon',
-    pricePerSqm: '4 850 EUR/m²',
+    pricePerSqm: '4 850 € / m²',
     priceEvolution: '+3.2% sur 12 mois',
     population: '22 000 habitants',
     description: [
@@ -47,7 +47,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Tassin-la-Demi-Lune',
     heroImage: '/fr/images/Biens/appartement-interieur-1.webp',
     tagline: "Le carrefour dynamique de l'Ouest",
-    pricePerSqm: '4 200 EUR/m²',
+    pricePerSqm: '4 200 € / m²',
     priceEvolution: '+2.6% sur 12 mois',
     population: '18 000 habitants',
     description: [
@@ -70,7 +70,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Écully',
     heroImage: '/fr/images/Biens/maison-art.webp',
     tagline: 'Prestige discret et grandes écoles',
-    pricePerSqm: '5 100 EUR/m²',
+    pricePerSqm: '5 100 € / m²',
     priceEvolution: '+2.1% sur 12 mois',
     population: '19 000 habitants',
     description: [
@@ -93,7 +93,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Francheville',
     heroImage: '/fr/images/Biens/maison-homepage.webp',
     tagline: 'Nature et tranquillité',
-    pricePerSqm: '3 600 EUR/m²',
+    pricePerSqm: '3 600 € / m²',
     priceEvolution: '+3.9% sur 12 mois',
     population: '14 000 habitants',
     description: [
@@ -116,7 +116,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Craponne',
     heroImage: '/fr/images/Biens/maison-bleu-2.webp',
     tagline: 'La campagne aux portes de Lyon',
-    pricePerSqm: '3 800 EUR/m²',
+    pricePerSqm: '3 800 € / m²',
     priceEvolution: '+4.1% sur 12 mois',
     population: '11 000 habitants',
     description: [
@@ -139,7 +139,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     name: 'Oullins',
     heroImage: '/fr/images/Biens/appartement-interieur-2.webp',
     tagline: "L'énergie du sud-ouest lyonnais",
-    pricePerSqm: '3 400 EUR/m²',
+    pricePerSqm: '3 400 € / m²',
     priceEvolution: '+3.5% sur 12 mois',
     population: '26 000 habitants',
     description: [

@@ -149,7 +149,7 @@ function FieldSelect({
 export function EstimationPage() {
   usePageMeta({
     title: 'Estimation immobilière gratuite — Hamac Investissements & Patrimoine',
-    description: 'Obtenez une estimation précise et argumentée de votre bien sous 24h avec un expert Hamac de votre quartier.',
+    description: 'Obtenez une estimation précise et argumentée de votre bien sous 24 h avec un expert Hamac de votre quartier.',
   })
 
   const [step, setStep] = useState(1)
@@ -417,11 +417,11 @@ export function EstimationPage() {
                   </div>
                 </label>
                 <FieldSelect
-                  label="Nombre de pieces"
+                  label="Nombre de pièces"
                   value={form.rooms}
                   onValueChange={(value) => setForm((current) => ({ ...current, rooms: value }))}
                   options={[1, 2, 3, 4, 5, 6, 7].map((value) => ({ value: String(value), label: String(value) }))}
-                  placeholder="Pieces"
+                  placeholder="Pièces"
                 />
                 <FieldSelect
                   label="Nombre de chambres"
@@ -455,7 +455,7 @@ export function EstimationPage() {
                   <input value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} />
                 </label>
                 <label className="estimation-field">
-                  <span>Prenom</span>
+                  <span>Prénom</span>
                   <input value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} />
                 </label>
                 <label className="estimation-field">
@@ -463,7 +463,7 @@ export function EstimationPage() {
                   <input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
                 </label>
                 <label className="estimation-field">
-                  <span>Telephone</span>
+                  <span>Téléphone</span>
                   <input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} />
                 </label>
                 <label className="estimation-field estimation-field--full">

@@ -3,28 +3,28 @@ import { usePageMeta } from '../utils/seo'
 
 const SELL_STEPS = [
   {
-    title: 'Estimation precise',
-    description: 'Nous analysons votre bien, le marche local et les transactions recentes pour fixer le juste prix.',
+    title: 'Estimation précise',
+    description: 'Nous analysons votre bien, le marché local et les transactions récentes pour fixer le juste prix.',
   },
   {
     title: 'Mise en valeur',
-    description: "Photos professionnelles, visite virtuelle, redaction soignee de l'annonce.",
+    description: "Photos professionnelles, visite virtuelle, rédaction soignée de l'annonce.",
   },
   {
-    title: 'Diffusion ciblee',
-    description: 'Visibilite sur les portails immobiliers, notre site, nos reseaux sociaux et notre reseau off-market.',
+    title: 'Diffusion ciblée',
+    description: 'Visibilité sur les portails immobiliers, notre site, nos réseaux sociaux et notre réseau off-market.',
   },
   {
-    title: 'Selection des acquereurs',
-    description: 'Nous qualifions chaque candidat : budget valide, projet serieux, visite organisee.',
+    title: 'Sélection des acquéreurs',
+    description: 'Nous qualifions chaque candidat : budget validé, projet sérieux, visite organisée.',
   },
   {
-    title: 'Negociation',
-    description: 'Nous defendons vos interets avec diplomatie pour obtenir le meilleur prix.',
+    title: 'Négociation',
+    description: 'Nous défendons vos intérêts avec diplomatie pour obtenir le meilleur prix.',
   },
   {
-    title: "Accompagnement jusqu'a la signature",
-    description: 'Suivi administratif, coordination avec le notaire, serenite totale.',
+    title: "Accompagnement jusqu'à la signature",
+    description: 'Suivi administratif, coordination avec le notaire, sérénité totale.',
   },
 ]
 
@@ -46,9 +46,9 @@ export function SellingPage() {
         <div className="selling-hero__overlay" />
         <div className="container selling-hero__content">
           <p className="eyebrow">VENDRE AVEC HAMAC</p>
-          <h1 className="selling-hero__title">Votre bien merite une mise en valeur a la hauteur de son caractere</h1>
+          <h1 className="selling-hero__title">Votre bien mérite une mise en valeur à la hauteur de son caractère</h1>
           <p className="selling-hero__lead">
-            De l&apos;estimation a la signature, nous vous accompagnons avec precision et transparence.
+            De l&apos;estimation à la signature, nous vous accompagnons avec précision et transparence.
           </p>
         </div>
         <div className="wave wave--hero-bottom" aria-hidden="true">
@@ -61,7 +61,7 @@ export function SellingPage() {
       <section className="section section--cream selling-steps">
         <div className="container">
           <header className="section-header">
-            <h2 className="section-title">Les etapes d&apos;une vente reussie</h2>
+            <h2 className="section-title">Les étapes d&apos;une vente réussie</h2>
           </header>
           <div className="selling-steps__grid">
             {SELL_STEPS.map((step, index) => (
@@ -89,15 +89,15 @@ export function SellingPage() {
           <div className="selling-advantages__grid">
             <article className="selling-adv-card">
               <h3>Connaissance hyper-locale</h3>
-              <p>Nous connaissons chaque rue, chaque ecole, chaque prix de l&apos;Ouest Lyonnais.</p>
+              <p>Nous connaissons chaque rue, chaque école, chaque prix de l&apos;Ouest Lyonnais.</p>
             </article>
             <article className="selling-adv-card">
               <h3>Reseau off-market</h3>
-              <p>Acces a des acheteurs qualifies avant meme la mise en ligne de votre bien.</p>
+              <p>Accès à des acheteurs qualifiés avant même la mise en ligne de votre bien.</p>
             </article>
             <article className="selling-adv-card">
               <h3>Transparence totale</h3>
-              <p>Des rapports de visite detailles, un suivi regulier et des conseils honnetes.</p>
+              <p>Des rapports de visite détaillés, un suivi régulier et des conseils honnêtes.</p>
             </article>
           </div>
         </div>
@@ -112,7 +112,7 @@ export function SellingPage() {
       <section className="section section--cream selling-actions">
         <div className="container selling-actions__grid">
           <Link to="/estimation" className="selling-action-card">
-            <img src="/fr/images/Biens/maison-moderne.webp" alt="Interieur contemporain pour estimer un bien" loading="lazy" />
+            <img src="/fr/images/Biens/maison-moderne.webp" alt="Intérieur contemporain pour estimer un bien" loading="lazy" />
             <span className="selling-action-card__overlay" />
             <strong>Estimer mon bien</strong>
           </Link>
@@ -128,10 +128,10 @@ export function SellingPage() {
         <div className="container">
           <blockquote className="selling-quote">
             <p>
-              « Une vente menee avec calme, clarte et beaucoup de precision. Nous nous sommes sentis accompagnes du debut
-              a la signature. »
+              « Une vente menée avec calme, clarté et beaucoup de précision. Nous nous sommes sentis accompagnés du début
+              à la signature. »
             </p>
-            <footer>— Claire &amp; Julien M., Vente maison a Sainte-Foy-les-Lyon.</footer>
+            <footer>— Claire &amp; Julien M., Vente maison à Sainte-Foy-lès-Lyon.</footer>
           </blockquote>
         </div>
       </section>
@@ -139,8 +139,8 @@ export function SellingPage() {
       <section className="section section--navy agency-cta">
         <div className="container section-header section-header--on-dark">
           <p className="eyebrow eyebrow--muted">Parlons de votre projet</p>
-          <h2 className="section-title">Un accompagnement sur-mesure, de la premiere visite a la signature</h2>
-          <p className="section-intro">Contactez notre equipe pour une estimation, une vente ou un achat dans l&apos;Ouest Lyonnais.</p>
+          <h2 className="section-title">Un accompagnement sur-mesure, de la première visite à la signature</h2>
+          <p className="section-intro">Contactez notre équipe pour une estimation, une vente ou un achat dans l&apos;Ouest Lyonnais.</p>
           <p className="biens-cta-wrap"><Link className="btn btn--outline-light" to="/contact">Nous contacter</Link></p>
         </div>
       </section>

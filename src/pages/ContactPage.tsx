@@ -23,7 +23,7 @@ export function ContactPage() {
   const [searchParams] = useSearchParams()
   usePageMeta({
     title: 'Contact — Hamac Investissements & Patrimoine',
-    description: 'Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24h.',
+    description: 'Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24 h.',
     jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
   })
 
@@ -96,7 +96,7 @@ export function ContactPage() {
     <main className="section section--cream contact-page">
       <section className="container contact-hero">
         <h1 className="section-title">Nous rencontrer</h1>
-        <p className="contact-hero__lead">Passez nous voir a l&apos;agence ou ecrivez-nous. Nous repondons sous 24h.</p>
+        <p className="contact-hero__lead">Passez nous voir à l&apos;agence ou écrivez-nous. Nous répondons sous 24 h.</p>
       </section>
 
       <section className="container contact-layout">
@@ -106,13 +106,13 @@ export function ContactPage() {
               <MapPin size={18} />
               <div>
                 <h2>Adresse de l&apos;agence</h2>
-                <p>19 Boulevard Baron du Marais, 69110 Sainte-Foy-les-Lyon</p>
+                <p>19 Boulevard Baron du Marais, 69110 Sainte-Foy-lès-Lyon</p>
               </div>
             </article>
             <article className="contact-info-card">
               <Phone size={18} />
               <div>
-                <h2>Telephone</h2>
+                <h2>Téléphone</h2>
                 <p><a href="tel:+33478850827">04 78 85 08 27</a></p>
               </div>
             </article>
@@ -147,7 +147,7 @@ export function ContactPage() {
           <form className="contact-form" onSubmit={submit}>
             <div className="contact-form__grid">
               <label>
-                <span>Prenom</span>
+                <span>Prénom</span>
                 <input value={form.firstName} onChange={(e) => setForm((c) => ({ ...c, firstName: e.target.value }))} required />
               </label>
               <label>
@@ -161,7 +161,7 @@ export function ContactPage() {
               <input type="email" value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} required />
             </label>
             <label>
-              <span>Telephone</span>
+              <span>Téléphone</span>
               <input value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} required />
             </label>
 
@@ -169,7 +169,7 @@ export function ContactPage() {
               <span>Votre projet</span>
               <Select.Root value={form.project} onValueChange={(value) => setForm((c) => ({ ...c, project: value }))}>
                 <Select.Trigger className="contact-select" aria-label="Votre projet">
-                  <Select.Value placeholder="Selectionnez un projet" />
+                  <Select.Value placeholder="Sélectionnez un projet" />
                   <Select.Icon>
                     <ChevronDown size={14} />
                   </Select.Icon>

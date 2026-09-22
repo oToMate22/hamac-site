@@ -202,7 +202,7 @@ export function OffMarketPage() {
           <div className="offmarket-explain__copy">
             <h2 className="section-title">Qu&apos;est-ce que le off-market ?</h2>
             <p>
-              Le off-market représente environ 5 à 10% du marché immobilier français. Il s&apos;agit de biens vendus dans la
+              Le off-market représente environ 5 à 10 % du marché immobilier français. Il s&apos;agit de biens vendus dans la
               discrétion, sans diffusion publique sur les portails traditionnels.
             </p>
             <p>

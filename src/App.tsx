@@ -26,8 +26,8 @@ type AppProps = {
 type NavItem = { label: string; to: string }
 
 const SELL_MENU: NavItem[] = [
-  { label: "Les etapes d'une vente", to: '/vendre' },
-  { label: 'Acces off-market', to: '/off-market' },
+  { label: "Les étapes d'une vente", to: '/vendre' },
+  { label: 'Accès off-market', to: '/off-market' },
 ]
 
 const QUARTIERS_MENU: NavItem[] = [
@@ -378,7 +378,7 @@ function SiteLayout() {
           <div>
             <h3 className="site-footer__heading">Informations</h3>
             <ul className="site-footer__links">
-              <li><Link to="/mentions-legales">Mentions legales</Link></li>
+              <li><Link to="/mentions-legales">Mentions légales</Link></li>
               <li><Link to="/honoraires">Honoraires</Link></li>
               <li><Link to="/confidentialite">Confidentialite</Link></li>
             </ul>
@@ -387,7 +387,7 @@ function SiteLayout() {
             <h3 className="site-footer__heading">Journal</h3>
             <ul className="site-footer__links">
               <li><Link to="/blog">Tous les articles</Link></li>
-              <li><Link to="/blog?category=marche-immobilier">Marche immobilier</Link></li>
+              <li><Link to="/blog?category=marche-immobilier">Marché immobilier</Link></li>
               <li><Link to="/blog?category=guides-pratiques">Guides pratiques</Link></li>
               <li><Link to="/blog?category=vie-locale">Vie locale</Link></li>
             </ul>
