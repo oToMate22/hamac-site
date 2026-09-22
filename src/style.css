@@ -571,17 +571,38 @@ a {
 
 .catalog-filter-card {
   background: #fff;
-  border-radius: 1rem;
+  border-radius: 1.1rem;
   border: 1px solid rgba(20, 42, 56, 0.08);
   box-shadow: var(--shadow-card);
-  padding: 1rem;
+  padding: 1.15rem;
   display: grid;
-  gap: 0.95rem;
+  gap: 0;
 }
 
-.catalog-filter__group {
-  display: grid;
-  gap: 0.45rem;
+.catalog-filter-card > .catalog-filter__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+  padding: 0.62rem 0;
+}
+
+.catalog-filter-card > .catalog-filter__group:first-child {
+  padding-top: 0;
+}
+
+.catalog-filter-card > .catalog-filter__group:nth-child(4),
+.catalog-filter-card > .catalog-filter__group:nth-child(7) {
+  border-top: 1px solid rgba(20, 42, 56, 0.08);
+  margin-top: 0.35rem;
+  padding-top: 1rem;
+}
+
+.catalog-filter__group.is-disabled {
+  opacity: 0.45;
+}
+
+.catalog-filter__group.is-disabled .catalog-filter__trigger {
+  cursor: not-allowed;
 }
 
 .catalog-filter__label {
@@ -589,6 +610,13 @@ a {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-heading);
+}
+
+.catalog-filter-card .catalog-filter__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: rgba(20, 42, 56, 0.58);
 }
 
 .catalog-filter__trigger {
@@ -602,11 +630,31 @@ a {
   justify-content: space-between;
 }
 
+.catalog-filter-card .catalog-filter__trigger,
+.catalog-filter-card .catalog-filter__city-trigger {
+  width: 100%;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(20, 42, 56, 0.13);
+  background: #fdfcfa;
+  padding: 0 0.8rem;
+  font-size: 0.82rem;
+  color: rgba(20, 42, 56, 0.92);
+}
+
+.catalog-filter-card .catalog-filter__trigger:hover,
+.catalog-filter-card .catalog-filter__city-trigger:hover {
+  border-color: rgba(20, 42, 56, 0.26);
+}
+
 .catalog-filter__trigger:focus-visible {
   outline: 2px solid #c5a96a;
 }
 
 .catalog-filter__content {
+  z-index: 140;
+  min-width: var(--radix-select-trigger-width, 12rem);
   background: #fff;
   border: 1px solid rgba(20, 42, 56, 0.1);
   border-radius: 0.65rem;
@@ -638,6 +686,10 @@ a {
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+}
+
+.catalog-filter__city-trigger:focus-visible {
+  outline: 2px solid #c5a96a;
 }
 
 .catalog-filter__city-popover {
@@ -710,8 +762,9 @@ a {
 
 .catalog-slider__value {
   margin: 0;
-  font-size: 0.84rem;
-  color: rgba(20, 42, 56, 0.88);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(20, 42, 56, 0.82);
 }
 
 .catalog-slider {
@@ -719,32 +772,32 @@ a {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 1.6rem;
+  height: 1.7rem;
   padding-inline: 0.15rem;
 }
 
 .catalog-slider__track {
   position: relative;
   flex: 1;
-  height: 0.32rem;
+  height: 0.28rem;
   border-radius: 999px;
-  background: rgba(27, 42, 74, 0.22);
+  background: rgba(20, 42, 56, 0.13);
 }
 
 .catalog-slider__range {
   position: absolute;
   height: 100%;
   border-radius: 999px;
-  background: var(--navy-muted);
+  background: #234d63;
 }
 
 .catalog-slider__thumb {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 1.1rem;
+  height: 1.1rem;
   border-radius: 999px;
-  border: 2px solid var(--navy-muted);
+  border: 2px solid #234d63;
   background: #fff;
-  box-shadow: 0 1px 8px rgba(27, 42, 74, 0.26);
+  box-shadow: 0 1px 4px rgba(20, 42, 56, 0.2);
 }
 
 .catalog-slider__thumb:focus-visible {
@@ -753,22 +806,27 @@ a {
 }
 
 .catalog-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
 }
 
 .catalog-chip {
-  border: 1px solid rgba(20, 42, 56, 0.16);
-  border-radius: 999px;
-  background: #faf8f5;
-  padding: 0.28rem 0.65rem;
+  width: 100%;
+  min-height: 2.25rem;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(20, 42, 56, 0.14);
+  background: #fdfcfa;
+  font-size: 0.8rem;
+  padding: 0 0.6rem;
+  color: rgba(20, 42, 56, 0.82);
   text-transform: capitalize;
 }
 
 .catalog-chip.is-active {
-  border-color: #c5a96a;
-  background: rgba(197, 169, 106, 0.14);
+  background: #234d63;
+  border-color: #234d63;
+  color: #fdfcfa;
 }
 
 .catalog-toolbar {
