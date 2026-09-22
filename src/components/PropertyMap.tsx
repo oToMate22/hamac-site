@@ -6,7 +6,11 @@ import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 're
 import type { Property } from '../data/properties'
 import 'leaflet/dist/leaflet.css'
 
-type MapViewState = { center: [number, number]; zoom: number }
+export type MapViewState = {
+  center: [number, number]
+  zoom: number
+  bounds: { north: number; south: number; east: number; west: number }
+}
 
 type PropertyMapProps = {
   properties: Property[]
@@ -19,6 +23,24 @@ type PropertyMapProps = {
   initialZoom?: number
   onViewChange?: (view: MapViewState) => void
   fitPadding?: { topLeft: [number, number]; bottomRight: [number, number] }
+  autoFit?: boolean
+  fitAllSignal?: number
+  widenSignal?: number
+}
+
+function readMapView(map: ReturnType<typeof useMap>): MapViewState {
+  const center = map.getCenter()
+  const bounds = map.getBounds()
+  return {
+    center: [center.lat, center.lng],
+    zoom: map.getZoom(),
+    bounds: {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+    },
+  }
 }
 
 const formatPriceLabel = (value: number) => `${new Intl.NumberFormat('fr-FR').format(value)} €`
@@ -114,6 +136,8 @@ function FitBounds({
   skipFitOnMount,
   programmaticFitRef,
   fitPadding,
+  autoFit = true,
+  fitAllSignal = 0,
 }: {
   properties: Property[]
   isExpanded: boolean
@@ -121,12 +145,15 @@ function FitBounds({
   skipFitOnMount: boolean
   programmaticFitRef: { current: boolean }
   fitPadding?: { topLeft: [number, number]; bottomRight: [number, number] }
+  autoFit?: boolean
+  fitAllSignal?: number
 }) {
   const map = useMap()
   const lastFittedKeyRef = useRef<string | null>(null)
   const expandedFitKeyRef = useRef<string | null>(null)
   const userAdjustedViewRef = useRef(false)
   const skippedInitialFitRef = useRef(false)
+  const lastFitAllRef = useRef(0)
 
   useEffect(() => {
     const markUserAdjusted = (event: LeafletEvent) => {
@@ -144,6 +171,9 @@ function FitBounds({
   }, [map, programmaticFitRef])
 
   useEffect(() => {
+    const fitAllRequested = fitAllSignal !== lastFitAllRef.current
+    if (fitAllRequested) lastFitAllRef.current = fitAllSignal
+
     if (!properties.length) {
       lastFittedKeyRef.current = null
       expandedFitKeyRef.current = null
@@ -151,18 +181,20 @@ function FitBounds({
       return
     }
 
-    if (skipFitOnMount && !skippedInitialFitRef.current) {
+    if (skipFitOnMount && !skippedInitialFitRef.current && !fitAllRequested) {
       skippedInitialFitRef.current = true
       lastFittedKeyRef.current = fitBoundsKey
       if (isExpanded) expandedFitKeyRef.current = fitBoundsKey
       return
     }
 
+    if (!autoFit && !fitAllRequested && lastFittedKeyRef.current !== null) return
+
     const isNewDataset = lastFittedKeyRef.current !== fitBoundsKey
     const shouldFitExpanded = isExpanded && expandedFitKeyRef.current !== fitBoundsKey
 
-    if (!isNewDataset && !shouldFitExpanded) return
-    if (userAdjustedViewRef.current && !isNewDataset) return
+    if (!fitAllRequested && !isNewDataset && !shouldFitExpanded) return
+    if (!fitAllRequested && userAdjustedViewRef.current && !isNewDataset) return
 
     const bounds = latLngBounds(properties.map((entry) => [entry.lat, entry.lng] as [number, number]))
     const paddingTopLeft = fitPadding?.topLeft ?? [24, 24]
@@ -198,37 +230,64 @@ function FitBounds({
     fitPadding?.topLeft[1],
     fitPadding?.bottomRight[0],
     fitPadding?.bottomRight[1],
+    autoFit,
+    fitAllSignal,
   ])
+  return null
+}
+
+function MapWidenCommand({
+  widenSignal = 0,
+  onViewChange,
+}: {
+  widenSignal?: number
+  onViewChange?: (view: MapViewState) => void
+}) {
+  const map = useMap()
+  const lastWidenRef = useRef(0)
+
+  useEffect(() => {
+    if (!widenSignal || widenSignal === lastWidenRef.current) return
+    lastWidenRef.current = widenSignal
+    map.setZoom(Math.max(map.getZoom() - 1, map.getMinZoom()))
+    const timer = window.setTimeout(() => {
+      onViewChange?.(readMapView(map))
+    }, 220)
+    return () => window.clearTimeout(timer)
+  }, [map, widenSignal, onViewChange])
+
   return null
 }
 
 function MapViewReporter({
   onViewChange,
   programmaticFitRef,
+  reportInitialLoad = false,
 }: {
   onViewChange?: (view: MapViewState) => void
   programmaticFitRef: { current: boolean }
+  reportInitialLoad?: boolean
 }) {
   const map = useMap()
   const timerRef = useRef<number | null>(null)
+  const reportedInitialRef = useRef(false)
+
+  const report = (event: LeafletEvent) => {
+    if (!onViewChange || programmaticFitRef.current) return
+    const original = (event as LeafletEvent & { originalEvent?: Event }).originalEvent
+    if (!original) {
+      if (!reportInitialLoad || reportedInitialRef.current) return
+      reportedInitialRef.current = true
+    }
+    if (timerRef.current) window.clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => {
+      onViewChange(readMapView(map))
+    }, 200)
+  }
 
   useMapEvents({
-    moveend: () => {
-      if (!onViewChange || programmaticFitRef.current) return
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      timerRef.current = window.setTimeout(() => {
-        const center = map.getCenter()
-        onViewChange({ center: [center.lat, center.lng], zoom: map.getZoom() })
-      }, 200)
-    },
-    zoomend: () => {
-      if (!onViewChange || programmaticFitRef.current) return
-      if (timerRef.current) window.clearTimeout(timerRef.current)
-      timerRef.current = window.setTimeout(() => {
-        const center = map.getCenter()
-        onViewChange({ center: [center.lat, center.lng], zoom: map.getZoom() })
-      }, 200)
-    },
+    moveend: report,
+    zoomend: report,
   })
 
   useEffect(
@@ -452,6 +511,9 @@ export function PropertyMap({
   initialZoom,
   onViewChange,
   fitPadding,
+  autoFit = true,
+  fitAllSignal = 0,
+  widenSignal = 0,
 }: PropertyMapProps) {
   const programmaticFitRef = useRef(false)
   const hasInitialView =
@@ -496,9 +558,16 @@ export function PropertyMap({
           skipFitOnMount={hasInitialView}
           programmaticFitRef={programmaticFitRef}
           fitPadding={fitPadding}
+          autoFit={autoFit}
+          fitAllSignal={fitAllSignal}
         />
+        <MapWidenCommand widenSignal={widenSignal} onViewChange={onViewChange} />
         {onViewChange ? (
-          <MapViewReporter onViewChange={onViewChange} programmaticFitRef={programmaticFitRef} />
+          <MapViewReporter
+            onViewChange={onViewChange}
+            programmaticFitRef={programmaticFitRef}
+            reportInitialLoad={hasInitialView}
+          />
         ) : null}
         <PropertyMapMarkers
           properties={validProperties}

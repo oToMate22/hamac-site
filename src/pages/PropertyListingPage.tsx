@@ -15,6 +15,7 @@ import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
 import { usePageMeta } from '../utils/seo'
 import { getProperties, getRentalProperties, type FeaturedProperty } from '../services/apimo'
 import { type PropertySort } from '../hooks/useProperties'
+import type { MapViewState } from '../components/PropertyMap'
 const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) => ({ default: mod.PropertyMap })))
 
 const MAP_VIEW_STORAGE_KEY = 'hamac:catalog-map-view'
@@ -116,7 +117,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [cityFilterQuery, setCityFilterQuery] = useState('')
   const [widePreview, setWidePreview] = useState(false)
   const [desktopMapLayout, setDesktopMapLayout] = useState(false)
+  const [visibleZone, setVisibleZone] = useState<MapViewState['bounds'] | null>(null)
+  const [fitAllSignal, setFitAllSignal] = useState(0)
+  const [widenSignal, setWidenSignal] = useState(0)
   const openedAsMapViewRef = useRef(searchParams.get('view') === 'map')
+  const mapResultsRef = useRef<HTMLDivElement>(null)
+  const hoverOriginRef = useRef<'list' | 'map' | null>(null)
   const budgetSliderCap = mode === 'rent' ? 8000 : 1_950_000
   const budgetSliderStep = mode === 'rent' ? 100 : 50_000
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
@@ -306,7 +312,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }, [mode])
 
   const properties = (() => {
-    if (!apiProperties) return []
+    if (!apiProperties) return { listed: [] as Property[], catalog: [] as Property[] }
 
     const filters = {
       type: type.toLowerCase(),
@@ -341,14 +347,27 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       return true
     })
 
-    const sorted = [...filtered]
-    if (sort === 'price-asc') sorted.sort((a, b) => a.price - b.price)
-    if (sort === 'price-desc') sorted.sort((a, b) => b.price - a.price)
-    if (sort === 'surface') sorted.sort((a, b) => b.surface - a.surface)
-    if (sort === 'recent') sorted.sort((a, b) => (a.reference < b.reference ? 1 : -1))
+    const listed = filtered.filter((property) => {
+      if (visibleZone && isMapView) {
+        if (property.lat < visibleZone.south || property.lat > visibleZone.north) return false
+        if (property.lng < visibleZone.west || property.lng > visibleZone.east) return false
+      }
+      return true
+    })
 
-    return sorted
+    const applySort = (list: Property[]) => {
+      const sorted = [...list]
+      if (sort === 'price-asc') sorted.sort((a, b) => a.price - b.price)
+      if (sort === 'price-desc') sorted.sort((a, b) => b.price - a.price)
+      if (sort === 'surface') sorted.sort((a, b) => b.surface - a.surface)
+      if (sort === 'recent') sorted.sort((a, b) => (a.reference < b.reference ? 1 : -1))
+      return sorted
+    }
+
+    return { listed: applySort(listed), catalog: applySort(filtered) }
   })()
+  const catalogProperties = properties.catalog
+  const listedProperties = properties.listed
 
   const availableCities = (() => {
     if (!apiProperties) return []
@@ -395,17 +414,39 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next, { replace: true })
   }, [mode, searchParams, setSearchParams])
 
-  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q, radiusKm])
+  useEffect(() => setVisibleCount(32), [type, city, budgetParam, budgetMin, surface, rooms, sort, q, radiusKm, visibleZone])
   useEffect(() => {
     setCityFilterQuery(city === 'all' ? '' : city)
   }, [city])
 
   const isLoading = apiProperties === null && apiError === null
-  const propertiesForMap = !isLoading && !apiError ? properties : []
+  const zoneActive = Boolean(visibleZone && isMapView)
+  const propertiesForMap = !isLoading && !apiError ? catalogProperties : []
 
-  const handleMapViewChange = useCallback((view: SavedMapView) => {
-    writeSavedMapView(view)
+  const handleMapViewChange = useCallback((view: MapViewState) => {
+    writeSavedMapView({ center: view.center, zoom: view.zoom })
+    setVisibleZone(view.bounds)
   }, [])
+
+  const handleHoverFromList = useCallback((slug: string | null) => {
+    hoverOriginRef.current = 'list'
+    setHoveredPropertySlug(slug)
+  }, [])
+
+  const handleHoverFromMap = useCallback((slug: string | null) => {
+    hoverOriginRef.current = 'map'
+    setHoveredPropertySlug(slug)
+  }, [])
+
+  useEffect(() => {
+    if (!isMapView || !hoveredPropertySlug || hoverOriginRef.current !== 'map') return
+    const root = mapResultsRef.current
+    if (!root) return
+    const target = root.querySelector(`[data-property-slug="${CSS.escape(hoveredPropertySlug)}"]`)
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [hoveredPropertySlug, isMapView])
 
   const renderCatalogMap = (expanded: boolean, visible: boolean) => {
     if (apiError || isLoading) {
@@ -416,12 +457,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
         <PropertyMap
           properties={propertiesForMap}
           hoveredSlug={hoveredPropertySlug}
-          onHoverChange={setHoveredPropertySlug}
+          onHoverChange={expanded ? handleHoverFromMap : setHoveredPropertySlug}
           isVisible={visible}
           isExpanded={expanded}
           initialCenter={expanded ? restoreMapFrame?.center : undefined}
           initialZoom={expanded ? restoreMapFrame?.zoom : undefined}
           onViewChange={expanded ? handleMapViewChange : undefined}
+          autoFit={!expanded}
+          fitAllSignal={expanded ? fitAllSignal : 0}
+          widenSignal={expanded ? widenSignal : 0}
           fitPadding={
             expanded && desktopMapLayout
               ? { topLeft: [380, 24], bottomRight: [24, 24] }
@@ -708,7 +752,20 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           </aside>
           <div className="catalog-main">
             <div className="catalog-toolbar">
-              <p>{isLoading ? 'Chargement...' : apiError ? 'Erreur lors du chargement' : `${properties.length} biens trouvés`}</p>
+              <p>
+                {isLoading
+                  ? 'Chargement...'
+                  : apiError
+                    ? 'Erreur lors du chargement'
+                    : zoneActive
+                      ? (
+                          <>
+                            {listedProperties.length} bien{listedProperties.length !== 1 ? 's' : ''} dans cette zone
+                            <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
+                          </>
+                        )
+                      : `${listedProperties.length} biens trouvés`}
+              </p>
               <div className="catalog-toolbar__end">
                 <nav className="catalog-view-toggle" aria-label="Affichage des biens">
                   <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
@@ -740,23 +797,45 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               </div>
             ) : isMapView ? (
               <div className="catalog-map-view" role="region" aria-label="Carte des biens">
-                <div className="catalog-map-results">
-                  {properties.slice(0, visibleCount).map((property, index) => (
-                    <PropertyCard
-                      key={property.slug}
-                      property={property}
-                      light
-                      highlighted={hoveredPropertySlug === property.slug}
-                      onHoverChange={setHoveredPropertySlug}
-                      priorityImage={index < 3}
-                    />
-                  ))}
+                <div className="catalog-map-results" ref={mapResultsRef}>
+                  {listedProperties.length === 0 && zoneActive ? (
+                    <div className="catalog-map-empty">
+                      <p>Aucun bien dans cette zone</p>
+                      <div className="catalog-map-empty__actions">
+                        <button type="button" onClick={() => setWidenSignal((value) => value + 1)}>
+                          Élargir la carte
+                        </button>
+                        <button
+                          type="button"
+                          className="is-primary"
+                          onClick={() => {
+                            setVisibleZone(null)
+                            setFitAllSignal((value) => value + 1)
+                          }}
+                        >
+                          Voir tous les biens
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    listedProperties.slice(0, visibleCount).map((property, index) => (
+                      <div key={property.slug} data-property-slug={property.slug}>
+                        <PropertyCard
+                          property={property}
+                          light
+                          highlighted={hoveredPropertySlug === property.slug}
+                          onHoverChange={handleHoverFromList}
+                          priorityImage={index < 3}
+                        />
+                      </div>
+                    ))
+                  )}
                 </div>
                 <div className="catalog-map-stage">{renderCatalogMap(true, true)}</div>
               </div>
             ) : (
               <div className="catalog-grid">
-                {properties.slice(0, visibleCount).map((property, index) => (
+                {listedProperties.slice(0, visibleCount).map((property, index) => (
                   <motion.div
                     key={property.slug}
                     initial={{ opacity: 0, y: 40 }}

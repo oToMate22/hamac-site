@@ -852,6 +852,66 @@ a {
   margin-bottom: 1.2rem;
 }
 
+.catalog-toolbar__hint {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgba(74, 69, 64, 0.58);
+}
+
+.catalog-map-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.85rem 0.55rem 1rem;
+  color: #1b2a4a;
+}
+
+.catalog-map-empty p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.catalog-map-empty__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.catalog-map-empty__actions button {
+  width: 100%;
+  min-height: 2.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 42, 56, 0.16);
+  background: #fff;
+  color: #1b2a4a;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalog-map-empty__actions button:hover {
+  background: #faf8f5;
+}
+
+.catalog-map-empty__actions button:focus-visible {
+  outline: 2px solid #c5a96a;
+  outline-offset: 2px;
+}
+
+.catalog-map-empty__actions .is-primary {
+  background: #234d63;
+  border-color: #234d63;
+  color: #fdfcfa;
+}
+
+.catalog-map-empty__actions .is-primary:hover {
+  background: #1b3d4f;
+}
+
 .catalog-toolbar__end {
   display: flex;
   align-items: center;
@@ -925,6 +985,11 @@ a {
 
 .catalog-map-results > * {
   flex: 0 0 min(78vw, 18.5rem);
+}
+
+.catalog-map-results .catalog-map-empty {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 .catalog-map-results .bien-card {
