@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, socialOgImage } from '../config/site'
+import { breadcrumbJsonLd } from '../seo/jsonld'
 
 type PageMeta = {
   title: string
@@ -54,22 +55,6 @@ const upsertLink = (rel: string, href: string, extra?: Record<string, string>) =
   node.setAttribute('href', href)
 }
 
-const SECTION_LABELS: Record<string, string> = {
-  acheter: 'Acheter',
-  louer: 'Louer',
-  vendre: 'Vendre',
-  estimation: 'Estimation',
-  'off-market': 'Off-market',
-  quartiers: 'Communes',
-  agence: "L'agence",
-  contact: 'Contact',
-  investir: 'Investir',
-  blog: 'Journal',
-  'mentions-legales': 'Mentions légales',
-  honoraires: 'Honoraires',
-  confidentialite: 'Confidentialité',
-}
-
 export const applyJsonLd = (id: string, data: object | null) => {
   const existing = document.getElementById(id)
   if (!data) {
@@ -84,30 +69,6 @@ export const applyJsonLd = (id: string, data: object | null) => {
   node.type = 'application/ld+json'
   node.textContent = JSON.stringify(data)
   if (!existing) document.head.appendChild(node)
-}
-
-const breadcrumbJsonLd = (pathname: string) => {
-  const parts = pathname.split('/').filter(Boolean)
-  const items = [
-    { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${SITE_URL}/` },
-  ]
-  let acc = ''
-  parts.forEach((part, index) => {
-    acc += `/${part}`
-    const isLast = index === parts.length - 1
-    const name = SECTION_LABELS[part] ?? decodeURIComponent(part).replace(/-/g, ' ')
-    items.push({
-      '@type': 'ListItem',
-      position: index + 2,
-      name: isLast ? name.charAt(0).toUpperCase() + name.slice(1) : name,
-      item: canonicalUrl(acc),
-    })
-  })
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: items,
-  }
 }
 
 export const applyPageMeta = ({

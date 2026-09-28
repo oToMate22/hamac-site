@@ -1,20 +1,18 @@
 /**
- * Balayage des photos d'une carte de bien — au doigt, sur mobile uniquement.
- * Une seule implémentation pour tout le site : les cartes rendues par React
- * (PropertyCard) et celles injectées en HTML par l'accueil (HomePage).
+ * Balayage des photos d'une carte de bien.
+ * Mobile : glisser au doigt. Desktop : pastilles, flèches au survol, deux doigts sur le pad.
+ * Une seule implémentation pour React (PropertyCard) et l'accueil (HomePage).
  *
  * Les photos autres que la première ne sont montées qu'au moment du geste :
  * l'API renvoie 91 biens à 12 photos de médiane, tout charger est exclu.
  */
 
-const REQUETE_MOBILE = '(max-width: 767px)'
 const SEUIL = 8          // px de mouvement avant de considérer qu'on glisse
 const FRANCHI = 0.18     // part de la largeur à franchir pour changer de photo
 const SUPPRESSION = 16   // au-delà, c'est un vrai glissement : on annule le clic
 const MAX_PASTILLES = 10
 
 export function initPhotoSwipe(root: ParentNode = document): number {
-  if (!window.matchMedia(REQUETE_MOBILE).matches) return 0
   let initialisees = 0
 
   root.querySelectorAll<HTMLElement>('.bien-card__img[data-photos]').forEach((cadre) => {
@@ -30,22 +28,37 @@ export function initPhotoSwipe(root: ParentNode = document): number {
     const carte = (cadre.closest('.bien-card') as HTMLElement) ?? cadre
     const titre = carte.querySelector('.bien-card__title')?.textContent?.trim() ?? ''
 
-    // le rail : une bande large d'une photo, qu'on translate
     const rail = document.createElement('div')
     rail.className = 'bien-card__track'
     const existante = cadre.querySelector('img')
     if (existante) {
       existante.dataset.index = '0'
+      existante.draggable = false
       rail.appendChild(existante)
     }
     cadre.appendChild(rail)
     const montees = new Set<number>(existante ? [0] : [])
 
-    // les pastilles
     const pastilles = document.createElement('span')
     pastilles.className = 'bien-card__dots'
-    pastilles.setAttribute('aria-hidden', 'true')
+    pastilles.setAttribute('role', 'group')
+    pastilles.setAttribute('aria-label', 'Photos du bien')
     cadre.appendChild(pastilles)
+
+    const prev = document.createElement('button')
+    prev.type = 'button'
+    prev.className = 'bien-card__nav bien-card__nav--prev'
+    prev.setAttribute('aria-label', 'Photo précédente')
+    prev.textContent = '‹'
+
+    const next = document.createElement('button')
+    next.type = 'button'
+    next.className = 'bien-card__nav bien-card__nav--next'
+    next.setAttribute('aria-label', 'Photo suivante')
+    next.textContent = '›'
+
+    cadre.appendChild(prev)
+    cadre.appendChild(next)
 
     let index = 0
     let depart: number | null = null
@@ -53,6 +66,8 @@ export function initPhotoSwipe(root: ParentNode = document): number {
     let glisse = false
     let justeGlisse = false
     let minuteur: number | undefined
+    let roue = 0
+    let roueVerrou = false
 
     const fenetre = (i: number): number[] => {
       const max = Math.min(photos.length, MAX_PASTILLES)
@@ -71,7 +86,6 @@ export function initPhotoSwipe(root: ParentNode = document): number {
       img.loading = 'lazy'
       img.decoding = 'async'
       img.draggable = false
-      // on insère à sa place, pour que le rail reste dans l'ordre des photos
       const suivant = Array.from(rail.children).find((el) => Number((el as HTMLElement).dataset.index) > i)
       rail.insertBefore(img, suivant ?? null)
     }
@@ -79,10 +93,16 @@ export function initPhotoSwipe(root: ParentNode = document): number {
     const majPastilles = () => {
       pastilles.replaceChildren()
       fenetre(index).forEach((p) => {
-        const point = document.createElement('i')
+        const point = document.createElement('button')
+        point.type = 'button'
         point.className = 'bien-card__dot' + (p === index ? ' is-active' : '')
+        point.dataset.photo = String(p)
+        point.setAttribute('aria-label', `Photo ${p + 1} sur ${photos.length}`)
+        point.setAttribute('aria-current', p === index ? 'true' : 'false')
         pastilles.appendChild(point)
       })
+      prev.hidden = index <= 0
+      next.hidden = index >= photos.length - 1
     }
 
     const aller = (i: number) => {
@@ -97,8 +117,15 @@ export function initPhotoSwipe(root: ParentNode = document): number {
       majPastilles()
     }
 
+    const bloquerClicCarte = () => {
+      justeGlisse = true
+      window.clearTimeout(minuteur)
+      minuteur = window.setTimeout(() => { justeGlisse = false }, 400)
+    }
+
     cadre.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse') return
+      if ((e.target as HTMLElement).closest('.bien-card__nav, .bien-card__dots')) return
       depart = e.clientX
       dx = 0
       glisse = false
@@ -109,7 +136,7 @@ export function initPhotoSwipe(root: ParentNode = document): number {
       dx = e.clientX - depart
       if (!glisse && Math.abs(dx) > SEUIL) {
         glisse = true
-        monter(index + 1)   // c'est ici, et seulement ici, que la photo suivante est demandée
+        monter(index + 1)
         monter(index - 1)
       }
       if (!glisse) return
@@ -122,17 +149,45 @@ export function initPhotoSwipe(root: ParentNode = document): number {
       const seuil = cadre.clientWidth * FRANCHI
       if (glisse && Math.abs(dx) > seuil) aller(index + (dx < 0 ? 1 : -1))
       else aller(index)
-      if (glisse && Math.abs(dx) > SUPPRESSION) {
-        justeGlisse = true
-        window.clearTimeout(minuteur)
-        minuteur = window.setTimeout(() => { justeGlisse = false }, 400)
-      }
+      if (glisse && Math.abs(dx) > SUPPRESSION) bloquerClicCarte()
       depart = null
     }
     cadre.addEventListener('pointerup', relacher)
     cadre.addEventListener('pointercancel', () => { depart = null; aller(index) })
 
-    // un appui franc ouvre la fiche ; un glissement ne l'ouvre pas
+    cadre.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+      e.preventDefault()
+      roue += e.deltaX
+      const seuil = Math.max(40, cadre.clientWidth * FRANCHI)
+      if (roueVerrou || Math.abs(roue) < seuil) return
+      aller(index + (roue > 0 ? 1 : -1))
+      roue = 0
+      roueVerrou = true
+      window.setTimeout(() => { roueVerrou = false }, 320)
+    }, { passive: false })
+
+    pastilles.addEventListener('click', (e) => {
+      const point = (e.target as HTMLElement).closest<HTMLElement>('[data-photo]')
+      if (!point) return
+      e.preventDefault()
+      e.stopPropagation()
+      const cible = Number(point.dataset.photo)
+      if (!Number.isFinite(cible) || cible === index) return
+      aller(cible)
+    }, true)
+
+    prev.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      aller(index - 1)
+    })
+    next.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      aller(index + 1)
+    })
+
     carte.addEventListener('click', (e) => {
       if (!justeGlisse) return
       e.preventDefault()

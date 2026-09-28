@@ -1,10 +1,9 @@
-import { copyFile, mkdir, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer'
 import { collectRoutes } from './collect-routes'
+import { fetchListingsForHead, injectRouteHeads } from './inject-route-heads'
 import { loadEnvFiles } from './load-env'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -34,10 +33,24 @@ async function waitForServer(url: string) {
   throw new Error(`vite preview injoignable sur ${url}`)
 }
 
-async function renderRoute(
-  browser: puppeteer.Browser,
-  route: string,
-) {
+async function launchBrowser() {
+  if (process.env.VERCEL) {
+    const chromium = (await import('@sparticuz/chromium')).default
+    return puppeteer.launch({
+      headless: true,
+      executablePath: await chromium.executablePath(),
+      args: chromium.args,
+      defaultViewport: { width: 1440, height: 900 },
+    })
+  }
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox'],
+    defaultViewport: { width: 1440, height: 900 },
+  })
+}
+
+async function renderRoute(browser: puppeteer.Browser, route: string) {
   const page = await browser.newPage()
   try {
     const url = `${BASE}${BASE_PATH}${route}`
@@ -54,6 +67,7 @@ async function renderRoute(
       await page.waitForSelector('.detail-gallery__main img', { timeout: 15000 }).catch(() => undefined)
     }
     const html = await page.content()
+    const { mkdir, writeFile } = await import('node:fs/promises')
     const dir = outputDir(route)
     await mkdir(dir, { recursive: true })
     await writeFile(path.join(dir, 'index.html'), html)
@@ -62,24 +76,17 @@ async function renderRoute(
   }
 }
 
-async function writeSpaShells() {
-  const shellHtml = path.join(DIST, 'index.html')
-  if (!existsSync(shellHtml)) throw new Error('dist/index.html absent après vite build')
-  const frDir = path.join(DIST, BASE_PATH)
-  await mkdir(frDir, { recursive: true })
-  await copyFile(shellHtml, path.join(frDir, 'index.html'))
-  await copyFile(shellHtml, path.join(frDir, '200.html'))
-  await copyFile(shellHtml, path.join(frDir, '404.html'))
-  await copyFile(shellHtml, path.join(DIST, '404.html'))
+const routes = await collectRoutes()
+const listings = await fetchListingsForHead()
+await injectRouteHeads(routes, listings)
+
+if (process.env.SKIP_PRERENDER === '1') {
+  console.warn('SKIP_PRERENDER=1 : Chromium ignoré, les pages gardent le <head> injecté.')
+  process.exit(0)
 }
 
-const routes = await collectRoutes()
+const CHROME_BUDGET_MS = Number(process.env.PRERENDER_CHROME_MS ?? (process.env.VERCEL ? 6 * 60 * 1000 : 0)) || 0
 
-if (process.env.VERCEL) {
-  console.warn('Vercel : pré-rendu Puppeteer ignoré (Chrome système absent sur l’image de build).')
-  await writeSpaShells()
-  console.log(`${routes.size} routes conservées pour le sitemap ; HTML servi par le shell SPA.`)
-} else {
 const server = spawn(
   'npx',
   ['vite', 'preview', '--host', '127.0.0.1', '--port', PREVIEW_PORT, '--strictPort'],
@@ -91,71 +98,82 @@ const failures: string[] = []
 let ok = 0
 
 try {
-  await waitForServer(`${BASE}${BASE_PATH}/`)
-  browser = await puppeteer.launch({ headless: true })
-  const queue = [...routes]
-  const workers = 2
-  await Promise.all(
-    Array.from({ length: workers }, async () => {
-      while (queue.length) {
-        const route = queue.shift()
-        if (!route) return
+  const runChrome = async () => {
+    await waitForServer(`${BASE}${BASE_PATH}/`)
+    browser = await launchBrowser()
+    const queue = [...routes]
+    const workers = 2
+    await Promise.all(
+      Array.from({ length: workers }, async () => {
+        while (queue.length) {
+          const route = queue.shift()
+          if (!route) return
+          try {
+            await renderRoute(browser!, route)
+            ok++
+            console.log(`OK ${route}`)
+          } catch (error) {
+            failures.push(route)
+            console.error(`ÉCHEC ${route} : ${(error as Error).message}`)
+          }
+        }
+      }),
+    )
+
+    if (failures.length) {
+      const retry = [...failures]
+      failures.length = 0
+      for (const route of retry) {
         try {
           await renderRoute(browser!, route)
           ok++
-          console.log(`OK ${route}`)
+          console.log(`OK (retry) ${route}`)
         } catch (error) {
           failures.push(route)
-          console.error(`ÉCHEC ${route} : ${(error as Error).message}`)
+          console.error(`ÉCHEC (retry) ${route} : ${(error as Error).message}`)
         }
       }
-    }),
-  )
-
-  if (failures.length) {
-    const retry = [...failures]
-    failures.length = 0
-    for (const route of retry) {
-      try {
-        await renderRoute(browser!, route)
-        ok++
-        console.log(`OK (retry) ${route}`)
-      } catch (error) {
-        failures.push(route)
-        console.error(`ÉCHEC (retry) ${route} : ${(error as Error).message}`)
-      }
     }
+
+    const { mkdir, writeFile } = await import('node:fs/promises')
+    const notFoundPage = await browser.newPage()
+    await notFoundPage.goto(`${BASE}${BASE_PATH}/route-inexistante-test`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 45000,
+    })
+    await notFoundPage.waitForSelector('h1', { timeout: 15000 })
+    const notFound = await notFoundPage.content()
+    await notFoundPage.close()
+    await writeFile(path.join(DIST, '404.html'), notFound)
+    await mkdir(path.join(DIST, BASE_PATH), { recursive: true })
+    await writeFile(path.join(DIST, BASE_PATH, '404.html'), notFound)
   }
 
-  const notFoundPage = await browser.newPage()
-  await notFoundPage.goto(`${BASE}${BASE_PATH}/route-inexistante-test`, {
-    waitUntil: 'domcontentloaded',
-    timeout: 45000,
-  })
-  await notFoundPage.waitForSelector('h1', { timeout: 15000 })
-  const notFound = await notFoundPage.content()
-  await notFoundPage.close()
-  await writeFile(path.join(DIST, '404.html'), notFound)
-  await mkdir(path.join(DIST, BASE_PATH), { recursive: true })
-  await writeFile(path.join(DIST, BASE_PATH, '404.html'), notFound)
-  const homeHtml = path.join(DIST, BASE_PATH, 'index.html')
-  const shellHtml = path.join(DIST, 'index.html')
-  await copyFile(existsSync(homeHtml) ? homeHtml : shellHtml, path.join(DIST, BASE_PATH, '200.html'))
+  if (CHROME_BUDGET_MS > 0) {
+    await Promise.race([
+      runChrome(),
+      new Promise((_, reject) => {
+        setTimeout(
+          () => reject(new Error(`budget Chromium ${Math.round(CHROME_BUDGET_MS / 1000)}s dépassé`)),
+          CHROME_BUDGET_MS,
+        )
+      }),
+    ])
+  } else {
+    await runChrome()
+  }
+} catch (error) {
+  console.warn(
+    `Chromium indisponible (${(error as Error).message}). Les pages conservent le <head> injecté (option C).`,
+  )
 } finally {
   await browser?.close()
   server.kill()
 }
 
-console.log(`\n${ok}/${routes.size} routes pré-rendues`)
+if (ok) console.log(`\n${ok}/${routes.size} routes pré-rendues (body complet)`)
 if (failures.length) {
-  const quotaHint = failures.length > 3
-  console.error(`Pré-rendu incomplet (${failures.length} route(s) en échec). Le dossier dist/ du build Vite est conservé.`)
-  if (quotaHint) {
-    console.error(
-      'Si Apimo renvoie 429, relancer `npm run sync:routes` hors quota puis reconstruire. Les pages déjà écrites dans dist/ restent utilisables.',
-    )
-  }
-  console.error(`Routes en échec : ${failures.join(', ')}`)
-  process.exit(1)
-}
+  console.warn(
+    `Pré-rendu Chromium incomplet (${failures.length} route(s)). Le <head> injecté reste en place pour ces URLs : ${failures.join(', ')}`,
+  )
 }

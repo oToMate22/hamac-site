@@ -631,11 +631,16 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     }
 
     const initFeatured = async () => {
+      const grid = document.querySelector<HTMLElement>('.biens-grid')
+      const showStatus = (message: string) => {
+        if (!grid) return
+        grid.innerHTML = `<p class="biens-grid__status">${message}</p>`
+      }
+
       try {
         const featured = await getProperties()
         if (cancelled) return
 
-        const grid = document.querySelector<HTMLElement>('.biens-grid')
         if (grid && featured.length) {
           const items = featured.slice(0, 6)
           const toCard = (p: FeaturedProperty, i: number) => {
@@ -670,10 +675,14 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
 
           grid.innerHTML = items.map(toCard).join('')
           initPhotoSwipe(grid)
+        } else {
+          showStatus('Aucun bien à afficher pour le moment.')
         }
       } catch (err) {
-        // Si l'API Apimo échoue, on conserve les cartes mock existantes.
         console.error('[apimo] getProperties() error:', err)
+        if (!cancelled) {
+          showStatus('Les biens n’ont pas pu être chargés. Consultez le catalogue pour voir l’offre en cours.')
+        }
       }
 
       const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-biens-filter]'))

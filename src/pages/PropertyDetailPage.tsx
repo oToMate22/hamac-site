@@ -11,6 +11,7 @@ import {
   type FeaturedProperty,
 } from '../services/apimo'
 import { AGENCY } from '../config/site'
+import { listingDocumentTitle, listingMetaDescription } from '../seo/listingTitle'
 import { listingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 import { PagePlaceholder } from './PagePlaceholder'
@@ -195,10 +196,8 @@ export function PropertyDetailPage() {
     }
 
     return {
-      title: `${property.title} à ${property.city} — Hamac Investissements & Patrimoine`,
-      description:
-        property.description?.slice(0, 160) ??
-        `${property.title} à ${property.city}. Contactez Hamac pour visiter ce bien.`,
+      title: listingDocumentTitle(property),
+      description: listingMetaDescription(property),
       robots: 'index,follow',
       ogImage: property.images[0],
       jsonLd: [{ id: 'ld-listing', data: listingJsonLd(property, `${listingPath}/${propertyId}`) }],

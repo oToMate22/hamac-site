@@ -1,6 +1,7 @@
 import { AGENCY, SITE_NAME, SITE_URL, canonicalUrl, toAbsoluteUrl } from '../config/site'
 import { HAMAC_SOCIAL_LINKS } from '../data/socialLinks'
 import type { FeaturedProperty } from '../services/apimo'
+import { listingHeadline, listingMetaDescription } from './listingTitle'
 
 export const realEstateAgentJsonLd = (areaServed?: string | string[]) => ({
   '@context': 'https://schema.org',
@@ -24,8 +25,8 @@ export const realEstateAgentJsonLd = (areaServed?: string | string[]) => ({
 export const listingJsonLd = (property: FeaturedProperty, pathname: string) => ({
   '@context': 'https://schema.org',
   '@type': 'RealEstateListing',
-  name: `${property.title} à ${property.city}`,
-  description: property.description?.slice(0, 300) ?? `${property.title} à ${property.city}`,
+  name: listingHeadline(property),
+  description: listingMetaDescription(property),
   url: canonicalUrl(pathname),
   image: property.images.map(toAbsoluteUrl),
   address: {
@@ -72,3 +73,41 @@ export const blogPostingJsonLd = (post: {
   },
   url: canonicalUrl(`/blog/${post.slug}`),
 })
+
+const SECTION_LABELS: Record<string, string> = {
+  acheter: 'Acheter',
+  louer: 'Louer',
+  vendre: 'Vendre',
+  estimation: 'Estimation',
+  'off-market': 'Off-market',
+  quartiers: 'Communes',
+  agence: "L'agence",
+  contact: 'Contact',
+  investir: 'Investir',
+  blog: 'Journal',
+  'mentions-legales': 'Mentions légales',
+  honoraires: 'Honoraires',
+  confidentialite: 'Confidentialité',
+}
+
+export const breadcrumbJsonLd = (pathname: string) => {
+  const parts = pathname.split('/').filter(Boolean)
+  const items = [{ '@type': 'ListItem', position: 1, name: 'Accueil', item: `${SITE_URL}/` }]
+  let acc = ''
+  parts.forEach((part, index) => {
+    acc += `/${part}`
+    const isLast = index === parts.length - 1
+    const name = SECTION_LABELS[part] ?? decodeURIComponent(part).replace(/-/g, ' ')
+    items.push({
+      '@type': 'ListItem',
+      position: index + 2,
+      name: isLast ? name.charAt(0).toUpperCase() + name.slice(1) : name,
+      item: canonicalUrl(acc),
+    })
+  })
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items,
+  }
+}
