@@ -10,6 +10,7 @@ import {
   type EnergyRating,
   type FeaturedProperty,
 } from '../services/apimo'
+import { AGENCY } from '../config/site'
 import { listingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 import { PagePlaceholder } from './PagePlaceholder'
@@ -595,7 +596,7 @@ export function PropertyDetailPage() {
               </div>
             </section>
 
-            <section className="detail-card">
+            <section className="detail-card" id="demande-visite">
               <h2>Intéressé par ce bien ?</h2>
 
               <div className="detail-contact-agent">
@@ -697,6 +698,22 @@ export function PropertyDetailPage() {
           </header>
           <div className="catalog-grid">{similar.map((entry) => <PropertyCard key={entry.slug} property={entry} light />)}</div>
         </section>
+
+        <div className="detail-mobile-cta">
+          <a
+            className="detail-mobile-cta__btn detail-mobile-cta__btn--call"
+            href={`tel:${agent?.phone ?? AGENCY.telephone}`}
+            aria-label="Appeler l'agence au sujet de ce bien"
+          >
+            Appeler
+          </a>
+          <a
+            className="detail-mobile-cta__btn detail-mobile-cta__btn--visit"
+            href="#demande-visite"
+          >
+            Demander une visite
+          </a>
+        </div>
       </div>
 
       {isLightboxOpen ? (

@@ -1725,6 +1725,76 @@ a {
   }
 }
 
+/* Mobile — la fiche bien : la galerie, puis le prix et le contact, puis le reste.
+   On aplatit uniquement la colonne principale : c'est un <div> neutre, aucune sémantique
+   n'est perdue, et ses blocs deviennent des éléments de grille qui acceptent `order`.
+   ⚠️ Ne jamais appliquer display:contents à l'<aside> : il perdrait son rôle de repère
+   pour les lecteurs d'écran. */
+@media (max-width: 1023px) {
+  .detail-layout > div:first-child { display: contents; }
+  .detail-layout .detail-gallery { order: 1; min-width: 0; }
+  .detail-layout .detail-side { order: 2; position: static; min-width: 0; }
+  .detail-layout .detail-card { order: 3; min-width: 0; }
+
+  /* la cible de l'ancre de la barre ne doit pas passer sous le header collant */
+  .detail-side > .detail-card:not(.detail-price) { scroll-margin-top: calc(var(--header-h) + 1rem); }
+
+  /* la barre recouvre 68 px en bas : la page doit finir au-dessus */
+  .detail-page { padding-bottom: 5.25rem; }
+  .detail-page.section--cream { padding-bottom: 5.25rem; }
+
+  /* « ← Retour aux biens » fait 21 px de haut aujourd'hui : sous le seuil tactile de 44 px */
+  .detail-back a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+}
+
+/* Barre d'action mobile de la fiche bien — masquée dès 1024 px. */
+.detail-mobile-cta { display: none; }
+
+@media (max-width: 1023px) {
+  .detail-mobile-cta {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 900;                 /* au-dessus du header (100), sous la lightbox (950) */
+    display: flex; gap: 0.5rem;
+    padding: 0.625rem 0.75rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
+    background: var(--navy);      /* le bleu et le noir de charte sont illisibles sur fond sombre */
+    box-shadow: 0 -10px 28px rgba(20, 42, 56, 0.30);
+  }
+
+  .detail-mobile-cta .detail-mobile-cta__btn {
+    flex: 1; min-height: 3rem;    /* 48 px : au-dessus du seuil de 44 px */
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 0.625rem;
+    font-size: 0.9375rem; font-weight: 600; text-decoration: none;
+  }
+
+  .detail-mobile-cta .detail-mobile-cta__btn--call {
+    color: var(--cream); border: 1px solid rgba(247, 244, 239, 0.45);
+  }
+
+  .detail-mobile-cta .detail-mobile-cta__btn--visit {
+    background: var(--cream); color: var(--navy);
+  }
+}
+
+@media (max-width: 389px) {
+  .detail-gallery__thumbs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    margin-top: 0.45rem;
+    padding-bottom: 0.1rem;
+  }
+
+  .detail-gallery__thumbs .detail-thumb {
+    flex: 0 0 4.5rem;
+  }
+
+  .detail-gallery__thumbs .detail-thumb img {
+    aspect-ratio: 1;
+  }
+}
+
 .detail-map {
   width: 100%;
   height: 320px;
@@ -2133,6 +2203,7 @@ a {
 
 .estimation-hero {
   position: relative;
+  z-index: 1;
   min-height: calc(58vh + var(--header-h));
   display: flex;
   flex-direction: column;
@@ -2197,8 +2268,8 @@ a {
 
 .estimation-highlights {
   position: relative;
-  z-index: 3;
-  margin-top: -1.35rem;
+  z-index: 2;
+  margin-top: -0.45rem;
   padding-bottom: 0.35rem;
 }
 
@@ -2211,7 +2282,8 @@ a {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.85rem 1rem;
+  min-width: 0;
+  padding: 0.85rem 1.1rem;
   border-radius: 0.95rem;
   background: #fff;
   border: 1px solid rgba(20, 42, 56, 0.08);
@@ -3202,6 +3274,7 @@ a {
 
 .selling-hero {
   position: relative;
+  z-index: 1;
   min-height: calc(68vh + var(--header-h));
   display: flex;
   flex-direction: column;
@@ -3259,6 +3332,27 @@ a {
   margin: 0;
   max-width: 44rem;
   color: rgba(253, 252, 250, 0.92);
+}
+
+.selling-hero__cta {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(3.4rem, 7.5vw, 5.6rem);
+  z-index: 5;
+  transform: translateX(-50%);
+  max-width: min(36rem, calc(100% - 2.4rem));
+  justify-content: center;
+  text-align: center;
+  animation: none;
+}
+
+.selling-hero__cta .hero__secondary-arrow {
+  animation: none;
+  transition: transform 0.2s ease;
+}
+
+.selling-hero__cta:hover .hero__secondary-arrow {
+  transform: translateX(2px);
 }
 
 .selling-steps {
@@ -6723,6 +6817,10 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   padding-block: clamp(2.35rem, 6vw, 4rem);
 }
 
+.detail-page.section--cream {
+  padding-top: calc(var(--header-h) + 1.2rem);
+}
+
 /* Estimation page uses hero + wave layout (no extra top padding on main) */
 .estimation-page.section--cream {
   padding-top: 0;
@@ -7334,6 +7432,56 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-on-dark-muted);
+}
+
+/* Mobile — la carte de bien : on balaie les photos au doigt.
+   Le rail est large d'une photo et on le translate ; les pastilles disent où on en est. */
+@media (max-width: 767px) {
+  .bien-card__img {
+    position: relative;      /* les pastilles se posent dessus */
+    touch-action: pan-y;     /* le geste horizontal est à nous, le vertical reste au défilement */
+  }
+
+  .bien-card__track {
+    display: flex;
+    width: 100%;             /* large d'une photo : translate3d(-100%) = une photo */
+    height: 100%;
+    will-change: transform;
+  }
+
+  .bien-card__track img {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* au doigt, le zoom au survol ne se déclenche jamais au bon moment */
+  .bien-card:hover .bien-card__img img { transform: none; }
+
+  .bien-card__dots {
+    position: absolute;
+    left: 50%;
+    bottom: 0.5rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.28rem;
+    z-index: 2;
+  }
+
+  .bien-card__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(253, 252, 250, 0.55);
+    box-shadow: 0 1px 3px rgba(20, 42, 56, 0.45);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .bien-card__dot.is-active {
+    background: #fdfcfa;
+    transform: scale(1.25);
+  }
 }
 
 .biens-cta-wrap {

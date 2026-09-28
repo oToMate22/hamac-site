@@ -51,6 +51,12 @@ export function SellingPage() {
             De l&apos;estimation à la signature, nous vous accompagnons avec précision et transparence.
           </p>
         </div>
+        <Link to="/estimation" className="hero__secondary selling-hero__cta">
+          Vous vendez&nbsp;? Estimez votre bien gratuitement
+          <span className="hero__secondary-arrow" aria-hidden="true">
+            →
+          </span>
+        </Link>
         <div className="wave wave--hero-bottom" aria-hidden="true">
           <svg viewBox="0 0 1440 100" preserveAspectRatio="none" focusable="false">
             <path className="wave__path" d="M0,58 C230,44 470,70 760,50 C1010,34 1240,62 1440,46 L1440,100 L0,100 Z" />
