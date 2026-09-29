@@ -19,16 +19,30 @@ function parseCsv(text) {
   })
 }
 
+function decodePath(pathname) {
+  return pathname
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment)
+      } catch {
+        return segment
+      }
+    })
+    .join('/')
+}
+
 const rows = parseCsv(await readFile(MAPPING, 'utf8'))
 const redirects = JSON.parse(await readFile(REDIRECTS, 'utf8'))
 const vercel = JSON.parse(await readFile(VERCEL, 'utf8'))
 
-const bySource = new Map(redirects.map((entry) => [entry.source, entry]))
+const bySource = new Map(redirects.map((entry) => [decodePath(entry.source), entry]))
 const gaps = []
 let identities = 0
 
 for (const row of rows) {
-  const rule = bySource.get(row.ancienne_url)
+  const source = decodePath(row.ancienne_url)
+  const rule = bySource.get(source)
   if (row.regle_a_creer === 'non') {
     identities++
     if (rule) {
@@ -45,23 +59,46 @@ for (const row of rows) {
   }
 }
 
+const csvSources = new Set(rows.map((row) => decodePath(row.ancienne_url)))
 for (const entry of redirects) {
-  const row = rows.find((item) => item.ancienne_url === entry.source)
-  if (!row) gaps.push(`en trop : ${entry.source}`)
+  if (!csvSources.has(decodePath(entry.source))) gaps.push(`en trop : ${entry.source}`)
 }
+
+const encodedPlus = []
+const loops = []
+for (const entry of vercel.redirects ?? []) {
+  if (/%2B/i.test(entry.source)) encodedPlus.push(entry.source)
+  if (entry.source === entry.destination) loops.push(entry.source)
+}
+
+const sourceCount = (await readFile(VERCEL, 'utf8')).split('"source"').length - 1
 
 console.log(`CSV : ${rows.length} URLs`)
 console.log(`redirections : ${redirects.length}`)
 console.log(`identités : ${identities}`)
 console.log(`vercel redirects : ${vercel.redirects.length}`)
+console.log(`clés "source" : ${sourceCount}`)
 console.log(`écart : ${gaps.length}`)
+if (encodedPlus.length) {
+  console.error(`%2B dans ${encodedPlus.length} source(s)`)
+  for (const source of encodedPlus.slice(0, 10)) console.error(`  ${source}`)
+  process.exit(1)
+}
+if (loops.length) {
+  console.error(`boucle : ${loops.join(', ')}`)
+  process.exit(1)
+}
+if (sourceCount > 2048) {
+  console.error(`trop de "source" : ${sourceCount} > 2048`)
+  process.exit(1)
+}
 if (gaps.length) {
   for (const gap of gaps.slice(0, 40)) console.error(`  ${gap}`)
   if (gaps.length > 40) console.error(`  … ${gaps.length - 40} de plus`)
   process.exit(1)
 }
-if (vercel.redirects.length !== 722) {
-  console.error(`vercel.json doit contenir 722 redirects, pas ${vercel.redirects.length}`)
+if (vercel.redirects.length < 722 || vercel.redirects.length > 2048) {
+  console.error(`vercel.json redirects hors plage : ${vercel.redirects.length}`)
   process.exit(1)
 }
 if (JSON.stringify(vercel.redirects[0]) !== JSON.stringify({ source: '/', destination: '/fr/', permanent: true })) {
