@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BLOG_POSTS } from '../src/data/blogPosts'
 import { NEIGHBORHOODS } from '../src/data/neighborhoods'
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, socialOgImage } from '../src/config/site'
+import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, shareUrl, socialOgImage } from '../src/config/site'
 import {
   blogPostingJsonLd,
   breadcrumbJsonLd,
@@ -83,6 +83,7 @@ function setLink(html: string, rel: string, href: string, extra = '') {
 
 function applyHead(shell: string, route: string, meta: RouteHead) {
   const url = canonicalUrl(route)
+  const ogUrl = shareUrl(route)
   const image = socialOgImage(meta.ogImage)
   const robots = meta.robots ?? 'index,follow'
   const ogType = meta.ogType ?? 'website'
@@ -93,7 +94,7 @@ function applyHead(shell: string, route: string, meta: RouteHead) {
   html = setMetaByProperty(html, 'og:title', meta.title)
   html = setMetaByProperty(html, 'og:description', meta.description)
   html = setMetaByProperty(html, 'og:type', ogType)
-  html = setMetaByProperty(html, 'og:url', url)
+  html = setMetaByProperty(html, 'og:url', ogUrl)
   html = setMetaByProperty(html, 'og:site_name', SITE_NAME)
   html = setMetaByProperty(html, 'og:locale', 'fr_FR')
   html = setMetaByProperty(html, 'og:image', image)

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, socialOgImage } from '../config/site'
+import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, shareUrl, socialOgImage } from '../config/site'
 import { breadcrumbJsonLd } from '../seo/jsonld'
 
 type PageMeta = {
@@ -80,6 +80,7 @@ export const applyPageMeta = ({
   robots = 'index,follow',
 }: PageMeta) => {
   const url = canonicalUrl(canonicalPath)
+  const ogUrl = shareUrl(canonicalPath)
   const image = socialOgImage(ogImage)
   const isDefaultOg = image === DEFAULT_OG_IMAGE
 
@@ -89,7 +90,7 @@ export const applyPageMeta = ({
   upsertMetaByProperty('og:title', title)
   upsertMetaByProperty('og:description', description)
   upsertMetaByProperty('og:type', ogType)
-  upsertMetaByProperty('og:url', url)
+  upsertMetaByProperty('og:url', ogUrl)
   upsertMetaByProperty('og:site_name', SITE_NAME)
   upsertMetaByProperty('og:locale', 'fr_FR')
   upsertMetaByProperty('og:image', image)

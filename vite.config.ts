@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { DEFAULT_OG_IMAGE, SERVED_SITE_URL } from './src/config/site'
 
 function redirectToFr() {
   return {
@@ -33,7 +34,33 @@ function redirectToFr() {
 
 export default defineConfig({
   base: '/fr/',
-  plugins: [react(), redirectToFr()],
+  define: {
+    'import.meta.env.VERCEL_PROJECT_PRODUCTION_URL': JSON.stringify(
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? '',
+    ),
+  },
+  plugins: [
+    react(),
+    redirectToFr(),
+    {
+      name: 'share-meta-served-origin',
+      transformIndexHtml(html) {
+        return html
+          .replace(
+            /(<meta property="og:url" content=")[^"]*(")/,
+            `$1${SERVED_SITE_URL}/$2`,
+          )
+          .replace(
+            /(<meta property="og:image" content=")[^"]*(")/,
+            `$1${DEFAULT_OG_IMAGE}$2`,
+          )
+          .replace(
+            /(<meta name="twitter:image" content=")[^"]*(")/,
+            `$1${DEFAULT_OG_IMAGE}$2`,
+          )
+      },
+    },
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
