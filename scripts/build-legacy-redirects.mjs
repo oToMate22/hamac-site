@@ -20,6 +20,11 @@ function decodePath(pathname) {
     .join('/')
 }
 
+/** Vercel path-to-regexp treats `+` as a quantifier; escape so the request URL can keep a literal +. */
+function vercelSource(pathname) {
+  return decodePath(pathname).replace(/\+/g, '\\+')
+}
+
 function parseCsv(text) {
   const lines = text.trim().split(/\r?\n/)
   const header = lines.shift()
@@ -71,7 +76,10 @@ const rewrites = vercel.rewrites
 vercel.redirects = [
   { source: '/', destination: '/fr/', permanent: true },
   { source: '/index.html', destination: '/fr/', permanent: true },
-  ...redirects,
+  ...redirects.map((entry) => ({
+    ...entry,
+    source: vercelSource(entry.source),
+  })),
 ]
 if (rewrites) vercel.rewrites = rewrites
 delete vercel.routes

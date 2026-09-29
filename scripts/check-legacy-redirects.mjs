@@ -68,7 +68,8 @@ const encodedPlus = []
 const loops = []
 for (const entry of vercel.redirects ?? []) {
   if (/%2B/i.test(entry.source)) encodedPlus.push(entry.source)
-  if (entry.source === entry.destination) loops.push(entry.source)
+  const requestPath = entry.source.replace(/\\\+/g, '+')
+  if (requestPath === entry.destination) loops.push(entry.source)
 }
 
 const sourceCount = (await readFile(VERCEL, 'utf8')).split('"source"').length - 1
