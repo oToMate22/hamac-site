@@ -6,6 +6,11 @@
       "permanent": true
     },
     {
+      "source": "/index.html",
+      "destination": "/fr/",
+      "permanent": true
+    },
+    {
       "source": "/en/",
       "destination": "/fr/",
       "permanent": true
@@ -3611,69 +3616,46 @@
       "permanent": true
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/$",
-      "status": 308,
-      "headers": {
-        "Location": "/fr/"
-      }
+      "source": "/fr/assets/:path*",
+      "destination": "/assets/:path*"
     },
     {
-      "src": "^/index\\.html$",
-      "status": 308,
-      "headers": {
-        "Location": "/fr/"
-      }
+      "source": "/fr/images/:path*",
+      "destination": "/images/:path*"
     },
     {
-      "src": "^/fr/assets/(.*)$",
-      "dest": "/assets/$1"
+      "source": "/fr/video/:path*",
+      "destination": "/video/:path*"
     },
     {
-      "src": "^/fr/images/(.*)$",
-      "dest": "/images/$1"
+      "source": "/fr/icons.svg",
+      "destination": "/icons.svg"
     },
     {
-      "src": "^/fr/video/(.*)$",
-      "dest": "/video/$1"
+      "source": "/fr/favicon.ico",
+      "destination": "/favicon.ico"
     },
     {
-      "src": "^/fr/icons\\.svg$",
-      "dest": "/icons.svg"
+      "source": "/fr/favicon.svg",
+      "destination": "/favicon.svg"
     },
     {
-      "src": "^/fr/favicon\\.ico$",
-      "dest": "/favicon.ico"
+      "source": "/fr/favicon-32x32.png",
+      "destination": "/favicon-32x32.png"
     },
     {
-      "src": "^/fr/favicon\\.svg$",
-      "dest": "/favicon.svg"
+      "source": "/fr/apple-touch-icon.png",
+      "destination": "/apple-touch-icon.png"
     },
     {
-      "src": "^/fr/favicon-32x32\\.png$",
-      "dest": "/favicon-32x32.png"
+      "source": "/fr/acheter/:id",
+      "destination": "/fr/200.html"
     },
     {
-      "src": "^/fr/apple-touch-icon\\.png$",
-      "dest": "/apple-touch-icon.png"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "^/fr/(acheter|louer)/[^/]+$",
-      "dest": "/fr/200.html"
-    },
-    {
-      "src": "^/fr(/.*)?$",
-      "dest": "/fr/404.html",
-      "status": 404
-    },
-    {
-      "src": "/.*",
-      "dest": "/404.html",
-      "status": 404
+      "source": "/fr/louer/:id",
+      "destination": "/fr/200.html"
     }
   ]
 }

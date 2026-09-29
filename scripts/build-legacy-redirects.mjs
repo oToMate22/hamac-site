@@ -217,9 +217,14 @@ await mkdir(path.dirname(OUTPUT_JSON), { recursive: true })
 await writeFile(OUTPUT_JSON, `${JSON.stringify(redirects, null, 2)}\n`)
 
 const vercel = JSON.parse(await readFile(VERCEL_PATH, 'utf8'))
-const routes = vercel.routes
-vercel.redirects = [{ source: '/', destination: '/fr/', permanent: true }, ...redirects]
-vercel.routes = routes
+const rewrites = vercel.rewrites
+vercel.redirects = [
+  { source: '/', destination: '/fr/', permanent: true },
+  { source: '/index.html', destination: '/fr/', permanent: true },
+  ...redirects,
+]
+if (rewrites) vercel.rewrites = rewrites
+delete vercel.routes
 await writeFile(VERCEL_PATH, `${JSON.stringify(vercel, null, 2)}\n`)
 
 console.log(`identités (pas de règle) : ${identities}`)

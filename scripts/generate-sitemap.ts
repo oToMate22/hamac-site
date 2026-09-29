@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { SITE_URL } from '../src/config/site'
+import { SITE_ORIGIN, SITE_URL } from '../src/config/site'
 import { collectRoutes } from './collect-routes'
 import { loadEnvFiles } from './load-env'
 
@@ -29,7 +29,20 @@ ${urls}
 </urlset>
 `
 
-const indexable = process.env.INDEXABLE === '1'
+function hostnameOf(value: string) {
+  return value
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*$/, '')
+    .replace(/^www\./i, '')
+    .toLowerCase()
+}
+
+const productionHost = hostnameOf(process.env.VERCEL_PROJECT_PRODUCTION_URL ?? '')
+const siteHost = hostnameOf(SITE_ORIGIN)
+const indexable =
+  process.env.INDEXABLE === '1' ||
+  (process.env.INDEXABLE !== '0' && productionHost !== '' && productionHost === siteHost)
 const robots = `User-agent: *
 ${indexable ? 'Allow: /' : 'Disallow: /'}
 
@@ -40,3 +53,6 @@ await writeFile(path.join(DIST, 'robots.txt'), robots)
 await mkdir(path.join(DIST, BASE_PATH), { recursive: true })
 await writeFile(path.join(DIST, BASE_PATH, 'sitemap.xml'), xml)
 console.log(`sitemap : ${routes.size} URLs → ${SITE_URL}/sitemap.xml`)
+console.log(
+  `robots.txt : ${indexable ? 'Allow: /' : 'Disallow: /'} (INDEXABLE=${process.env.INDEXABLE ?? 'unset'}, production=${productionHost || 'local'})`,
+)
