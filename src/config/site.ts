@@ -16,7 +16,10 @@ function hostnameOf(value: string) {
 }
 
 function productionHost() {
-  const runtime = globalThis as Record<string, { env?: Record<string, string | undefined> } | undefined>
+  const runtime = globalThis as unknown as Record<
+    string,
+    { env?: Record<string, string | undefined> } | undefined
+  >
   const fromProcess = String(runtime['process']?.env?.VERCEL_PROJECT_PRODUCTION_URL ?? '')
   const fromVite =
     typeof import.meta !== 'undefined' && import.meta.env
