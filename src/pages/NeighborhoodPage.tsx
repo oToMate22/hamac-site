@@ -1,26 +1,116 @@
 import { Building2, Bus, Leaf, ShoppingBag } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import { getNeighborhoodBySlug, NEIGHBORHOODS } from '../data/neighborhoods'
-import { useProperties } from '../hooks/useProperties'
 import { realEstateAgentJsonLd } from '../seo/jsonld'
+import { CatalogLoadError, getProperties, type FeaturedProperty } from '../services/apimo'
 import { usePageMeta } from '../utils/seo'
+
+const fallbackImage = '/fr/images/Biens/maison-homepage.webp'
+
+const normalizeCity = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+function toPropertyCard(p: FeaturedProperty) {
+  return {
+    slug: p.slug,
+    title: p.title,
+    city: p.city,
+    type: p.type,
+    price: p.price,
+    surface: p.surface,
+    rooms: p.rooms,
+    bedrooms: p.bedrooms,
+    badge: p.badge ?? 'Nouveau',
+    reference: p.slug,
+    description: p.description ?? '',
+    heating: '',
+    exposure: '',
+    year: 0,
+    dpe: '',
+    lat: typeof p.lat === 'number' ? p.lat : Number.NaN,
+    lng: typeof p.lng === 'number' ? p.lng : Number.NaN,
+    amenities: p.amenities,
+    images: p.images.length ? p.images : [fallbackImage],
+  }
+}
+
+type ListStatus = 'loading' | 'ok' | 'empty' | 'quota' | 'timeout' | 'network'
 
 export function NeighborhoodPage() {
   const { slug = '' } = useParams()
   const neighborhood = getNeighborhoodBySlug(slug)
+  const [status, setStatus] = useState<ListStatus>('loading')
+  const [properties, setProperties] = useState<ReturnType<typeof toPropertyCard>[]>([])
+
+  usePageMeta({
+    title: neighborhood
+      ? `Immobilier à ${neighborhood.name} — Hamac Investissements & Patrimoine`
+      : 'Quartier — Hamac Investissements & Patrimoine',
+    description: neighborhood
+      ? `${neighborhood.tagline}. Prix moyen : ${neighborhood.pricePerSqm}. Découvrez nos biens disponibles à ${neighborhood.name} dans l'Ouest Lyonnais.`
+      : 'Découvrez nos communes dans l’Ouest lyonnais.',
+    ogImage: neighborhood?.heroImage,
+    jsonLd: neighborhood ? [{ id: 'ld-agent', data: realEstateAgentJsonLd(neighborhood.name) }] : undefined,
+  })
+
+  useEffect(() => {
+    if (!neighborhood) return
+    let cancelled = false
+    setStatus('loading')
+    setProperties([])
+
+    const load = () => {
+      void getProperties()
+        .then((all) => {
+          if (cancelled) return
+          const wanted = normalizeCity(neighborhood.name)
+          const matched = all
+            .filter((entry) => normalizeCity(entry.city) === wanted)
+            .sort((a, b) => (a.slug < b.slug ? 1 : -1))
+            .map(toPropertyCard)
+          setProperties(matched)
+          setStatus(matched.length ? 'ok' : 'empty')
+        })
+        .catch((err) => {
+          if (cancelled) return
+          const kind = err instanceof CatalogLoadError ? err.kind : 'network'
+          setStatus(kind === 'timeout' ? 'timeout' : kind === 'quota' ? 'quota' : 'network')
+        })
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [neighborhood])
 
   if (!neighborhood) return <Navigate to="/acheter" replace />
 
-  usePageMeta({
-    title: `Immobilier à ${neighborhood.name} — Hamac Investissements & Patrimoine`,
-    description: `${neighborhood.tagline}. Prix moyen : ${neighborhood.pricePerSqm}. Découvrez nos biens disponibles à ${neighborhood.name} dans l'Ouest Lyonnais.`,
-    ogImage: neighborhood.heroImage,
-    jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd(neighborhood.name) }],
-  })
-
-  const properties = useProperties({ city: neighborhood.name }, 'recent')
   const neighbors = NEIGHBORHOODS.filter((entry) => entry.slug !== neighborhood.slug).slice(0, 3)
+  const showList = status !== 'empty'
+  const reload = () => {
+    setStatus('loading')
+    void getProperties()
+      .then((all) => {
+        const wanted = normalizeCity(neighborhood.name)
+        const matched = all
+          .filter((entry) => normalizeCity(entry.city) === wanted)
+          .sort((a, b) => (a.slug < b.slug ? 1 : -1))
+          .map(toPropertyCard)
+        setProperties(matched)
+        setStatus(matched.length ? 'ok' : 'empty')
+      })
+      .catch((err) => {
+        const kind = err instanceof CatalogLoadError ? err.kind : 'network'
+        setStatus(kind === 'timeout' ? 'timeout' : kind === 'quota' ? 'quota' : 'network')
+      })
+  }
 
   return (
     <main className="neighborhood-page">
@@ -100,26 +190,43 @@ export function NeighborhoodPage() {
         </svg>
       </div>
 
-      <section className="section section--cream neighborhood-properties">
-        <div className="container">
-          <header className="section-header">
-            <h2 className="section-title">Biens disponibles à {neighborhood.name}</h2>
-          </header>
-          {properties.length ? (
-            <div className="neighborhood-properties__grid">
-              {properties.map((property) => <PropertyCard key={property.slug} property={property} light />)}
-            </div>
-          ) : (
-            <div className="neighborhood-empty">
-              <p>Aucun bien disponible actuellement à {neighborhood.name} — inscrivez-vous pour être alerté.</p>
-              <form onSubmit={(event) => event.preventDefault()}>
-                <input type="email" placeholder="Votre email" />
-                <button className="btn btn--navy" type="submit">Être alerté</button>
-              </form>
-            </div>
-          )}
-        </div>
-      </section>
+      {showList ? (
+        <section className="section section--cream neighborhood-properties">
+          <div className="container">
+            <header className="section-header">
+              <h2 className="section-title">Biens disponibles à {neighborhood.name}</h2>
+            </header>
+            {status === 'ok' ? (
+              <div className="neighborhood-properties__grid">
+                {properties.map((property) => (
+                  <PropertyCard key={property.slug} property={property} light />
+                ))}
+              </div>
+            ) : status === 'loading' ? (
+              <div className="catalog-map-loading">Chargement des biens…</div>
+            ) : (
+              <div className="catalog-map-empty">
+                {status === 'quota' ? (
+                  <p>
+                    Le catalogue est momentanément indisponible, réessayez plus tard ou appelez le{' '}
+                    <a href="tel:+33478850827">04 78 85 08 27</a>.
+                  </p>
+                ) : (
+                  <p>
+                    Les biens ne se chargent pas.{' '}
+                    <a href="tel:+33478850827">04 78 85 08 27</a>
+                  </p>
+                )}
+                <div className="catalog-map-empty__actions">
+                  <button type="button" className="is-primary" onClick={reload}>
+                    Réessayer
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <section className="section section--cream neighborhood-agent">
         <div className="container">
