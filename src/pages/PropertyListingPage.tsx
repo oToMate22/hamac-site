@@ -210,6 +210,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const [apiProperties, setApiProperties] = useState<Property[] | null>(null)
   const [apiError, setApiError] = useState<'quota' | 'timeout' | 'network' | null>(null)
   const [cacheServedAt, setCacheServedAt] = useState<number | undefined>(undefined)
+  const [catalogEpoch, setCatalogEpoch] = useState(0)
 
   useEffect(() => {
     if (!locationQuery || radiusKm <= 0) {
@@ -263,24 +264,30 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     }
   }
 
-  const reloadProperties = async () => {
+  const reloadProperties = () => setCatalogEpoch((value) => value + 1)
+
+  useEffect(() => {
+    const controller = new AbortController()
     setApiError(null)
     setCacheServedAt(undefined)
     setApiProperties(null)
-    try {
-      const result = await fetchCatalogProperties(mode)
-      setApiProperties(result.properties.map(mapFeaturedToProperty))
-      setCacheServedAt(result.cacheServedAt)
-    } catch (err) {
-      const kind = err instanceof CatalogLoadError ? err.kind : 'network'
-      setApiError(kind === 'timeout' ? 'timeout' : kind)
-    }
-  }
 
-  useEffect(() => {
-    void reloadProperties()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode])
+    void (async () => {
+      try {
+        const result = await fetchCatalogProperties(mode, controller.signal)
+        if (controller.signal.aborted) return
+        setApiProperties(result.properties.map(mapFeaturedToProperty))
+        setCacheServedAt(result.cacheServedAt)
+      } catch (err) {
+        if (controller.signal.aborted) return
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        const kind = err instanceof CatalogLoadError ? err.kind : 'network'
+        setApiError(kind === 'timeout' ? 'timeout' : kind === 'quota' ? 'quota' : 'network')
+      }
+    })()
+
+    return () => controller.abort()
+  }, [mode, catalogEpoch])
 
   const properties = (() => {
     if (!apiProperties) return { listed: [] as Property[], catalog: [] as Property[] }
@@ -765,7 +772,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     </p>
                   )}
                   <div className="catalog-map-empty__actions">
-                    <button type="button" className="is-primary" onClick={() => void reloadProperties()}>
+                    <button type="button" className="is-primary" onClick={reloadProperties}>
                       Réessayer
                     </button>
                   </div>

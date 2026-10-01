@@ -516,7 +516,7 @@ function extractList<T>(payload: unknown): T[] {
 
 const LOCAL_PROPERTIES_CACHE = 'hamac:apimo-properties'
 const LOCAL_PROPERTIES_CACHE_AT = 'hamac:apimo-properties-at'
-const CATALOG_FETCH_TIMEOUT_MS = 10_000
+const CATALOG_FETCH_TIMEOUT_MS = 45_000
 
 export class CatalogLoadError extends Error {
   readonly status?: number
@@ -579,28 +579,32 @@ function extractHttpStatus(error: unknown): number | undefined {
   return undefined
 }
 
+function isAbortLike(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const record = error as { name?: string; message?: string; context?: { name?: string } }
+  if (record.name === 'AbortError') return true
+  if (record.context?.name === 'AbortError') return true
+  return typeof record.message === 'string' && /aborted|AbortError/i.test(record.message)
+}
+
 function toCatalogLoadError(error: unknown): CatalogLoadError {
   if (error instanceof CatalogLoadError) return error
   const status = extractHttpStatus(error)
   if (status === 429) {
     return new CatalogLoadError('quota', 'Quota Apimo atteint', 429)
   }
+  if (isAbortLike(error)) {
+    return new CatalogLoadError('timeout', 'Délai de chargement dépassé', 408)
+  }
   return new CatalogLoadError('network', error instanceof Error ? error.message : 'Impossible de charger les biens', status)
 }
 
-async function invokeWithTimeout(ms: number) {
-  const timeoutSignal = AbortSignal.timeout(ms)
-  const invoke = supabase.functions.invoke('apimo-proxy', {
+async function invokeCatalog(signal?: AbortSignal) {
+  return supabase.functions.invoke('apimo-proxy', {
     body: { route: 'properties' },
+    signal,
+    timeout: CATALOG_FETCH_TIMEOUT_MS,
   })
-  return Promise.race([
-    invoke,
-    new Promise<never>((_, reject) => {
-      const fail = () => reject(new CatalogLoadError('timeout', 'Délai de chargement dépassé', 408))
-      if (timeoutSignal.aborted) fail()
-      else timeoutSignal.addEventListener('abort', fail, { once: true })
-    }),
-  ])
 }
 
 function mapRawList(payload: unknown): FeaturedProperty[] {
@@ -608,13 +612,16 @@ function mapRawList(payload: unknown): FeaturedProperty[] {
   return rawList.map(mapFeaturedProperty).filter((p) => p.images.length > 0 || p.title)
 }
 
-async function getAllMappedProperties(): Promise<CatalogFetchResult> {
+async function getAllMappedProperties(signal?: AbortSignal): Promise<CatalogFetchResult> {
   if (!isSupabaseConfigured()) {
     return { properties: [] }
   }
 
   try {
-    const res = await invokeWithTimeout(CATALOG_FETCH_TIMEOUT_MS)
+    const res = await invokeCatalog(signal)
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError')
+    }
     const payload = (res as { data?: unknown }).data ?? res
     const statusFromBody =
       payload && typeof payload === 'object' && 'status' in payload
@@ -622,6 +629,7 @@ async function getAllMappedProperties(): Promise<CatalogFetchResult> {
         : undefined
 
     if ('error' in res && res.error) {
+      if (signal?.aborted) throw res.error
       const status = extractHttpStatus(res.error) ?? (statusFromBody === 429 ? 429 : undefined)
       const cached = readLocalPropertiesCache()
       if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
@@ -646,6 +654,9 @@ async function getAllMappedProperties(): Promise<CatalogFetchResult> {
     if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
     return { properties: [] }
   } catch (error) {
+    if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+      throw error
+    }
     const cached = readLocalPropertiesCache()
     if (cached) return { properties: cached.properties, cacheServedAt: cached.savedAt }
     throw toCatalogLoadError(error)
@@ -662,8 +673,11 @@ export async function getRentalProperties(): Promise<FeaturedProperty[]> {
   return filtered.filter((p) => p.isRental)
 }
 
-export async function fetchCatalogProperties(mode: 'sale' | 'rent'): Promise<CatalogFetchResult> {
-  const result = await getAllMappedProperties()
+export async function fetchCatalogProperties(
+  mode: 'sale' | 'rent',
+  signal?: AbortSignal,
+): Promise<CatalogFetchResult> {
+  const result = await getAllMappedProperties(signal)
   const properties =
     mode === 'rent'
       ? result.properties.filter((property) => property.isRental)

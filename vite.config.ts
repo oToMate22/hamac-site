@@ -74,7 +74,6 @@ export default defineConfig({
     // Autorise les requêtes depuis le navigateur intégré de l’IDE (hostnames proxy / tunnel)
     allowedHosts: true,
     hmr: {
-      host: 'localhost',
       protocol: 'ws',
     },
   },
