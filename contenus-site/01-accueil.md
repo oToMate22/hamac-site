@@ -166,10 +166,6 @@ L'AGENCE
 Titre :
 Une équipe qui connaît chaque rue
 
-Sébastien Garnier
-Gérant
-Passionné par le patrimoine lyonnais, il met son expertise au service de votre projet depuis plus de 15 ans.
-
 Romain Monneri-Fons
 Agent commercial indépendant
 Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.
@@ -177,10 +173,6 @@ Spécialiste du marché local, il accompagne chaque projet avec méthode et disp
 Victor Bonazza
 Agent commercial indépendant
 Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur.
-
-Élodie Renard
-Agent commercial indépendant
-Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.
 
 Raphaël Lasbatx
 Agent commercial indépendant
@@ -205,6 +197,10 @@ Elle met son sens du détail au service d'un accompagnement immobilier serein.
 Axel Bernard
 Agent commercial indépendant
 Il vous accompagne avec disponibilité et précision sur les secteurs de l'Ouest lyonnais.
+
+Élodie Renard
+Agent commercial indépendant
+Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.
 
 Bouton :
 Découvrir l'agence

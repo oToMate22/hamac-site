@@ -5,10 +5,10 @@ import { blogPostingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
 const AUTHOR_DATA: Record<string, { role: string; photo: string; bio: string }> = {
-  'Sébastien Garnier': {
-    role: 'Gérant',
-    photo: '/fr/images/team/sebastien.webp',
-    bio: "Spécialiste du marché résidentiel de l'Ouest lyonnais, Sébastien accompagne vendeurs et acquéreurs avec une lecture fine des micro-secteurs.",
+  "L'équipe Hamac": {
+    role: 'Agence immobilière',
+    photo: '/fr/images/Logo/logo-hamac.webp',
+    bio: "L'équipe Hamac décrypte le marché résidentiel de l'Ouest lyonnais pour accompagner vendeurs et acquéreurs avec une lecture fine des micro-secteurs.",
   },
   'Romain Monneri-Fons': {
     role: 'Agent commercial indépendant',
@@ -17,7 +17,7 @@ const AUTHOR_DATA: Record<string, { role: string; photo: string; bio: string }> 
   },
   'Élodie Renard': {
     role: 'Agent commercial indépendant',
-    photo: '/fr/images/team/elodie.webp',
+    photo: '/fr/images/team/elodie-renard.webp',
     bio: 'Élodie accompagne les familles dans leurs projets de vie, avec une attention particulière aux quartiers et aux écoles.',
   },
   'Samuel Ribes': {

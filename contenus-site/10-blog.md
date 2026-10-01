@@ -31,7 +31,7 @@ Catégorie :
 Marché immobilier
 
 Auteur :
-Sébastien Garnier
+L'équipe Hamac
 
 Date :
 2026-02-11

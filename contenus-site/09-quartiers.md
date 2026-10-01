@@ -88,7 +88,7 @@ Espaces verts :
 Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.
 
 Agent référent :
-Sébastien Garnier — Gérant
+Ana Sanabria — Agent commercial indépendant
 
 ## Tassin-la-Demi-Lune
 

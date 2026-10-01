@@ -37,9 +37,9 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     shops: 'Commerces de bouche, cafés de quartier, marché hebdomadaire et services de centre-bourg.',
     parks: 'Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.',
     referentAgent: {
-      name: 'Sébastien Garnier',
-      role: 'Gérant',
-      photo: '/fr/images/team/sebastien.webp'
+      name: 'Ana Sanabria',
+      role: 'Agent commercial indépendant',
+      photo: '/fr/images/team/ana-sanabria.webp'
     }
   },
   {
@@ -108,7 +108,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Élodie Renard',
       role: 'Agent commercial indépendant',
-      photo: '/fr/images/team/elodie.webp'
+      photo: '/fr/images/team/elodie-renard.webp'
     }
   },
   {

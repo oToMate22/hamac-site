@@ -63,10 +63,10 @@ export const blogPostingJsonLd = (post: {
   description: post.excerpt,
   image: toAbsoluteUrl(post.coverImage),
   datePublished: post.publishedDate,
-  author: {
-    '@type': 'Person',
-    name: post.author,
-  },
+  author:
+    post.author === "L'équipe Hamac"
+      ? { '@type': 'Organization', name: SITE_NAME }
+      : { '@type': 'Person', name: post.author },
   publisher: {
     '@type': 'Organization',
     name: SITE_NAME,

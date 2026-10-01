@@ -24,7 +24,7 @@ Depuis Sainte-Foy-les-Lyon, nous accompagnons chaque client avec exigence, trans
 ## Section histoire
 
 Titre :
-L'histoire de Hamac et la vision de Sebastien
+L'histoire et la vision de Hamac
 
 Texte 1 :
 Nee a Sainte-Foy-les-Lyon, Hamac s'est construite autour d'une conviction simple: chaque projet merite une strategie sur-mesure et un accompagnement humain.
@@ -59,19 +59,11 @@ satisfaction client
 Titre :
 Une equipe qui connait chaque rue
 
-Sébastien Garnier
-Gerant
-Accompagnement humain et precision locale.
-
 Romain Monneri-Fons
 Agent commercial independant
 Accompagnement humain et precision locale.
 
 Victor Bonazza
-Agent commercial independant
-Accompagnement humain et precision locale.
-
-Elodie Renard
 Agent commercial independant
 Accompagnement humain et precision locale.
 
@@ -96,6 +88,10 @@ Agent commercial independant
 Accompagnement humain et precision locale.
 
 Axel Bernard
+Agent commercial independant
+Accompagnement humain et precision locale.
+
+Elodie Renard
 Agent commercial independant
 Accompagnement humain et precision locale.
 

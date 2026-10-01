@@ -221,10 +221,6 @@ L'AGENCE
 Titre :
 Une équipe qui connaît chaque rue
 
-Sébastien Garnier
-Gérant
-Passionné par le patrimoine lyonnais, il met son expertise au service de votre projet depuis plus de 15 ans.
-
 Romain Monneri-Fons
 Agent commercial indépendant
 Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.
@@ -918,7 +914,7 @@ Depuis Sainte-Foy-les-Lyon, nous accompagnons chaque client avec exigence, trans
 ## Section histoire
 
 Titre :
-L'histoire de Hamac et la vision de Sebastien
+L'histoire et la vision de Hamac
 
 Texte 1 :
 Nee a Sainte-Foy-les-Lyon, Hamac s'est construite autour d'une conviction simple: chaque projet merite une strategie sur-mesure et un accompagnement humain.
@@ -952,10 +948,6 @@ satisfaction client
 
 Titre :
 Une equipe qui connait chaque rue
-
-Sébastien Garnier
-Gerant
-Accompagnement humain et precision locale.
 
 Romain Monneri-Fons
 Agent commercial independant
@@ -1178,7 +1170,7 @@ Espaces verts :
 Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.
 
 Agent référent :
-Sébastien Garnier — Gérant
+Ana Sanabria — Agent commercial indépendant
 
 ## Tassin-la-Demi-Lune
 
@@ -1419,7 +1411,7 @@ Catégorie :
 Marché immobilier
 
 Auteur :
-Sébastien Garnier
+L'équipe Hamac
 
 Date :
 2026-02-11

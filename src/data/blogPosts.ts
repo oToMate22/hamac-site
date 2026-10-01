@@ -19,7 +19,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt: "Après deux années de normalisation, les prix se stabilisent dans la plupart des communes de l'Ouest lyonnais. Voici les signaux à surveiller pour acheter ou vendre au bon moment.",
     coverImage: '/fr/images/Biens/maison-homepage.webp',
     category: 'Marché immobilier',
-    author: 'Sébastien Garnier',
+    author: "L'équipe Hamac",
     publishedDate: '2026-02-11',
     readTime: '5 min',
     content: [
