@@ -13,6 +13,8 @@ import {
   TYPE_OPTIONS,
   BUDGET_SLIDER_CAP,
   BUDGET_SLIDER_STEP,
+  SALE_BUDGET_DEFAULT_MAX,
+  SALE_BUDGET_DEFAULT_MIN,
   applyCatalogParam,
   formatEuroAmount,
   parseBudgetMax,
@@ -136,6 +138,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const budgetSliderCap = BUDGET_SLIDER_CAP[mode]
   const budgetSliderStep = BUDGET_SLIDER_STEP[mode]
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
+  const saleBudgetUnset =
+    mode === 'sale' &&
+    !searchParams.has('budgetMin') &&
+    !searchParams.has('budgetMax') &&
+    !searchParams.has('budget')
 
   // Mémorise les filtres pour le lien « retour au catalogue » de la fiche.
   const filtersStorageKey = `hamac:catalog-filters:${mode}`
@@ -151,6 +158,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   useEffect(() => {
     persistFilters(searchParams)
   }, [filtersStorageKey, searchParams])
+
+  useEffect(() => {
+    if (!saleBudgetUnset) return
+    const next = new URLSearchParams(searchParams)
+    applyCatalogParam(next, 'budgetMin', String(SALE_BUDGET_DEFAULT_MIN))
+    applyCatalogParam(next, 'budgetMax', String(SALE_BUDGET_DEFAULT_MAX))
+    persistFilters(next)
+    setSearchParams(next, { replace: true })
+  }, [saleBudgetUnset, searchParams, setSearchParams])
 
   useEffect(() => {
     const preview = window.matchMedia('(min-width: 768px)')
@@ -171,8 +187,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const type = searchParams.get('type') ?? 'all'
   const q = searchParams.get('q') ?? ''
   const locationQuery = q
-  const budgetMaxForFilter = parseBudgetMax(searchParams)
-  const budgetMinValue = Math.min(parseBudgetMin(searchParams), budgetSliderCap)
+  const budgetMaxForFilter = saleBudgetUnset
+    ? SALE_BUDGET_DEFAULT_MAX
+    : parseBudgetMax(searchParams)
+  const budgetMinValue = Math.min(
+    saleBudgetUnset ? SALE_BUDGET_DEFAULT_MIN : parseBudgetMin(searchParams),
+    budgetSliderCap,
+  )
   const budgetMaxThumb = budgetMaxForFilter == null ? budgetSliderCap : Math.min(budgetMaxForFilter, budgetSliderCap)
   const budgetForSearchBar = searchBarBudgetValue(searchParams)
   const surface = searchParams.get('surface') ?? 'all'

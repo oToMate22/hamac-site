@@ -43,6 +43,10 @@ export const BUDGET_SLIDER_STEP: Record<CatalogMode, number> = {
   rent: 100,
 }
 
+/** Position initiale de la jauge à l’arrivée sur /acheter (sans budget dans l’URL). */
+export const SALE_BUDGET_DEFAULT_MIN = 350_000
+export const SALE_BUDGET_DEFAULT_MAX = 1_500_000
+
 const KEYS_CLEARED_ON_ALL = new Set(['type', 'q', 'radius', 'surface', 'rooms', 'sort', 'amenities', 'budgetMin'])
 
 export function budgetMaxOptions(mode: CatalogMode): ReadonlyArray<{ value: string; label: string }> {
