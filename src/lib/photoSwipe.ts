@@ -11,6 +11,41 @@ const SEUIL = 8          // px de mouvement avant de considérer qu'on glisse
 const FRANCHI = 0.18     // part de la largeur à franchir pour changer de photo
 const SUPPRESSION = 16   // au-delà, c'est un vrai glissement : on annule le clic
 const MAX_PASTILLES = 10
+const ROUE_SEUIL = 40
+const ROUE_VERROU_MS = 550
+
+/** Trackpad / molette horizontale : une photo par geste, pas deux. */
+export function bindHorizontalPhotoWheel(
+  element: HTMLElement,
+  onStep: (direction: 1 | -1) => void,
+): () => void {
+  let acc = 0
+  let locked = false
+  let unlockTimer: number | undefined
+
+  const onWheel = (event: WheelEvent) => {
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (locked) return
+    acc += event.deltaX
+    if (Math.abs(acc) < ROUE_SEUIL) return
+    onStep(acc > 0 ? 1 : -1)
+    acc = 0
+    locked = true
+    window.clearTimeout(unlockTimer)
+    unlockTimer = window.setTimeout(() => {
+      locked = false
+      acc = 0
+    }, ROUE_VERROU_MS)
+  }
+
+  element.addEventListener('wheel', onWheel, { passive: false })
+  return () => {
+    element.removeEventListener('wheel', onWheel)
+    window.clearTimeout(unlockTimer)
+  }
+}
 
 export function initPhotoSwipe(root: ParentNode = document): number {
   let initialisees = 0
@@ -158,13 +193,16 @@ export function initPhotoSwipe(root: ParentNode = document): number {
     cadre.addEventListener('wheel', (e) => {
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
       e.preventDefault()
+      if (roueVerrou) return
       roue += e.deltaX
-      const seuil = Math.max(40, cadre.clientWidth * FRANCHI)
-      if (roueVerrou || Math.abs(roue) < seuil) return
+      if (Math.abs(roue) < ROUE_SEUIL) return
       aller(index + (roue > 0 ? 1 : -1))
       roue = 0
       roueVerrou = true
-      window.setTimeout(() => { roueVerrou = false }, 320)
+      window.setTimeout(() => {
+        roueVerrou = false
+        roue = 0
+      }, ROUE_VERROU_MS)
     }, { passive: false })
 
     pastilles.addEventListener('click', (e) => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import type { Property } from '../data/properties'
@@ -14,6 +14,7 @@ import { AGENCY } from '../config/site'
 import { listingDocumentTitle, listingMetaDescription } from '../seo/listingTitle'
 import { listingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
+import { bindHorizontalPhotoWheel } from '../lib/photoSwipe'
 import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
@@ -170,6 +171,8 @@ export function PropertyDetailPage() {
   const [similar, setSimilar] = useState<Property[]>([])
   const [activeImage, setActiveImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
+  const galleryMainRef = useRef<HTMLDivElement>(null)
+  const lightboxRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
@@ -307,6 +310,24 @@ export function PropertyDetailPage() {
     }
   }, [isLightboxOpen, property?.images.length])
 
+  const imagesCountForSwipe = property?.images.length ?? 0
+
+  useEffect(() => {
+    const gallery = galleryMainRef.current
+    if (!gallery || imagesCountForSwipe < 2) return
+    return bindHorizontalPhotoWheel(gallery, (direction) => {
+      setActiveImage((prev) => (prev + direction + imagesCountForSwipe) % imagesCountForSwipe)
+    })
+  }, [imagesCountForSwipe, property?.slug])
+
+  useEffect(() => {
+    const lightbox = lightboxRef.current
+    if (!lightbox || !isLightboxOpen || imagesCountForSwipe < 2) return
+    return bindHorizontalPhotoWheel(lightbox, (direction) => {
+      setActiveImage((prev) => (prev + direction + imagesCountForSwipe) % imagesCountForSwipe)
+    })
+  }, [isLightboxOpen, imagesCountForSwipe])
+
   useEffect(() => {
     setIsDescriptionExpanded(false)
   }, [property?.slug])
@@ -433,7 +454,7 @@ export function PropertyDetailPage() {
         <div className="detail-layout">
           <div>
             <section className="detail-gallery">
-              <div className="detail-gallery__main">
+              <div className="detail-gallery__main" ref={galleryMainRef}>
                 <button
                   type="button"
                   className="detail-gallery__main-trigger"
@@ -717,6 +738,7 @@ export function PropertyDetailPage() {
 
       {isLightboxOpen ? (
         <div
+          ref={lightboxRef}
           className="detail-lightbox"
           role="dialog"
           aria-modal="true"
