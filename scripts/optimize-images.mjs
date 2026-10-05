@@ -24,6 +24,7 @@ const HEROES = new Set([
 const targetWidth = (rel) => {
   if (rel.startsWith('team/')) return 640
   if (rel.startsWith('Logo/')) return 400
+  if (rel.startsWith('quartiers/')) return 1920
   if (HEROES.has(rel)) return 1920
   return 1600
 }

@@ -35,7 +35,7 @@ export function QuartiersPage() {
               className={`bento-card ${idx === 0 ? 'bento-card--featured' : ''} ${idx === 5 ? 'bento-card--wide' : ''}`}
               to={`/quartiers/${entry.slug}`}
             >
-              <img src={entry.heroImage} alt={entry.name} loading="lazy" />
+              <img src={entry.heroImage} alt={entry.heroAlt} loading="lazy" />
               <div className="bento-card__overlay"></div>
               <div className="bento-card__content">
                 <h3>{entry.name}</h3>

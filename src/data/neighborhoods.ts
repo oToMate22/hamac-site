@@ -1,7 +1,16 @@
+export type NeighborhoodPhotoCredit = {
+  author: string
+  license: 'CC BY-SA 4.0' | 'CC0'
+  work: string
+  url: string
+}
+
 export type Neighborhood = {
   slug: string
   name: string
   heroImage: string
+  heroAlt: string
+  photoCredit: NeighborhoodPhotoCredit
   tagline: string
   pricePerSqm: string
   priceEvolution: string
@@ -22,7 +31,14 @@ export const NEIGHBORHOODS: Neighborhood[] = [
   {
     slug: 'sainte-foy-les-lyon',
     name: 'Sainte-Foy-lès-Lyon',
-    heroImage: '/fr/images/Biens/maison-city.webp',
+    heroImage: '/fr/images/quartiers/sainte-foy-les-lyon.webp?v=5',
+    heroAlt: 'Église Sainte-Foy à Sainte-Foy-lès-Lyon, chevet et clocher',
+    photoCredit: {
+      author: 'Chabe01',
+      license: 'CC BY-SA 4.0',
+      work: 'Église Sainte-Foy',
+      url: 'https://commons.wikimedia.org/wiki/File:%C3%89glise_Sainte_Foy_-_Sainte-Foy-l%C3%A8s-Lyon_(FR69)_-_2026-08-23_-_5.jpg',
+    },
     tagline: 'Le bourg historique aux portes de Lyon',
     pricePerSqm: '4 850 € / m²',
     priceEvolution: '+3.2% sur 12 mois',
@@ -38,14 +54,21 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.',
     referentAgent: {
       name: 'Ana Sanabria',
-      role: 'Agent commercial indépendant',
-      photo: '/fr/images/team/ana-sanabria.webp'
+      role: 'Agent commercial',
+      photo: '/fr/images/team/ana-sanabria.webp?v=2'
     }
   },
   {
     slug: 'tassin-la-demi-lune',
     name: 'Tassin-la-Demi-Lune',
-    heroImage: '/fr/images/Biens/appartement-interieur-1.webp',
+    heroImage: '/fr/images/quartiers/tassin-la-demi-lune.webp',
+    heroAlt: 'Place Pierre Vauboin et horloge monumentale à Tassin-la-Demi-Lune',
+    photoCredit: {
+      author: 'Chabe01',
+      license: 'CC BY-SA 4.0',
+      work: 'Place Pierre Vauboin',
+      url: 'https://commons.wikimedia.org/wiki/File:Place_Pierre_Vauboin_-_Tassin-la-Demi-Lune_(FR69)_-_2026-08-23_-_2.jpg',
+    },
     tagline: "Le carrefour dynamique de l'Ouest",
     pricePerSqm: '4 200 € / m²',
     priceEvolution: '+2.6% sur 12 mois',
@@ -61,14 +84,21 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Squares résidentiels, promenades vertes et accès rapide aux espaces boisés de l’Ouest lyonnais.',
     referentAgent: {
       name: 'Romain Monneri-Fons',
-      role: 'Agent commercial indépendant',
-      photo: '/fr/images/team/romain.webp'
+      role: 'Directeur associé',
+      photo: '/fr/images/team/romain.webp?v=2'
     }
   },
   {
     slug: 'ecully',
     name: 'Écully',
-    heroImage: '/fr/images/Biens/maison-art.webp',
+    heroImage: '/fr/images/quartiers/ecully.webp?v=3',
+    heroAlt: 'Église Saint-Blaise à Écully',
+    photoCredit: {
+      author: 'Chabe01',
+      license: 'CC BY-SA 4.0',
+      work: 'Église Saint-Blaise',
+      url: 'https://commons.wikimedia.org/wiki/File:%C3%89glise_Saint_Blaise_-_%C3%89cully_(FR69)_-_2026-08-23_-_10.jpg',
+    },
     tagline: 'Prestige discret et grandes écoles',
     pricePerSqm: '5 100 € / m²',
     priceEvolution: '+2.1% sur 12 mois',
@@ -84,14 +114,21 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Grandes propriétés arborées, parcs paysagers et ambiance très verte au quotidien.',
     referentAgent: {
       name: 'Victor Bonazza',
-      role: 'Agent commercial indépendant',
-      photo: '/fr/images/team/victor.webp'
+      role: 'Gérant associé',
+      photo: '/fr/images/team/victor.webp?v=3'
     }
   },
   {
     slug: 'francheville',
     name: 'Francheville',
-    heroImage: '/fr/images/Biens/maison-homepage.webp',
+    heroImage: '/fr/images/quartiers/francheville.webp',
+    heroAlt: 'Église Saint-Roch à Francheville-le-Haut',
+    photoCredit: {
+      author: 'Sebleouf',
+      license: 'CC BY-SA 4.0',
+      work: 'Église Saint-Roch de Francheville-le-Haut',
+      url: 'https://commons.wikimedia.org/wiki/File:Francheville_(Rh%C3%B4ne)_-_%C3%89glise_Saint-Roch_de_Francheville-le-Haut_(mars_2019).jpg',
+    },
     tagline: 'Nature et tranquillité',
     pricePerSqm: '3 600 € / m²',
     priceEvolution: '+3.9% sur 12 mois',
@@ -107,14 +144,21 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: "Vallée de l'Yzeron, sentiers verts et espaces naturels appréciés des familles.",
     referentAgent: {
       name: 'Élodie Renard',
-      role: 'Agent commercial indépendant',
-      photo: '/fr/images/team/elodie-renard.webp'
+      role: 'Agent commercial',
+      photo: '/fr/images/team/elodie-renard.webp?v=2'
     }
   },
   {
     slug: 'craponne',
     name: 'Craponne',
-    heroImage: '/fr/images/Biens/maison-bleu-2.webp',
+    heroImage: '/fr/images/quartiers/craponne.webp',
+    heroAlt: 'Marché dans le bourg de Craponne',
+    photoCredit: {
+      author: 'Vert42450',
+      license: 'CC BY-SA 4.0',
+      work: 'Bourg de Craponne un jour de marché',
+      url: 'https://commons.wikimedia.org/wiki/File:Bourg_Craponne_en_plein_march%C3%A9_estival.jpg',
+    },
     tagline: 'La campagne aux portes de Lyon',
     pricePerSqm: '3 800 € / m²',
     priceEvolution: '+4.1% sur 12 mois',
@@ -130,14 +174,21 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Espaces verts familiaux, promenades en lisière de campagne et environnement résidentiel aéré.',
     referentAgent: {
       name: 'Raphaël Lasbatx',
-      role: 'Agent commercial indépendant',
+      role: 'Négociateur immobilier',
       photo: '/fr/images/team/raphael.webp'
     }
   },
   {
     slug: 'oullins',
     name: 'Oullins',
-    heroImage: '/fr/images/Biens/appartement-interieur-2.webp',
+    heroImage: '/fr/images/quartiers/oullins.webp',
+    heroAlt: "Mairie d'Oullins et son esplanade",
+    photoCredit: {
+      author: 'Benoît Prieur',
+      license: 'CC0',
+      work: "Mairie d'Oullins",
+      url: 'https://commons.wikimedia.org/wiki/File:Mairie_d%27Oullins_en_janvier_2023.JPG',
+    },
     tagline: "L'énergie du sud-ouest lyonnais",
     pricePerSqm: '3 400 € / m²',
     priceEvolution: '+3.5% sur 12 mois',
@@ -153,7 +204,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Berges du Rhône, parcs de quartier et promenades aménagées.',
     referentAgent: {
       name: 'Samuel Ribes',
-      role: 'Agent commercial indépendant',
+      role: 'Négociateur immobilier',
       photo: '/fr/images/team/samuel.webp'
     }
   }

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { LegalDocument, LegalSection } from '../components/LegalDocument'
+import { NEIGHBORHOODS } from '../data/neighborhoods'
 
-const LAST_UPDATED = '26 mai 2026'
+const LAST_UPDATED = '5 octobre 2026'
 
 const AGENCY = {
   name: 'Hamac Investissements & Patrimoine',
@@ -74,6 +75,31 @@ export function LegalPage() {
         <p>
           Le détail des traitements de données personnelles est précisé sur la page{' '}
           <Link to="/confidentialite">Politique de confidentialité</Link>.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Crédits photos" id="credits-photos">
+        <p>
+          Les photographies des communes utilisées sur les pages quartiers proviennent de Wikimedia Commons. Cinq d’entre
+          elles sont publiées sous licence CC BY-SA 4.0 : l’auteur et la licence doivent être mentionnés. La photo
+          d’Oullins est en CC0 (domaine public), sans mention obligatoire.
+        </p>
+        <ul>
+          {NEIGHBORHOODS.map((entry) => (
+            <li key={entry.slug}>
+              <strong>{entry.name}</strong>
+              {' — '}
+              {entry.photoCredit.work}, {entry.photoCredit.author}, {entry.photoCredit.license}, via{' '}
+              <a href={entry.photoCredit.url} rel="noopener noreferrer" target="_blank">
+                Wikimedia Commons
+              </a>
+              .
+            </li>
+          ))}
+        </ul>
+        <p>
+          Le partage à l’identique de la licence CC BY-SA 4.0 porte uniquement sur les photographies ainsi utilisées, et
+          non sur l’ensemble du site.
         </p>
       </LegalSection>
 

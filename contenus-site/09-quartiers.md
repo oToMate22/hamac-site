@@ -88,7 +88,7 @@ Espaces verts :
 Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.
 
 Agent référent :
-Ana Sanabria — Agent commercial indépendant
+Ana Sanabria — Agent commercial
 
 ## Tassin-la-Demi-Lune
 
@@ -128,7 +128,7 @@ Espaces verts :
 Squares résidentiels, promenades vertes et accès rapide aux espaces boisés de l’Ouest lyonnais.
 
 Agent référent :
-Romain Monneri-Fons — Agent commercial indépendant
+Romain Monneri-Fons — Directeur associé
 
 ## Écully
 
@@ -168,7 +168,7 @@ Espaces verts :
 Grandes propriétés arborées, parcs paysagers et ambiance très verte au quotidien.
 
 Agent référent :
-Victor Bonazza — Agent commercial indépendant
+Victor Bonazza — Gérant associé
 
 ## Francheville
 
@@ -208,7 +208,7 @@ Espaces verts :
 Vallée de l'Yzeron, sentiers verts et espaces naturels appréciés des familles.
 
 Agent référent :
-Élodie Renard — Agent commercial indépendant
+Élodie Renard — Agent commercial
 
 ## Craponne
 
@@ -248,7 +248,7 @@ Espaces verts :
 Espaces verts familiaux, promenades en lisière de campagne et environnement résidentiel aéré.
 
 Agent référent :
-Raphaël Lasbatx — Agent commercial indépendant
+Raphaël Lasbatx — Négociateur immobilier
 
 ## Oullins
 
@@ -288,4 +288,4 @@ Espaces verts :
 Berges du Rhône, parcs de quartier et promenades aménagées.
 
 Agent référent :
-Samuel Ribes — Agent commercial indépendant
+Samuel Ribes — Négociateur immobilier

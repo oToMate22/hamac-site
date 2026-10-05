@@ -278,7 +278,7 @@ export function EstimationPage() {
           </div>
           <div className="estimation-highlights__item">
             <MapPinHouse size={20} aria-hidden />
-            <span>Expertise locale de l&apos;Ouest Lyonnais</span>
+            <span>Expertise immobilière approfondie</span>
           </div>
         </div>
       </section>

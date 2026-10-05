@@ -40,10 +40,17 @@ const QUARTIERS_MENU: NavItem[] = [
 ]
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   useEffect(() => {
+    if (hash) {
+      const id = decodeURIComponent(hash.slice(1))
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'auto', block: 'start' })
+      })
+      return
+    }
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [pathname])
+  }, [pathname, hash])
   return null
 }
 
@@ -396,6 +403,10 @@ function SiteLayout() {
         <div className="site-footer__bottom">
           <div className="container site-footer__bottom-inner">
             <p>© {new Date().getFullYear()} Hamac Investissements & Patrimoine. Tous droits réservés.</p>
+            <p className="site-footer__photo-credits">
+              Photos communes : Chabe01, Sebleouf, Vert42450 — CC BY-SA 4.0, via Wikimedia Commons.{' '}
+              <Link to="/mentions-legales#credits-photos">Crédits photos</Link>
+            </p>
           </div>
         </div>
       </footer>

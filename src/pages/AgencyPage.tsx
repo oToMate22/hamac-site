@@ -10,15 +10,16 @@ export function AgencyPage() {
   })
 
   const team = [
-    ['Romain Monneri-Fons', 'Agent commercial indépendant', '/fr/images/team/romain.webp', 'Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.'],
-    ['Victor Bonazza', 'Agent commercial indépendant', '/fr/images/team/victor.webp', "Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur."],
-    ['Raphaël Lasbatx', 'Agent commercial indépendant', '/fr/images/team/raphael.webp', 'Réactif et attentif, il vous guide sur chaque phase de la transaction.'],
-    ['Samuel Ribes', 'Agent commercial indépendant', '/fr/images/team/samuel.webp', 'Il conseille les investisseurs avec une lecture patrimoniale claire et durable.'],
-    ['Ana Sanabria', 'Agent commercial indépendant', '/fr/images/team/ana-sanabria.webp', "Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute."],
-    ['Anthony Ribeiro', 'Agent commercial indépendant', '/fr/images/team/anthony.webp', 'Il structure chaque dossier pour offrir un suivi fluide et transparent.'],
-    ['Pauline Rodriguez', 'Agent commercial indépendant', '/fr/images/team/pauline.webp', "Elle met son sens du détail au service d'un accompagnement immobilier serein."],
-    ['Axel Bernard', 'Agent commercial indépendant', '/fr/images/team/AXELBERNARD.webp', "Il vous accompagne avec disponibilité et précision sur les secteurs de l'Ouest lyonnais."],
-    ['Élodie Renard', 'Agent commercial indépendant', '/fr/images/team/elodie-renard.webp', 'Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.'],
+    ['Romain Monneri-Fons', 'Directeur associé', '/fr/images/team/romain.webp?v=2', 'Une expertise solide, des conseils précis et surtout une vraie proximité : chaque projet mérite une attention particulière et un accompagnement à la hauteur.'],
+    ['Victor Bonazza', 'Gérant associé', '/fr/images/team/victor.webp?v=3', "Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur."],
+    ['Sarah Bodhuin', 'Agent commercial', '/fr/images/team/sarah-bodhuin.webp', 'Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.'],
+    ['Raphaël Lasbatx', 'Négociateur immobilier', '/fr/images/team/raphael.webp', 'Réactif et attentif, il vous guide sur chaque phase de la transaction.'],
+    ['Samuel Ribes', 'Négociateur immobilier', '/fr/images/team/samuel.webp', "Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement."],
+    ['Ana Sanabria', 'Agent commercial', '/fr/images/team/ana-sanabria.webp?v=2', "Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute."],
+    ['Anthony Ribeiro', 'Négociateur immobilier', '/fr/images/team/anthony.webp?v=2', 'Il structure chaque dossier pour offrir un suivi fluide et transparent.'],
+    ['Pauline Rodriguez', 'Agent commercial', '/fr/images/team/pauline.webp?v=2', "Minutieuse et attentive, elle accorde une importance particulière au suivi de chaque dossier et à la qualité de la relation humaine, afin d'accompagner chaque client avec confiance et sérénité."],
+    ['Axel Bernard', 'Conseiller location', '/fr/images/team/AXELBERNARD.webp', "Disponible, réactif et toujours à l'écoute, il met son énergie au service de vos projets."],
+    ['Élodie Renard', 'Agent commercial', '/fr/images/team/elodie-renard.webp?v=2', 'Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.'],
   ] as const
   return (
     <main className="agency-page">
@@ -62,7 +63,7 @@ export function AgencyPage() {
       </section>
       <section className="section section--cream agency-team">
         <div className="container">
-          <header className="section-header"><h2 className="section-title">Une équipe qui connaît chaque rue</h2></header>
+          <header className="section-header"><h2 className="section-title">Une synergie au service de vos projets</h2></header>
           <div className="agency-team__grid">
             {team.map(([name, role, photo, tagline]) => (
               <article key={name} className="agency-agent">

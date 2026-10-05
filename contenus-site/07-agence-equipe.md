@@ -57,42 +57,46 @@ satisfaction client
 ## Équipe
 
 Titre :
-Une equipe qui connait chaque rue
+Une synergie au service de vos projets
 
 Romain Monneri-Fons
-Agent commercial independant
-Accompagnement humain et precision locale.
+Directeur associé
+Une expertise solide, des conseils précis et surtout une vraie proximité : chaque projet mérite une attention particulière et un accompagnement à la hauteur.
 
 Victor Bonazza
-Agent commercial independant
+Gérant associé
 Accompagnement humain et precision locale.
 
+Sarah Bodhuin
+Agent commercial
+Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.
+
 Raphael Lasbatx
-Agent commercial independant
+Négociateur immobilier
 Accompagnement humain et precision locale.
 
 Samuel Ribes
-Agent commercial independant
-Accompagnement humain et precision locale.
+Négociateur immobilier
+Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement.
 
 Ana Sanabria
-Agent commercial independant
+Agent commercial
 Accompagnement humain et precision locale.
 
 Anthony Ribeiro
-Agent commercial independant
+Négociateur immobilier
 Accompagnement humain et precision locale.
 
 Pauline Rodriguez
-Agent commercial independant
-Accompagnement humain et precision locale.
+Agent commercial
+Minutieuse et attentive, elle accorde une importance particulière au suivi de chaque dossier et à la qualité de la relation humaine, afin d'accompagner chaque client avec confiance et sérénité.
 
 Axel Bernard
-Agent commercial independant
-Accompagnement humain et precision locale.
+Conseiller location
+Disponible, réactif et toujours à l'écoute, il met son énergie au service de vos projets.
 
 Elodie Renard
-Agent commercial independant
+Agent commercial
 Accompagnement humain et precision locale.
 
 ## CTA final

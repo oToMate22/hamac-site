@@ -164,42 +164,46 @@ Sur-titre :
 L'AGENCE
 
 Titre :
-Une équipe qui connaît chaque rue
+Une synergie au service de vos projets
 
 Romain Monneri-Fons
-Agent commercial indépendant
-Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.
+Directeur associé
+Une expertise solide, des conseils précis et surtout une vraie proximité : chaque projet mérite une attention particulière et un accompagnement à la hauteur.
 
 Victor Bonazza
-Agent commercial indépendant
+Gérant associé
 Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur.
 
+Sarah Bodhuin
+Agent commercial
+Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.
+
 Raphaël Lasbatx
-Agent commercial indépendant
+Négociateur immobilier
 Réactif et attentif, il vous guide sur chaque phase de la transaction.
 
 Samuel Ribes
-Agent commercial indépendant
-Il conseille les investisseurs avec une lecture patrimoniale claire et durable.
+Négociateur immobilier
+Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement.
 
 Ana Sanabria
-Agent commercial indépendant
+Agent commercial
 Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute.
 
 Anthony Ribeiro
-Agent commercial indépendant
+Négociateur immobilier
 Il structure chaque dossier pour offrir un suivi fluide et transparent.
 
 Pauline Rodriguez
-Agent commercial indépendant
-Elle met son sens du détail au service d'un accompagnement immobilier serein.
+Agent commercial
+Minutieuse et attentive, elle accorde une importance particulière au suivi de chaque dossier et à la qualité de la relation humaine, afin d'accompagner chaque client avec confiance et sérénité.
 
 Axel Bernard
-Agent commercial indépendant
-Il vous accompagne avec disponibilité et précision sur les secteurs de l'Ouest lyonnais.
+Conseiller location
+Disponible, réactif et toujours à l'écoute, il met son énergie au service de vos projets.
 
 Élodie Renard
-Agent commercial indépendant
+Agent commercial
 Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.
 
 Bouton :

@@ -1367,6 +1367,7 @@ a {
   aspect-ratio: 4/3;
   border-radius: 1rem;
   overflow: hidden;
+  overscroll-behavior-x: contain;
 }
 
 .detail-gallery__main-trigger {
@@ -1422,6 +1423,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  overscroll-behavior: contain;
 }
 
 .detail-lightbox__figure {
@@ -4538,10 +4540,13 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .neighborhood-hero {
   position: relative;
-  min-height: 62vh;
-  margin-top: var(--header-h);
+  min-height: calc(62vh + var(--header-h));
   display: flex;
   flex-direction: column;
+}
+
+.neighborhood-hero--sainte-foy {
+  min-height: max(calc(62vh + var(--header-h)), min(calc(100vw * 9 / 16), 86vh));
 }
 
 .neighborhood-hero__image,
@@ -4557,15 +4562,47 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 }
 
 .neighborhood-hero__overlay {
-  background: linear-gradient(180deg, rgba(20, 42, 56, 0.62) 0%, rgba(20, 42, 56, 0.38) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(20, 42, 56, 0.78) 0%,
+    rgba(20, 42, 56, 0.52) 42%,
+    rgba(20, 42, 56, 0.4) 100%
+  );
 }
 
 .neighborhood-hero__content {
   position: relative;
   z-index: 2;
   color: var(--white);
-  padding-top: clamp(4.8rem, 9vw, 7.2rem);
+  padding-top: calc(var(--header-h) + clamp(3.2rem, 6vw, 4.4rem));
   padding-bottom: clamp(3.5rem, 7vw, 5rem);
+}
+
+.neighborhood-hero__back {
+  position: absolute;
+  z-index: 3;
+  top: calc(var(--header-h) + 0.85rem);
+  left: var(--container-pad);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.neighborhood-hero__back:hover {
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+}
+
+.neighborhood-hero__back:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
 }
 
 .neighborhood-hero__content h1 {
@@ -4589,6 +4626,24 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   background: rgba(20, 42, 56, 0.4);
   padding: 0.35rem 0.8rem;
   font-size: 0.9rem;
+}
+
+.neighborhood-hero__credit {
+  position: absolute;
+  z-index: 2;
+  left: var(--container-pad);
+  right: var(--container-pad);
+  bottom: 1.6rem;
+  margin: 0;
+  max-width: 42rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: rgba(253, 252, 250, 0.72);
+}
+
+.neighborhood-hero__credit a {
+  color: inherit;
+  text-underline-offset: 0.12em;
 }
 
 .neighborhood-intro__grid {
@@ -5379,7 +5434,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   font-family: var(--font-serif);
   font-weight: 600;
   font-size: clamp(2rem, 4.5vw, 3rem);
-  line-height: 1.12;
+  line-height: 1.22;
   letter-spacing: -0.02em;
   color: var(--text-heading);
   margin: 0 0 1rem;
@@ -5422,6 +5477,9 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   display: inline-block;
   overflow: hidden;
   vertical-align: bottom;
+  /* Laisse de la place aux jambages (y, g, p) coupés par overflow. */
+  padding-bottom: 0.22em;
+  margin-bottom: -0.18em;
 }
 
 .section-title__word {
@@ -6714,6 +6772,10 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   font-size: 0.98rem;
   line-height: 1.65;
   color: var(--text);
+}
+
+.legal-section {
+  scroll-margin-top: calc(var(--header-h) + 1rem);
 }
 
 .legal-section + .legal-section {
@@ -8061,6 +8123,18 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .site-footer__bottom-inner p {
   margin: 0;
+}
+
+.site-footer__photo-credits {
+  margin-top: 0.45rem !important;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: rgba(247, 244, 239, 0.42);
+}
+
+.site-footer__photo-credits a {
+  color: inherit;
+  text-underline-offset: 0.12em;
 }
 
 /* Reduced motion */

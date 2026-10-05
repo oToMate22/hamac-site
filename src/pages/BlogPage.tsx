@@ -11,19 +11,19 @@ const AUTHOR_DATA: Record<string, { role: string; photo: string; bio: string }> 
     bio: "L'équipe Hamac décrypte le marché résidentiel de l'Ouest lyonnais pour accompagner vendeurs et acquéreurs avec une lecture fine des micro-secteurs.",
   },
   'Romain Monneri-Fons': {
-    role: 'Agent commercial indépendant',
-    photo: '/fr/images/team/romain.webp',
+    role: 'Directeur associé',
+    photo: '/fr/images/team/romain.webp?v=2',
     bio: 'Romain conseille les primo-accédants et structure des parcours d’achat clairs, efficaces et sécurisés.',
   },
   'Élodie Renard': {
-    role: 'Agent commercial indépendant',
-    photo: '/fr/images/team/elodie-renard.webp',
+    role: 'Agent commercial',
+    photo: '/fr/images/team/elodie-renard.webp?v=2',
     bio: 'Élodie accompagne les familles dans leurs projets de vie, avec une attention particulière aux quartiers et aux écoles.',
   },
   'Samuel Ribes': {
-    role: 'Agent commercial indépendant',
+    role: 'Négociateur immobilier',
     photo: '/fr/images/team/samuel.webp',
-    bio: 'Samuel accompagne les investisseurs avec une approche patrimoniale, orientée rendement durable et valorisation.',
+    bio: "Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement.",
   },
 }
 
@@ -112,7 +112,7 @@ export function BlogPostPage() {
 
   const author = AUTHOR_DATA[post.author] ?? {
     role: 'Agent commercial indépendant',
-    photo: '/fr/images/team/anthony.webp',
+    photo: '/fr/images/team/anthony.webp?v=2',
     bio: 'Expert immobilier de proximité dans l’Ouest lyonnais.',
   }
 

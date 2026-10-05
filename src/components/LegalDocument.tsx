@@ -54,9 +54,17 @@ export function LegalDocument({ title, metaDescription, heading, intro, lastUpda
   )
 }
 
-export function LegalSection({ title, children }: { title: string; children: ReactNode }) {
+export function LegalSection({
+  title,
+  id,
+  children,
+}: {
+  title: string
+  id?: string
+  children: ReactNode
+}) {
   return (
-    <section className="legal-section">
+    <section className="legal-section" id={id}>
       <h2>{title}</h2>
       {children}
     </section>

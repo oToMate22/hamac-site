@@ -219,43 +219,47 @@ Sur-titre :
 L'AGENCE
 
 Titre :
-Une équipe qui connaît chaque rue
+Une synergie au service de vos projets
 
 Romain Monneri-Fons
-Agent commercial indépendant
-Spécialiste du marché local, il accompagne chaque projet avec méthode et disponibilité.
+Directeur associé
+Une expertise solide, des conseils précis et surtout une vraie proximité : chaque projet mérite une attention particulière et un accompagnement à la hauteur.
 
 Victor Bonazza
-Agent commercial indépendant
+Gérant associé
 Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur.
 
+Sarah Bodhuin
+Agent commercial
+Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.
+
 Élodie Renard
-Agent commercial indépendant
+Agent commercial
 Elle accompagne les familles dans leurs projets de vie avec une approche humaine et précise.
 
 Raphaël Lasbatx
-Agent commercial indépendant
+Négociateur immobilier
 Réactif et attentif, il vous guide sur chaque phase de la transaction.
 
 Samuel Ribes
-Agent commercial indépendant
-Il conseille les investisseurs avec une lecture patrimoniale claire et durable.
+Négociateur immobilier
+Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement.
 
 Ana Sanabria
-Agent commercial indépendant
+Agent commercial
 Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute.
 
 Anthony Ribeiro
-Agent commercial indépendant
+Négociateur immobilier
 Il structure chaque dossier pour offrir un suivi fluide et transparent.
 
 Pauline Rodriguez
-Agent commercial indépendant
-Elle met son sens du détail au service d'un accompagnement immobilier serein.
+Agent commercial
+Minutieuse et attentive, elle accorde une importance particulière au suivi de chaque dossier et à la qualité de la relation humaine, afin d'accompagner chaque client avec confiance et sérénité.
 
 Axel Bernard
-Agent commercial indépendant
-Il vous accompagne avec disponibilité et précision sur les secteurs de l'Ouest lyonnais.
+Conseiller location
+Disponible, réactif et toujours à l'écoute, il met son énergie au service de vos projets.
 
 Bouton :
 Découvrir l'agence
@@ -947,42 +951,46 @@ satisfaction client
 ## Équipe
 
 Titre :
-Une equipe qui connait chaque rue
+Une synergie au service de vos projets
 
 Romain Monneri-Fons
-Agent commercial independant
+Directeur associé
 Accompagnement humain et precision locale.
 
 Victor Bonazza
-Agent commercial independant
+Gérant associé
 Accompagnement humain et precision locale.
 
+Sarah Bodhuin
+Agent commercial
+Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.
+
 Elodie Renard
-Agent commercial independant
+Agent commercial
 Accompagnement humain et precision locale.
 
 Raphael Lasbatx
-Agent commercial independant
+Négociateur immobilier
 Accompagnement humain et precision locale.
 
 Samuel Ribes
-Agent commercial independant
+Négociateur immobilier
 Accompagnement humain et precision locale.
 
 Ana Sanabria
-Agent commercial independant
+Agent commercial
 Accompagnement humain et precision locale.
 
 Anthony Ribeiro
-Agent commercial independant
+Négociateur immobilier
 Accompagnement humain et precision locale.
 
 Pauline Rodriguez
-Agent commercial independant
+Agent commercial
 Accompagnement humain et precision locale.
 
 Axel Bernard
-Agent commercial independant
+Conseiller location
 Accompagnement humain et precision locale.
 
 ## CTA final
@@ -1170,7 +1178,7 @@ Espaces verts :
 Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.
 
 Agent référent :
-Ana Sanabria — Agent commercial indépendant
+Ana Sanabria — Agent commercial
 
 ## Tassin-la-Demi-Lune
 
@@ -1210,7 +1218,7 @@ Espaces verts :
 Squares résidentiels, promenades vertes et accès rapide aux espaces boisés de l’Ouest lyonnais.
 
 Agent référent :
-Romain Monneri-Fons — Agent commercial indépendant
+Romain Monneri-Fons — Directeur associé
 
 ## Écully
 
@@ -1250,7 +1258,7 @@ Espaces verts :
 Grandes propriétés arborées, parcs paysagers et ambiance très verte au quotidien.
 
 Agent référent :
-Victor Bonazza — Agent commercial indépendant
+Victor Bonazza — Gérant associé
 
 ## Francheville
 
@@ -1290,7 +1298,7 @@ Espaces verts :
 Vallée de l'Yzeron, sentiers verts et espaces naturels appréciés des familles.
 
 Agent référent :
-Élodie Renard — Agent commercial indépendant
+Élodie Renard — Agent commercial
 
 ## Craponne
 
@@ -1330,7 +1338,7 @@ Espaces verts :
 Espaces verts familiaux, promenades en lisière de campagne et environnement résidentiel aéré.
 
 Agent référent :
-Raphaël Lasbatx — Agent commercial indépendant
+Raphaël Lasbatx — Négociateur immobilier
 
 ## Oullins
 
@@ -1370,7 +1378,7 @@ Espaces verts :
 Berges du Rhône, parcs de quartier et promenades aménagées.
 
 Agent référent :
-Samuel Ribes — Agent commercial indépendant
+Samuel Ribes — Négociateur immobilier
 
 
 

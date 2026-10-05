@@ -26,23 +26,26 @@ const featuredIndex = Math.max(
   privateVisits.findIndex((visit) => visit.id === FEATURED_PRIVATE_VISIT_ID),
 )
 
-/** Mobile : swipe tactile. Desktop : drag souris + molette / trackpad. */
+/** Mobile : swipe tactile. Desktop : drag souris + molette / trackpad, une photo à la fois. */
 const SWIPER_INTERACTION = {
   simulateTouch: true,
   allowTouchMove: true,
   touchRatio: 1,
   touchAngle: 45,
-  threshold: 5,
+  threshold: 8,
   longSwipes: true,
-  longSwipesRatio: 0.35,
+  longSwipesRatio: 0.5,
   shortSwipes: true,
   followFinger: true,
   watchSlidesProgress: true,
+  slidesPerGroup: 1,
+  preventInteractionOnTransition: true,
   mousewheel: {
     enabled: true,
     forceToAxis: true,
-    sensitivity: 1,
-    thresholdDelta: 12,
+    sensitivity: 0.5,
+    thresholdDelta: 40,
+    thresholdTime: 550,
     releaseOnEdges: true,
   },
 }

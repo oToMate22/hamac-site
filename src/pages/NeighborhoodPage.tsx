@@ -1,4 +1,4 @@
-import { Building2, Bus, Leaf, ShoppingBag } from 'lucide-react'
+import { Building2, Bus, ChevronLeft, Leaf, ShoppingBag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
@@ -114,14 +114,27 @@ export function NeighborhoodPage() {
 
   return (
     <main className="neighborhood-page">
-      <section className="neighborhood-hero">
-        <img src={neighborhood.heroImage} alt={`Vue de ${neighborhood.name} dans l'Ouest lyonnais`} className="neighborhood-hero__image" loading="eager" />
+      <section className={`neighborhood-hero${neighborhood.slug === 'sainte-foy-les-lyon' ? ' neighborhood-hero--sainte-foy' : ''}`}>
+        <img src={neighborhood.heroImage} alt={neighborhood.heroAlt} className="neighborhood-hero__image" loading="eager" />
         <div className="neighborhood-hero__overlay" />
+        <Link className="neighborhood-hero__back" to="/quartiers" aria-label="Retour aux communes">
+          <ChevronLeft size={18} strokeWidth={2} aria-hidden />
+        </Link>
         <div className="container neighborhood-hero__content">
           <h1>{neighborhood.name}</h1>
           <p>{neighborhood.tagline}</p>
           <span className="neighborhood-hero__price">{neighborhood.pricePerSqm}</span>
         </div>
+        {neighborhood.photoCredit.license !== 'CC0' ? (
+          <p className="neighborhood-hero__credit">
+            Photo :{' '}
+            <a href={neighborhood.photoCredit.url} rel="noopener noreferrer" target="_blank">
+              {neighborhood.photoCredit.author}
+            </a>
+            {' — '}
+            {neighborhood.photoCredit.license}, Wikimedia Commons
+          </p>
+        ) : null}
         <div className="wave wave--hero-bottom" aria-hidden="true">
           <svg viewBox="0 0 1440 100" preserveAspectRatio="none" focusable="false">
             <path className="wave__path" d="M0,58 C230,44 470,70 760,50 C1010,34 1240,62 1440,46 L1440,100 L0,100 Z" />
@@ -252,7 +265,7 @@ export function NeighborhoodPage() {
           <div className="neighborhood-neighbors__grid">
             {neighbors.map((entry) => (
               <Link key={entry.slug} to={`/quartiers/${entry.slug}`} className="neighborhood-neighbor-card">
-                <img src={entry.heroImage} alt={`Ambiance du quartier ${entry.name}`} loading="lazy" />
+                <img src={entry.heroImage} alt={entry.heroAlt} loading="lazy" />
                 <span className="neighborhood-neighbor-card__overlay" />
                 <div className="neighborhood-neighbor-card__content">
                   <h3>{entry.name}</h3>
