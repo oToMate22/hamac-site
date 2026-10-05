@@ -1766,7 +1766,33 @@ a {
     flex: 1; min-height: 3rem;    /* 48 px : au-dessus du seuil de 44 px */
     display: flex; align-items: center; justify-content: center;
     border-radius: 0.625rem;
-    font-size: 0.9375rem; font-weight: 600; text-decoration: none;
+    font-size: 0.9rem; font-weight: 600; text-decoration: none;
+    min-width: 0;
+  }
+
+  .detail-mobile-cta__price {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 0 0 auto;
+    margin: 0 0.15rem 0 0;
+    padding-right: 0.7rem;
+    border-right: 1px solid rgba(247, 244, 239, 0.25);
+  }
+
+  .detail-mobile-cta__amount {
+    font-family: var(--font-serif);
+    font-size: 1.1875rem;          /* 19 px */
+    font-weight: 600;
+    line-height: 1.08;
+    color: var(--cream);
+    white-space: nowrap;
+  }
+
+  .detail-mobile-cta__meta {
+    font-size: 0.65625rem;         /* 10,5 px */
+    color: rgba(247, 244, 239, 0.68);
+    white-space: nowrap;
   }
 
   .detail-mobile-cta .detail-mobile-cta__btn--call {
@@ -1808,14 +1834,44 @@ a {
   position: relative;
 }
 
-.detail-price__value {
-  margin: 0.3rem 0;
-  font-family: var(--font-serif);
-  color: #142a38;
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
+.detail-price__eyebrow {
+  margin: 0 0 0.4rem;
+  font-size: 0.6875rem;          /* 11 px */
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5c6b73;                /* navy-soft */
 }
 
-.detail-badge {
+.detail-price__value {
+  margin: 0;
+  font-family: var(--font-serif);
+  color: var(--navy);
+  font-size: 2.875rem;           /* 46 px */
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+}
+
+.detail-price__m2 {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;          /* 13 px */
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #5c6b73;
+  margin-left: 0.75rem;
+  white-space: nowrap;
+}
+
+.detail-price h1 {
+  font-size: 1.3125rem;          /* 21 px */
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.5rem 0 0;
+  color: var(--text-heading);
+}
+
+.detail-badge {                  /* inchangé : réservé aux futurs badges « Exclusivité » */
   display: inline-block;
   border-radius: 999px;
   background: rgba(20, 42, 56, 0.2);
@@ -1826,20 +1882,39 @@ a {
 
 .detail-stats {
   display: grid;
-  gap: 0.6rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 0.85rem;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.9rem;
 }
 
 .detail-stats > div {
   background: #faf8f5;
   border-radius: 0.6rem;
-  padding: 0.5rem;
+  padding: 0.55rem 0.6rem;
 }
 
 .detail-stats span {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.65625rem;         /* 10,5 px */
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #5c6b73;
+}
+
+.detail-stats strong {
+  font-family: var(--font-serif);
+  font-size: 1.625rem;           /* 26 px */
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--navy);
+}
+
+@media (max-width: 1023px) {
+  .detail-price__value { font-size: 2.375rem; }                       /* 38 px */
+  .detail-price__m2 { display: block; margin: 0.25rem 0 0; font-size: 0.78125rem; }  /* 12,5 px */
+  .detail-price h1 { font-size: 1.25rem; }                            /* 20 px */
+  .detail-stats strong { font-size: 1.125rem; }                       /* 18 px : tient sur une ligne */
 }
 
 .detail-contact {

@@ -398,6 +398,12 @@ export function PropertyDetailPage() {
   if (error) return <PagePlaceholder title="Erreur de chargement" />
   if (!property) return <PagePlaceholder title="Bien introuvable" />
 
+  // Prix au m² : uniquement pour une vente, avec une surface et un prix exploitables.
+  const pricePerSqm =
+    property.isRental || property.price <= 0 || property.surface <= 0
+      ? null
+      : new Intl.NumberFormat('fr-FR').format(Math.round(property.price / property.surface))
+
   const mainImage = property.images[activeImage] ?? property.images[0] ?? fallbackMainImage
   const imagesCount = property.images.length
   const fullDescription = property.description?.trim() ?? ''
@@ -587,12 +593,15 @@ export function PropertyDetailPage() {
 
           <aside className="detail-side">
             <section className="detail-card detail-price">
-              <span className="detail-badge">{property.badge ?? ''}</span>
-              <p className="detail-price__value">{new Intl.NumberFormat('fr-FR').format(property.price)} €</p>
-              <h1>{property.title}</h1>
-              <p>
-                {property.type} · {property.city}
+              {property.badge ? <span className="detail-badge">{property.badge}</span> : null}
+              <p className="detail-price__eyebrow">
+                {property.type} · réf. {property.slug}
               </p>
+              <p className="detail-price__value">
+                {new Intl.NumberFormat('fr-FR').format(property.price)} €
+                {pricePerSqm ? <span className="detail-price__m2">{pricePerSqm} €/m²</span> : null}
+              </p>
+              <h1>{property.title}</h1>
 
               <div className="detail-stats">
                 {property.surface ? (
@@ -720,6 +729,14 @@ export function PropertyDetailPage() {
         </section>
 
         <div className="detail-mobile-cta">
+          <p className="detail-mobile-cta__price">
+            <span className="detail-mobile-cta__amount">
+              {new Intl.NumberFormat('fr-FR').format(property.price)} €
+            </span>
+            {property.surface ? (
+              <span className="detail-mobile-cta__meta">{property.surface} m² habitable</span>
+            ) : null}
+          </p>
           <a
             className="detail-mobile-cta__btn detail-mobile-cta__btn--call"
             href={`tel:${agent?.phone ?? AGENCY.telephone}`}
@@ -731,7 +748,7 @@ export function PropertyDetailPage() {
             className="detail-mobile-cta__btn detail-mobile-cta__btn--visit"
             href="#demande-visite"
           >
-            Demander une visite
+            Visiter
           </a>
         </div>
       </div>
