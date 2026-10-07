@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import type { Property } from '../data/properties'
 import { initPhotoSwipe } from '../lib/photoSwipe'
+import { imageApimo, srcsetApimo } from '../utils/images'
 
 const formatPrice = (value: number) => `${new Intl.NumberFormat('fr-FR').format(value)} €`
 
@@ -32,7 +33,13 @@ export function PropertyCard({ property, light = false, highlighted = false, onH
           className="bien-card__img"
           data-photos={property.images.length > 1 ? encodeURIComponent(JSON.stringify(property.images)) : undefined}
         >
-          <img src={property.images[0]} alt={`${property.title} à ${property.city}`} loading={priorityImage ? 'eager' : 'lazy'} />
+          <img
+            src={imageApimo(property.images[0], 800)}
+            srcSet={srcsetApimo(property.images[0], [400, 800, 1200])}
+            sizes="(max-width: 1023px) 92vw, (max-width: 1439px) 47vw, 494px"
+            alt={`${property.title} à ${property.city}`}
+            loading={priorityImage ? 'eager' : 'lazy'}
+          />
         </div>
         <div className="bien-card__body">
           <p className="bien-card__price">{formatPrice(property.price)}</p>

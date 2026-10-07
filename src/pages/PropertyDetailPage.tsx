@@ -15,6 +15,7 @@ import { listingDocumentTitle, listingMetaDescription } from '../seo/listingTitl
 import { listingJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 import { bindHorizontalPhotoWheel } from '../lib/photoSwipe'
+import { imageApimo, srcsetApimo } from '../utils/images'
 import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
@@ -467,7 +468,13 @@ export function PropertyDetailPage() {
                   onClick={() => setIsLightboxOpen(true)}
                   aria-label="Ouvrir la galerie en plein écran"
                 >
-                  <img src={mainImage} alt={`${property.title} à ${property.city}`} loading={activeImage === 0 ? 'eager' : 'lazy'} />
+                  <img
+                    src={imageApimo(mainImage, 1200)}
+                    srcSet={srcsetApimo(mainImage, [800, 1200, 1600])}
+                    sizes="(max-width: 1023px) 92vw, 780px"
+                    alt={`${property.title} à ${property.city}`}
+                    loading={activeImage === 0 ? 'eager' : 'lazy'}
+                  />
                 </button>
               </div>
 
@@ -482,7 +489,7 @@ export function PropertyDetailPage() {
                       setIsLightboxOpen(true)
                     }}
                   >
-                    <img src={image} alt={`Vue ${idx + 1} du bien ${property.title}`} loading="lazy" />
+                    <img src={imageApimo(image, 400)} alt={`Vue ${idx + 1} du bien ${property.title}`} loading="lazy" />
                   </button>
                 ))}
               </div>

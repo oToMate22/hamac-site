@@ -6,6 +6,7 @@ import { mountPrivateVisits, unmountPrivateVisits } from '../components/home/mou
 import { mountSearchBars } from '../search/mount'
 import { initPhotoSwipe } from '../lib/photoSwipe'
 import { getProperties, type FeaturedProperty } from '../services/apimo'
+import { imageApimo, srcsetApimo } from '../utils/images'
 import { realEstateAgentJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
@@ -651,7 +652,9 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
             const price = `${new Intl.NumberFormat('fr-FR').format(p.price)} €`
             const bedrooms = p.bedrooms
             const loading = i === 0 ? 'eager' : 'lazy'
-            const img = p.images[0] ?? '/fr/images/Biens/maison-homepage.webp'
+            const brut = p.images[0] ?? '/fr/images/Biens/maison-homepage.webp'
+            const img = imageApimo(brut, 800)
+            const jeu = srcsetApimo(brut, [400, 800, 1200])
             const alt = `Photo du bien ${p.title} à ${p.city}`
             const photos = p.images.length > 1
               ? ` data-photos="${encodeURIComponent(JSON.stringify(p.images))}"`
@@ -661,7 +664,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
               <article class="bien-card" data-bien-card data-kind="${kind}" data-jardin="${jardin}" data-piscine="${piscine}" data-exclusive="${exclusive}">
                 <a href="/acheter/${p.slug}" class="bien-card__link">
                   <div class="bien-card__img"${photos}>
-                    <img src="${img}" alt="${alt}" width="800" height="560" loading="${loading}" />
+                    <img src="${img}"${jeu ? ` srcset="${jeu}" sizes="(max-width: 1023px) 92vw, 47vw"` : ''} alt="${alt}" width="800" height="560" loading="${loading}" />
                   </div>
                   <div class="bien-card__body">
                     <p class="bien-card__price">${price}</p>
