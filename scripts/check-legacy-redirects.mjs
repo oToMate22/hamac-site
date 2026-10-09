@@ -1,3 +1,4 @@
+// DÉPRÉCIÉ — remplacé par src/proxy.ts / scripts/check-legacy-live.mjs. Ne plus lancer : dépend d'un CSV hors dépôt.
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

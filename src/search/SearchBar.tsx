@@ -196,7 +196,15 @@ export function SearchBar({
         onSubmit={submitSearch}
       >
         <div className="search-card__fields premium-search__fields">
-          <label className="search-field premium-search__field">
+          <label
+            className={[
+              'search-field',
+              'premium-search__field',
+              type !== 'all' ? 'search-field--filled' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <span className="search-field__pill premium-search__pill">
               <span className="search-field__label">Type</span>
               <Select.Root value={type} onValueChange={setType}>

@@ -1,4 +1,13 @@
 {
+  "proxy": {
+    "entrypoint": "src/proxy.ts",
+    "matcher": [
+      "/fr/propriete/:slug*",
+      "/en/property/:slug*",
+      "/es/propiedad/:slug*",
+      "/es/:page"
+    ]
+  },
   "redirects": [
     {
       "source": "/",
