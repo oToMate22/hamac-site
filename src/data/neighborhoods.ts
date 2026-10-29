@@ -115,7 +115,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     referentAgent: {
       name: 'Victor Bonazza',
       role: 'Gérant associé',
-      photo: '/fr/images/team/victor.webp?v=4'
+      photo: '/fr/images/team/victor.webp?v=6'
     }
   },
   {
