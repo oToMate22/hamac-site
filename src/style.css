@@ -6494,9 +6494,9 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .premium-search--hero-glass .search-card__submit {
   height: auto;
-  align-self: stretch;
+  align-self: center;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   transition: none;
 }
 
@@ -6508,7 +6508,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 .premium-search--hero-glass .search-card__submit-inner {
   min-height: 40px;
   min-width: 124px;
-  height: 100%;
+  height: auto;
   padding: 0 20px;
   border-radius: 9999px;
   font-size: 13px;
