@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { searchFrenchCommunes, type FrenchCommune } from '../utils/frenchCommunes'
+import {
+  searchFrenchCommunes,
+  searchLocalPostalCommunes,
+  type FrenchCommune,
+} from '../utils/frenchCommunes'
 
 export function useFrenchCommuneSearch(query: string, enabled: boolean, limit = 16) {
   const [results, setResults] = useState<FrenchCommune[]>([])
@@ -11,6 +15,14 @@ export function useFrenchCommuneSearch(query: string, enabled: boolean, limit = 
     const trimmed = query.trim()
     if (trimmed.length < 2) {
       setResults([])
+      setLoading(false)
+      return
+    }
+
+    // 69 / 6900 / 69001 : liste locale, pas d’attente ni de spinner.
+    const localPostal = searchLocalPostalCommunes(trimmed, limit)
+    if (localPostal) {
+      setResults(localPostal)
       setLoading(false)
       return
     }
