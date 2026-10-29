@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-/** Rejoue le sitemap de l'ancien site contre une base (prod Vercel par défaut). */
+/** Rejoue le sitemap de l'ancien site contre une base (projet Vercel o-to-mate22 par défaut). */
 
-const SITEMAP = 'https://hamacpatrimoine.com/sitemap-1.xml'
-const DEFAULT_BASE = 'https://hamac-site.vercel.app'
+import { readFile } from 'node:fs/promises'
+
+const SITEMAP = process.argv[3] || ''
+const DEFAULT_BASE = 'https://hamacpatrimoine.com'
 const CONCURRENCY = 10
 
 const base = (process.argv[2] || DEFAULT_BASE).replace(/\/$/, '')
@@ -24,10 +26,21 @@ function resolveLocation(location, origin) {
   }
 }
 
+async function readSitemapXml(source) {
+  if (/^https?:\/\//i.test(source)) {
+    const res = await fetch(source)
+    if (!res.ok) throw new Error(`sitemap HTTP ${res.status}`)
+    return res.text()
+  }
+  return readFile(source, 'utf8')
+}
+
 async function fetchSitemapPaths() {
-  const res = await fetch(SITEMAP)
-  if (!res.ok) throw new Error(`sitemap HTTP ${res.status}`)
-  const xml = await res.text()
+  if (!SITEMAP) {
+    console.error('Ancien sitemap introuvable : passer le chemin du fichier archivé en 3e argument')
+    process.exit(1)
+  }
+  const xml = await readSitemapXml(SITEMAP)
   const locs = [...xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)].map((m) => m[1].trim())
   if (locs.length === 0) throw new Error('sitemap : aucune <loc>')
   return locs.map(pathnameOf)
