@@ -15,7 +15,7 @@ export function AgencyPage() {
     ['Sarah Bodhuin', 'Agent commercial', '/fr/images/team/sarah-bodhuin.webp', 'Elle accompagne chaque projet avec écoute, exigence et une vraie présence sur le terrain.'],
     ['Raphaël Lasbatx', 'Négociateur immobilier', '/fr/images/team/raphael.webp', 'Réactif et attentif, il vous guide sur chaque phase de la transaction.'],
     ['Samuel Ribes', 'Négociateur immobilier', '/fr/images/team/samuel.webp', "Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement."],
-    ['Ana Sanabria', 'Agent commercial', '/fr/images/team/ana-sanabria.webp?v=2', "Elle accompagne vos recherches avec exigence et une vraie qualité d'écoute."],
+    ['Ana Sanabria', 'Assistante de direction', '/fr/images/team/ana-sanabria.webp?v=2', "Elle accompagne chaque projet avec écoute, exigence et une organisation au service de l'équipe et des clients."],
     ['Anthony Ribeiro', 'Négociateur immobilier', '/fr/images/team/anthony.webp?v=2', 'Il structure chaque dossier pour offrir un suivi fluide et transparent.'],
     ['Pauline Rodriguez', 'Agent commercial', '/fr/images/team/pauline.webp?v=2', "Minutieuse et attentive, elle accorde une importance particulière au suivi de chaque dossier et à la qualité de la relation humaine, afin d'accompagner chaque client avec confiance et sérénité."],
     ['Axel Bernard', 'Conseiller location', '/fr/images/team/AXELBERNARD.webp', "Disponible, réactif et toujours à l'écoute, il met son énergie au service de vos projets."],
