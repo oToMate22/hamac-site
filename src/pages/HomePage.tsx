@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from 'react'
 import { animate, useMotionValueEvent, useScroll, useTransform } from 'framer-motion'
 import { CLIENT_REVIEWS } from '../data/clientReviews'
+import {
+  GOOGLE_REVIEWS,
+  googleReviewsAsClientReviews,
+  hasGoogleReviews,
+} from '../data/googleReviews'
 import { BLOG_POSTS } from '../data/blogPosts'
 import { mountPrivateVisits, unmountPrivateVisits } from '../components/home/mountPrivateVisits'
 import { mountSearchBars } from '../search/mount'
@@ -418,11 +423,39 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       })
     }
 
+    const setupGoogleRatingStat = () => {
+      if (!hasGoogleReviews()) return
+      const valueEl = document.querySelector<HTMLElement>('[data-google-rating-value]')
+      if (valueEl) {
+        const label = formatReviewScoreLabel(GOOGLE_REVIEWS.rating)
+        valueEl.replaceChildren()
+        valueEl.append(document.createTextNode(label))
+        const frac = document.createElement('span')
+        frac.className = 'key-stats-banner__frac'
+        frac.textContent = '/5'
+        valueEl.appendChild(frac)
+        if (GOOGLE_REVIEWS.userRatingCount > 0) {
+          valueEl.setAttribute(
+            'aria-label',
+            `Note Google ${label} sur 5, basée sur ${GOOGLE_REVIEWS.userRatingCount} avis`,
+          )
+        }
+      }
+      const linkEl = document.querySelector<HTMLAnchorElement>('[data-google-reviews-link]')
+      if (linkEl && GOOGLE_REVIEWS.mapsUrl) {
+        linkEl.href = GOOGLE_REVIEWS.mapsUrl
+        if (GOOGLE_REVIEWS.userRatingCount > 0) {
+          linkEl.textContent = `avis google — ${GOOGLE_REVIEWS.userRatingCount} avis`
+        }
+      }
+    }
+
     const setupClientReviewCards = () => {
       const track = document.querySelector<HTMLElement>('[data-temoignages-track]')
-      if (!track || !CLIENT_REVIEWS.length) return
+      const reviews = hasGoogleReviews() ? googleReviewsAsClientReviews() : CLIENT_REVIEWS
+      if (!track || !reviews.length) return
 
-      track.innerHTML = CLIENT_REVIEWS.map(
+      track.innerHTML = reviews.map(
         (review) => `
           <figure class="temoignage-card">
             <p class="temoignage-card__rating" data-temoignage-rating${
@@ -436,9 +469,10 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
         `,
       ).join('')
 
-      track.classList.toggle('temoignages-grid--few', CLIENT_REVIEWS.length <= 3)
+      track.classList.toggle('temoignages-grid--few', reviews.length <= 3)
     }
 
+    setupGoogleRatingStat()
     setupClientReviewCards()
     setupTemoignageRatings()
     setupReveal('.temoignage-card', (index) => Math.min(index * 0.12, 0.35))

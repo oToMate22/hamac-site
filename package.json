@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && tsx scripts/prerender.ts && tsx scripts/generate-sitemap.ts",
+    "build": "tsx scripts/sync-google-reviews.ts && tsc && vite build && tsx scripts/prerender.ts && tsx scripts/generate-sitemap.ts",
     "sync:routes": "tsx scripts/sync-routes.ts",
+    "sync:reviews": "tsx scripts/sync-google-reviews.ts",
     "preview": "vite preview"
   },
   "devDependencies": {

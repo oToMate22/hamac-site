@@ -28,5 +28,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "data/apimo-routes.json"]
+  "include": ["src", "data/apimo-routes.json", "data/google-reviews.json"]
 }
