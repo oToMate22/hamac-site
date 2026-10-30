@@ -89,7 +89,12 @@ async function searchPlaceId(apiKey: string): Promise<string> {
 }
 
 async function fetchPlaceDetails(apiKey: string, resourceName: string) {
-  const response = await fetch(`https://places.googleapis.com/v1/${resourceName}`, {
+  // Sans languageCode, Places API (New) renvoie en anglais (avis + « a year ago »).
+  const url = new URL(`https://places.googleapis.com/v1/${resourceName}`)
+  url.searchParams.set('languageCode', 'fr')
+  url.searchParams.set('regionCode', 'FR')
+
+  const response = await fetch(url, {
     headers: {
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': 'id,name,displayName,rating,userRatingCount,reviews',
@@ -113,6 +118,7 @@ async function fetchPlaceDetails(apiKey: string, resourceName: string) {
 function mapReviews(reviews: PlaceReview[] | undefined) {
   return (reviews ?? [])
     .map((review, index) => {
+      // text = version localisée (fr) ; originalText = langue d'écriture du client
       const quote = (review.text?.text || review.originalText?.text || '').trim()
       const author = (review.authorAttribution?.displayName || 'Client Google').trim()
       const rating = typeof review.rating === 'number' ? review.rating : 5
