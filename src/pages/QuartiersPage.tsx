@@ -21,9 +21,7 @@ export function QuartiersPage() {
       <section className="container quartiers-hub__hero">
         <header className="section-header">
           <h1 className="section-title">L&apos;Ouest Lyonnais, quartier par quartier</h1>
-          <p className="section-intro">
-            Découvrez nos communes, leurs atouts et les biens disponibles dans chaque secteur.
-          </p>
+          <p className="section-intro">Notre sélection de biens</p>
         </header>
       </section>
 
