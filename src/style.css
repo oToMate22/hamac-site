@@ -7752,6 +7752,119 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   padding-bottom: clamp(4rem, 10vw, 6rem);
 }
 
+.temoignages__header.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  max-width: 72rem;
+  text-align: left;
+  margin-bottom: 1.75rem;
+}
+
+.temoignages__heading .eyebrow {
+  text-align: left;
+}
+
+.temoignages__heading .section-title {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.temoignages__google {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 1rem 0.65rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--navy);
+  background: linear-gradient(180deg, #fff 0%, #f7f5f1 100%);
+  border: 1px solid rgba(20, 42, 56, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 28px -18px rgba(20, 42, 56, 0.35);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.temoignages__google:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 42, 56, 0.18);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 16px 34px -16px rgba(20, 42, 56, 0.4);
+}
+
+.temoignages__google:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 3px;
+}
+
+.temoignages__google-score {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  min-width: 2.4rem;
+  text-align: center;
+}
+
+.temoignages__google-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.temoignages__google-stars {
+  display: inline-flex;
+  gap: 0.08rem;
+  color: #e2b100;
+  font-size: 0.95rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.temoignages__google-star--half {
+  position: relative;
+  color: rgba(20, 42, 56, 0.18);
+}
+
+.temoignages__google-star--half::before {
+  content: '★';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 55%;
+  overflow: hidden;
+  color: #e2b100;
+}
+
+.temoignages__google-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(20, 42, 56, 0.62);
+}
+
+@media (max-width: 639px) {
+  .temoignages__header {
+    align-items: flex-start;
+  }
+
+  .temoignages__google {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .temoignages-carousel {
   position: relative;
   max-width: 72rem;

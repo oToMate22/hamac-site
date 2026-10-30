@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { animate, useMotionValueEvent, useScroll, useTransform } from 'framer-motion'
-import { CLIENT_REVIEWS } from '../data/clientReviews'
 import {
   GOOGLE_REVIEWS,
-  googleReviewsAsClientReviews,
-  hasGoogleReviews,
+  hasGoogleRating,
+  reviewsForCarousel,
 } from '../data/googleReviews'
 import { BLOG_POSTS } from '../data/blogPosts'
 import { mountPrivateVisits, unmountPrivateVisits } from '../components/home/mountPrivateVisits'
@@ -424,10 +423,10 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     }
 
     const setupGoogleRatingStat = () => {
-      if (!hasGoogleReviews()) return
+      if (!hasGoogleRating()) return
+      const label = formatReviewScoreLabel(GOOGLE_REVIEWS.rating)
       const valueEl = document.querySelector<HTMLElement>('[data-google-rating-value]')
       if (valueEl) {
-        const label = formatReviewScoreLabel(GOOGLE_REVIEWS.rating)
         valueEl.replaceChildren()
         valueEl.append(document.createTextNode(label))
         const frac = document.createElement('span')
@@ -448,11 +447,27 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
           linkEl.textContent = `avis google — ${GOOGLE_REVIEWS.userRatingCount} avis`
         }
       }
+
+      const badge = document.querySelector<HTMLAnchorElement>('[data-google-rating-badge]')
+      if (badge) {
+        if (GOOGLE_REVIEWS.mapsUrl) badge.href = GOOGLE_REVIEWS.mapsUrl
+        badge.hidden = false
+        badge.setAttribute(
+          'aria-label',
+          `Note Google ${label} sur 5 — ${GOOGLE_REVIEWS.userRatingCount} avis`,
+        )
+      }
+      const badgeScore = document.querySelector<HTMLElement>('[data-google-rating-badge-score]')
+      if (badgeScore) badgeScore.textContent = label
+      const badgeCount = document.querySelector<HTMLElement>('[data-google-rating-badge-count]')
+      if (badgeCount && GOOGLE_REVIEWS.userRatingCount > 0) {
+        badgeCount.textContent = String(GOOGLE_REVIEWS.userRatingCount)
+      }
     }
 
     const setupClientReviewCards = () => {
       const track = document.querySelector<HTMLElement>('[data-temoignages-track]')
-      const reviews = hasGoogleReviews() ? googleReviewsAsClientReviews() : CLIENT_REVIEWS
+      const reviews = reviewsForCarousel()
       if (!track || !reviews.length) return
 
       track.innerHTML = reviews.map(

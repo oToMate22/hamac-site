@@ -115,6 +115,10 @@ async function fetchPlaceDetails(apiKey: string, resourceName: string) {
   return payload
 }
 
+function quoteSubstance(quote: string) {
+  return Math.min(quote.replace(/[«»""']/g, '').trim().length, 280)
+}
+
 function mapReviews(reviews: PlaceReview[] | undefined) {
   return (reviews ?? [])
     .map((review, index) => {
@@ -122,7 +126,7 @@ function mapReviews(reviews: PlaceReview[] | undefined) {
       const quote = (review.text?.text || review.originalText?.text || '').trim()
       const author = (review.authorAttribution?.displayName || 'Client Google').trim()
       const rating = typeof review.rating === 'number' ? review.rating : 5
-      if (!quote) return null
+      if (!quote || rating < 4) return null
       return {
         id: review.name || `google-${index}`,
         rating,
@@ -133,6 +137,11 @@ function mapReviews(reviews: PlaceReview[] | undefined) {
       }
     })
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+    // Mieux notés d'abord, puis commentaires les plus développés
+    .sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating
+      return quoteSubstance(b.quote) - quoteSubstance(a.quote)
+    })
 }
 
 async function main() {
