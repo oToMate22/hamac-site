@@ -413,6 +413,17 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     }
   }, [mobileFiltersOpen, desktopMapLayout])
 
+  const openSheetToSection = useCallback((sectionId: string) => {
+    setMobileFiltersOpen(true)
+    window.setTimeout(() => {
+      if (sectionId === 'catalog-filter-chambres') {
+        const details = document.getElementById('catalog-filter-more')
+        if (details instanceof HTMLDetailsElement) details.open = true
+      }
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+  }, [])
+
   const isLoading = apiProperties === null && apiError === null
   const zoneActive = Boolean(visibleZone && isMapView)
   const propertiesForMap = !isLoading && !apiError ? catalogProperties : []
@@ -588,6 +599,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           <SearchBar
             action={mode === 'rent' ? '/louer' : '/acheter'}
             compact
+            omitSubmit={!desktopMapLayout}
             cityOptions={availableCities}
             initialValues={{ type, budget: budgetForSearchBar, city: q }}
             onSearch={(filters) => {
@@ -597,7 +609,112 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 { key: 'q', value: filters.city },
               ])
             }}
+            trailingAction={
+              !desktopMapLayout ? (
+                <button
+                  type="button"
+                  className="catalog-filter-button"
+                  aria-expanded={mobileFiltersOpen}
+                  aria-controls="catalog-filters"
+                  onClick={() => setMobileFiltersOpen((value) => !value)}
+                >
+                  <SlidersHorizontal size={18} aria-hidden />
+                  <span className="catalog-filter-button__label">Filtres</span>
+                  {activeFilterCount > 0 ? (
+                    <span className="catalog-filter-button__badge">{activeFilterCount}</span>
+                  ) : null}
+                </button>
+              ) : undefined
+            }
           />
+          {!desktopMapLayout ? (
+            <div className="catalog-active-chips" aria-label="Filtres rapides">
+              {type !== 'all' ? (
+                <button
+                  type="button"
+                  className="catalog-chip is-active"
+                  aria-label={`Retirer le filtre ${typeLabel}`}
+                  onClick={() => updateParam('type', 'all')}
+                >
+                  <span>{typeLabel}</span>
+                  <X size={12} aria-hidden />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="catalog-chip"
+                  onClick={() => openSheetToSection('catalog-filter-type')}
+                >
+                  <span>Tous types</span>
+                </button>
+              )}
+              {budgetMinValue > 0 || budgetMaxForFilter != null ? (
+                <button
+                  type="button"
+                  className="catalog-chip is-active"
+                  aria-label="Retirer le filtre budget"
+                  onClick={() =>
+                    updateParams([
+                      { key: 'budgetMin', value: 'all' },
+                      { key: 'budgetMax', value: 'all' },
+                    ])
+                  }
+                >
+                  <span>
+                    {budgetMinValue > 0 && budgetMaxForFilter != null
+                      ? `${formatEuro(budgetMinValue)} – ${formatEuro(budgetMaxForFilter)}`
+                      : budgetMinValue > 0
+                        ? `≥ ${formatEuro(budgetMinValue)}`
+                        : `≤ ${formatEuro(budgetMaxForFilter!)}`}
+                    {mode === 'rent' ? ' / mois' : ''}
+                  </span>
+                  <X size={12} aria-hidden />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="catalog-chip"
+                  onClick={() => openSheetToSection('catalog-filter-budget')}
+                >
+                  <span>{mode === 'rent' ? '≤ 3 000 € / mois' : '≤ 1 500 000 €'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="catalog-chip is-add"
+                onClick={() => openSheetToSection('catalog-filter-ville')}
+              >
+                <span>+ Ville</span>
+              </button>
+              <button
+                type="button"
+                className="catalog-chip is-add"
+                onClick={() => openSheetToSection('catalog-filter-chambres')}
+              >
+                <span>+ Chambres</span>
+              </button>
+              {activeFilterChips
+                .filter((chip) => chip.key !== 'type' && chip.key !== 'budget')
+                .map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    className="catalog-chip is-active"
+                    aria-label={`Retirer le filtre ${chip.label}`}
+                    onClick={() => {
+                      if (chip.key.startsWith('amenity-')) {
+                        toggleAmenity(chip.key.replace('amenity-', '') as Amenity)
+                        return
+                      }
+                      updateParams(chip.clear)
+                    }}
+                  >
+                    <span>{chip.label}</span>
+                    <X size={12} aria-hidden />
+                  </button>
+                ))}
+            </div>
+          ) : null}
         </div>
       </section>
       <section className="catalog-body section section--cream">
@@ -625,14 +742,16 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             </div>
             <div className="catalog-filter-card">
               {!desktopMapLayout ? (
-                <FilterSelect
-                  label="Type"
-                  value={type}
-                  onValueChange={(value) => updateParam('type', value)}
-                  options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
-                />
+                <div id="catalog-filter-type">
+                  <FilterSelect
+                    label="Type"
+                    value={type}
+                    onValueChange={(value) => updateParam('type', value)}
+                    options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                  />
+                </div>
               ) : null}
-              <label className="catalog-filter__group">
+              <label className="catalog-filter__group" id="catalog-filter-budget">
                 <span className="catalog-filter__label">
                   {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
                 </span>
@@ -681,7 +800,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </Slider.Root>
               </label>
               {!desktopMapLayout ? (
-                <label className="catalog-filter__group">
+                <label className="catalog-filter__group" id="catalog-filter-ville">
                   <span className="catalog-filter__label">Ville</span>
                   <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
                     <Popover.Trigger asChild>
@@ -782,7 +901,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   </Popover.Root>
                 </label>
               ) : null}
-              <details className="catalog-filter-more" {...(desktopMapLayout ? { open: true } : {})}>
+              <details
+                id="catalog-filter-more"
+                className="catalog-filter-more"
+                {...(desktopMapLayout ? { open: true } : {})}
+              >
                 <summary>Plus de filtres — surface, chambres, critères</summary>
                 <FilterSelect
                   label="Rayon"
@@ -818,18 +941,20 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     <Slider.Thumb className="catalog-slider__thumb" aria-label="Surface minimum" />
                   </Slider.Root>
                 </label>
-                <FilterSelect
-                  label="Chambres min"
-                  value={rooms}
-                  onValueChange={(value) => updateParam('rooms', value)}
-                  options={[
-                    { value: 'all', label: 'Toutes' },
-                    { value: '1', label: '1+' },
-                    { value: '2', label: '2+' },
-                    { value: '3', label: '3+' },
-                    { value: '4', label: '4+' },
-                  ]}
-                />
+                <div id="catalog-filter-chambres">
+                  <FilterSelect
+                    label="Chambres min"
+                    value={rooms}
+                    onValueChange={(value) => updateParam('rooms', value)}
+                    options={[
+                      { value: 'all', label: 'Toutes' },
+                      { value: '1', label: '1+' },
+                      { value: '2', label: '2+' },
+                      { value: '3', label: '3+' },
+                      { value: '4', label: '4+' },
+                    ]}
+                  />
+                </div>
                 <div className="catalog-filter__group">
                   <span className="catalog-filter__label">Critères</span>
                   <div className="catalog-chips">
@@ -882,19 +1007,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               <div className="catalog-toolbar__row">
                 <p className="catalog-toolbar__count">{resultsCountLabel}</p>
                 <div className="catalog-toolbar__end">
-                  <button
-                    type="button"
-                    className="catalog-filter-button"
-                    aria-expanded={mobileFiltersOpen}
-                    aria-controls="catalog-filters"
-                    onClick={() => setMobileFiltersOpen((value) => !value)}
-                  >
-                    <SlidersHorizontal size={16} aria-hidden />
-                    <span>Filtres</span>
-                    {activeFilterCount > 0 ? (
-                      <span className="catalog-filter-button__badge">{activeFilterCount}</span>
-                    ) : null}
-                  </button>
                   <nav className="catalog-view-toggle" aria-label="Affichage des biens">
                     <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
                       Liste
@@ -918,7 +1030,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   </div>
                 </div>
               </div>
-              {activeFilterChips.length > 0 ? (
+              {desktopMapLayout && activeFilterChips.length > 0 ? (
                 <div className="catalog-active-chips" aria-label="Filtres actifs">
                   {activeFilterChips.map((chip) => (
                     <button

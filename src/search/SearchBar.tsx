@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
 import {
@@ -103,6 +103,10 @@ type SearchBarProps = {
   compact?: boolean
   /** Barre unifiée glassmorphism (hero homepage) */
   variant?: 'default' | 'hero-glass'
+  /** Masque le bouton Rechercher (DOM) — catalogue mobile */
+  omitSubmit?: boolean
+  /** Action à droite des champs (ex. bouton Filtres catalogue mobile) */
+  trailingAction?: ReactNode
   cityOptions?: string[]
   initialValues?: {
     type?: string
@@ -116,6 +120,8 @@ export function SearchBar({
   action,
   compact = false,
   variant = 'default',
+  omitSubmit = false,
+  trailingAction,
   cityOptions = [],
   initialValues,
   onSearch,
@@ -163,19 +169,37 @@ export function SearchBar({
 
   const chevronSize = variant === 'hero-glass' ? 12 : 14
 
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const commitSearch = (next?: { type?: string; budgetMax?: string; city?: string }) => {
+    const payload = {
+      type: next?.type ?? type,
+      budgetMax: next?.budgetMax ?? budget,
+      city: next?.city ?? city,
+    }
     if (onSearch) {
-      onSearch({ type, budgetMax: budget, city })
+      onSearch(payload)
       return
     }
     const params = new URLSearchParams()
-    if (type !== 'all') params.set('type', type)
-    if (city) params.set('q', city)
-    if (budget !== 'all') params.set('budgetMax', budget)
+    if (payload.type !== 'all') params.set('type', payload.type)
+    if (payload.city) params.set('q', payload.city)
+    if (payload.budgetMax !== 'all') params.set('budgetMax', payload.budgetMax)
 
     const target = params.toString() ? `${action}?${params.toString()}` : action
     window.location.assign(target)
+  }
+
+  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    commitSearch()
+  }
+
+  const selectCity = (nextCity: string) => {
+    setCity(nextCity)
+    setCityQuery(nextCity)
+    setCityOpen(false)
+    if (onSearch) {
+      commitSearch({ city: nextCity })
+    }
   }
 
   return (
@@ -274,8 +298,7 @@ export function SearchBar({
                             className="premium-search__clear"
                             aria-label="Réinitialiser la ville"
                             onClick={() => {
-                              setCity('')
-                              setCityQuery('')
+                              selectCity('')
                             }}
                           >
                             ×
@@ -298,9 +321,7 @@ export function SearchBar({
                             value={entry}
                             className="premium-search__command-item"
                             onSelect={() => {
-                              setCity(entry)
-                              setCityQuery(entry)
-                              setCityOpen(false)
+                              selectCity(entry)
                             }}
                           >
                             <span>{highlightMatch(entry, cityQuery)}</span>
@@ -313,9 +334,7 @@ export function SearchBar({
                             value={`${entry.name}-${entry.code}`}
                             className="premium-search__command-item"
                             onSelect={() => {
-                              setCity(entry.name)
-                              setCityQuery(entry.name)
-                              setCityOpen(false)
+                              selectCity(entry.name)
                             }}
                           >
                             <span>{highlightMatch(formatCommuneLabel(entry), cityQuery)}</span>
@@ -362,36 +381,40 @@ export function SearchBar({
           </label>
         </div>
 
-        <div
-          className={[
-            'search-card__actions',
-            'premium-search__actions',
-            variant === 'hero-glass' ? 'hero-search__actions' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {variant === 'hero-glass' ? (
-            <a
-              href={action}
-              className="hero-search__plus"
-              aria-label="Ouvrir le catalogue avec tous les filtres"
-              title="Plus de critères"
-            >
-              <Plus size={15} strokeWidth={2.1} aria-hidden />
-            </a>
-          ) : null}
-          <button type="submit" className="search-card__submit premium-search__submit">
-            <span className="search-card__submit-inner premium-search__submit-inner">
-              {variant === 'hero-glass' ? (
-                <HeroMagnifyingGlass className="search-card__submit-icon hero-search__submit-icon" size={16} />
-              ) : (
-                <Search className="search-card__submit-icon" size={18} />
-              )}
-              <span className="search-card__submit-label">Rechercher</span>
-            </span>
-          </button>
-        </div>
+        {trailingAction ? <div className="premium-search__trailing">{trailingAction}</div> : null}
+
+        {!omitSubmit ? (
+          <div
+            className={[
+              'search-card__actions',
+              'premium-search__actions',
+              variant === 'hero-glass' ? 'hero-search__actions' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {variant === 'hero-glass' ? (
+              <a
+                href={action}
+                className="hero-search__plus"
+                aria-label="Ouvrir le catalogue avec tous les filtres"
+                title="Plus de critères"
+              >
+                <Plus size={15} strokeWidth={2.1} aria-hidden />
+              </a>
+            ) : null}
+            <button type="submit" className="search-card__submit premium-search__submit">
+              <span className="search-card__submit-inner premium-search__submit-inner">
+                {variant === 'hero-glass' ? (
+                  <HeroMagnifyingGlass className="search-card__submit-icon hero-search__submit-icon" size={16} />
+                ) : (
+                  <Search className="search-card__submit-icon" size={18} />
+                )}
+                <span className="search-card__submit-label">Rechercher</span>
+              </span>
+            </button>
+          </div>
+        ) : null}
       </form>
     </>
   )
