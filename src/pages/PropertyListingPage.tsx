@@ -399,6 +399,20 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setCityFilterQuery(q)
   }, [q])
 
+  useEffect(() => {
+    if (!mobileFiltersOpen || desktopMapLayout) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileFiltersOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [mobileFiltersOpen, desktopMapLayout])
+
   const isLoading = apiProperties === null && apiError === null
   const zoneActive = Boolean(visibleZone && isMapView)
   const propertiesForMap = !isLoading && !apiError ? catalogProperties : []
@@ -591,7 +605,27 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       </section>
       <section className="catalog-body section section--cream">
         <div className="container catalog-layout">
-          <aside className={`catalog-sidebar ${mobileFiltersOpen ? 'is-open' : ''}`}>
+          {mobileFiltersOpen && !desktopMapLayout ? (
+            <button
+              type="button"
+              className="catalog-filter-sheet__veil"
+              aria-label="Fermer les filtres"
+              onClick={() => setMobileFiltersOpen(false)}
+            />
+          ) : null}
+          <aside
+            id="catalog-filters"
+            className={`catalog-sidebar${mobileFiltersOpen ? ' is-open' : ''}${desktopMapLayout ? '' : ' catalog-filter-sheet'}`}
+          >
+            <div className="catalog-filter-sheet__chrome">
+              <div className="catalog-filter-sheet__handle" aria-hidden />
+              <div className="catalog-filter-sheet__title-row">
+                <p>Filtres</p>
+                <button type="button" aria-label="Fermer les filtres" onClick={() => setMobileFiltersOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
             <div className="catalog-filter-card">
               <FilterSelect
                 label="Type"
@@ -599,6 +633,54 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 onValueChange={(value) => updateParam('type', value)}
                 options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
               />
+              <label className="catalog-filter__group">
+                <span className="catalog-filter__label">
+                  {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
+                </span>
+                <p className="catalog-slider__value">
+                  {budgetMinValue > 0
+                    ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
+                    : mode === 'rent'
+                      ? 'Sans Plancher'
+                      : 'Sans Minimum'}
+                  {' — '}
+                  {budgetMaxForFilter == null
+                    ? 'Sans Budget Max'
+                    : `jusqu'à ${formatEuro(budgetMaxForFilter)}${rentBudgetSuffix}`}
+                </p>
+                <Slider.Root
+                  className="catalog-slider"
+                  min={0}
+                  max={budgetSliderCap}
+                  step={budgetSliderStep}
+                  minStepsBetweenThumbs={1}
+                  value={[budgetMinValue, budgetMaxThumb]}
+                  onValueChange={(values) => {
+                    const rawMin = values[0] ?? 0
+                    const rawMax = values[1] ?? budgetSliderCap
+                    let minV = Math.min(rawMin, rawMax)
+                    let maxV = Math.max(rawMin, rawMax)
+                    minV = Math.min(Math.max(0, minV), budgetSliderCap)
+                    maxV = Math.min(Math.max(0, maxV), budgetSliderCap)
+                    if (maxV < minV + budgetSliderStep) maxV = minV + budgetSliderStep
+                    if (maxV > budgetSliderCap) maxV = budgetSliderCap
+                    const minParam = minV <= 0 ? '0' : String(minV)
+                    const maxAtCap = maxV >= budgetSliderCap - budgetSliderStep / 2
+                    const maxParam = maxAtCap ? 'all' : String(maxV)
+                    updateParams([
+                      { key: 'budgetMin', value: minParam },
+                      { key: 'budgetMax', value: maxParam },
+                    ])
+                  }}
+                  aria-label={mode === 'rent' ? 'Fourchette de loyer' : 'Fourchette de budget'}
+                >
+                  <Slider.Track className="catalog-slider__track">
+                    <Slider.Range className="catalog-slider__range" />
+                  </Slider.Track>
+                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer minimum' : 'Budget minimum'} />
+                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer maximum' : 'Budget maximum'} />
+                </Slider.Root>
+              </label>
               <label className="catalog-filter__group">
                 <span className="catalog-filter__label">Ville</span>
                 <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
@@ -699,99 +781,94 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   </Popover.Portal>
                 </Popover.Root>
               </label>
-              <FilterSelect
-                label="Rayon"
-                value={String(radiusKm || 0)}
-                disabled={!locationQuery}
-                onValueChange={(value) => updateParam('radius', value === '0' ? 'all' : value)}
-                options={[
-                  { value: '0', label: 'Ville uniquement' },
-                  { value: '5', label: '5 km autour' },
-                  { value: '10', label: '10 km autour' },
-                  { value: '15', label: '15 km autour' },
-                  { value: '20', label: '20 km autour' },
-                  { value: '30', label: '30 km autour' },
-                ]}
-              />
-              <label className="catalog-filter__group">
-                <span className="catalog-filter__label">
-                  {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
-                </span>
-                <p className="catalog-slider__value">
-                  {budgetMinValue > 0
-                    ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
-                    : mode === 'rent'
-                      ? 'Sans Plancher'
-                      : 'Sans Minimum'}
-                  {' — '}
-                  {budgetMaxForFilter == null
-                    ? 'Sans Budget Max'
-                    : `jusqu'à ${formatEuro(budgetMaxForFilter)}${rentBudgetSuffix}`}
-                </p>
-                <Slider.Root
-                  className="catalog-slider"
-                  min={0}
-                  max={budgetSliderCap}
-                  step={budgetSliderStep}
-                  minStepsBetweenThumbs={1}
-                  value={[budgetMinValue, budgetMaxThumb]}
-                  onValueChange={(values) => {
-                    const rawMin = values[0] ?? 0
-                    const rawMax = values[1] ?? budgetSliderCap
-                    let minV = Math.min(rawMin, rawMax)
-                    let maxV = Math.max(rawMin, rawMax)
-                    minV = Math.min(Math.max(0, minV), budgetSliderCap)
-                    maxV = Math.min(Math.max(0, maxV), budgetSliderCap)
-                    if (maxV < minV + budgetSliderStep) maxV = minV + budgetSliderStep
-                    if (maxV > budgetSliderCap) maxV = budgetSliderCap
-                    const minParam = minV <= 0 ? '0' : String(minV)
-                    const maxAtCap = maxV >= budgetSliderCap - budgetSliderStep / 2
-                    const maxParam = maxAtCap ? 'all' : String(maxV)
-                    updateParams([
-                      { key: 'budgetMin', value: minParam },
-                      { key: 'budgetMax', value: maxParam },
-                    ])
-                  }}
-                  aria-label={mode === 'rent' ? 'Fourchette de loyer' : 'Fourchette de budget'}
-                >
-                  <Slider.Track className="catalog-slider__track">
-                    <Slider.Range className="catalog-slider__range" />
-                  </Slider.Track>
-                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer minimum' : 'Budget minimum'} />
-                  <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer maximum' : 'Budget maximum'} />
-                </Slider.Root>
-              </label>
-              <label className="catalog-filter__group">
-                <span className="catalog-filter__label">Surface min</span>
-                <p className="catalog-slider__value">
-                  {surfaceValue > 0 ? `à partir de ${surfaceValue} m²` : 'Toutes surfaces'}
-                </p>
-                <Slider.Root
-                  className="catalog-slider"
-                  min={0}
-                  max={300}
-                  step={10}
-                  value={[surfaceValue]}
-                  onValueChange={(values) => updateParam('surface', values[0] > 0 ? String(values[0]) : 'all')}
-                  aria-label="Surface minimum"
-                >
-                  <Slider.Track className="catalog-slider__track">
-                    <Slider.Range className="catalog-slider__range" />
-                  </Slider.Track>
-                  <Slider.Thumb className="catalog-slider__thumb" aria-label="Surface minimum" />
-                </Slider.Root>
-              </label>
-              <FilterSelect label="Chambres min" value={rooms} onValueChange={(value) => updateParam('rooms', value)} options={[
-                { value: 'all', label: 'Toutes' }, { value: '1', label: '1+' }, { value: '2', label: '2+' }, { value: '3', label: '3+' }, { value: '4', label: '4+' },
-              ]} />
-              <div className="catalog-filter__group">
-                <span className="catalog-filter__label">Critères</span>
-                <div className="catalog-chips">
-                  {(['jardin', 'piscine', 'terrasse', 'garage'] as Amenity[]).map((amenity) => (
-                    <button key={amenity} type="button" className={`catalog-chip ${amenities.includes(amenity) ? 'is-active' : ''}`} onClick={() => toggleAmenity(amenity)}>{amenity}</button>
-                  ))}
+              <details className="catalog-filter-more" {...(desktopMapLayout ? { open: true } : {})}>
+                <summary>Plus de filtres — surface, chambres, critères</summary>
+                <FilterSelect
+                  label="Rayon"
+                  value={String(radiusKm || 0)}
+                  disabled={!locationQuery}
+                  onValueChange={(value) => updateParam('radius', value === '0' ? 'all' : value)}
+                  options={[
+                    { value: '0', label: 'Ville uniquement' },
+                    { value: '5', label: '5 km autour' },
+                    { value: '10', label: '10 km autour' },
+                    { value: '15', label: '15 km autour' },
+                    { value: '20', label: '20 km autour' },
+                    { value: '30', label: '30 km autour' },
+                  ]}
+                />
+                <label className="catalog-filter__group">
+                  <span className="catalog-filter__label">Surface min</span>
+                  <p className="catalog-slider__value">
+                    {surfaceValue > 0 ? `à partir de ${surfaceValue} m²` : 'Toutes surfaces'}
+                  </p>
+                  <Slider.Root
+                    className="catalog-slider"
+                    min={0}
+                    max={300}
+                    step={10}
+                    value={[surfaceValue]}
+                    onValueChange={(values) => updateParam('surface', values[0] > 0 ? String(values[0]) : 'all')}
+                    aria-label="Surface minimum"
+                  >
+                    <Slider.Track className="catalog-slider__track">
+                      <Slider.Range className="catalog-slider__range" />
+                    </Slider.Track>
+                    <Slider.Thumb className="catalog-slider__thumb" aria-label="Surface minimum" />
+                  </Slider.Root>
+                </label>
+                <FilterSelect
+                  label="Chambres min"
+                  value={rooms}
+                  onValueChange={(value) => updateParam('rooms', value)}
+                  options={[
+                    { value: 'all', label: 'Toutes' },
+                    { value: '1', label: '1+' },
+                    { value: '2', label: '2+' },
+                    { value: '3', label: '3+' },
+                    { value: '4', label: '4+' },
+                  ]}
+                />
+                <div className="catalog-filter__group">
+                  <span className="catalog-filter__label">Critères</span>
+                  <div className="catalog-chips">
+                    {(['jardin', 'piscine', 'terrasse', 'garage'] as Amenity[]).map((amenity) => (
+                      <button
+                        key={amenity}
+                        type="button"
+                        className={`catalog-chip ${amenities.includes(amenity) ? 'is-active' : ''}`}
+                        onClick={() => toggleAmenity(amenity)}
+                      >
+                        {amenity}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </details>
+            </div>
+            <div className="catalog-filter-sheet__foot">
+              <button
+                type="button"
+                className="catalog-filter-sheet__clear"
+                onClick={() => {
+                  const next = new URLSearchParams()
+                  if (isMapView) next.set('view', 'map')
+                  persistFilters(next)
+                  setSearchParams(next)
+                }}
+              >
+                Effacer
+              </button>
+              <button
+                type="button"
+                className="catalog-filter-sheet__apply"
+                disabled={isLoading}
+                onClick={() => setMobileFiltersOpen(false)}
+              >
+                {isLoading
+                  ? 'Chargement…'
+                  : `Voir les ${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''}`}
+              </button>
             </div>
             {!isMapView && widePreview ? (
               <aside className="catalog-map-panel">

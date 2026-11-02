@@ -8531,3 +8531,193 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     transform: none;
   }
 }
+
+/* Catalogue mobile — feuille montante (direction A) */
+@media (max-width: 1023px) {
+  .catalog-filter-button {
+    min-height: 44px;
+    border-radius: 999px;
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  .catalog-active-chips {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .catalog-active-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .catalog-filter-sheet__veil {
+    position: fixed;
+    inset: 0;
+    z-index: 520;
+    border: 0;
+    background: rgba(20, 42, 56, 0.45);
+    cursor: pointer;
+  }
+
+  .catalog-sidebar.catalog-filter-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 530;
+    max-height: 88vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+    background: #fff;
+    box-shadow: 0 -12px 40px rgba(20, 42, 56, 0.18);
+    transform: translateY(100%);
+    transition: transform 0.28s ease;
+  }
+
+  .catalog-sidebar.catalog-filter-sheet.is-open {
+    display: flex;
+    transform: translateY(0);
+  }
+
+  .catalog-filter-sheet__chrome {
+    flex: 0 0 auto;
+    padding: 0.65rem 1rem 0.35rem;
+  }
+
+  .catalog-filter-sheet__handle {
+    width: 2.5rem;
+    height: 0.28rem;
+    margin: 0 auto 0.65rem;
+    border-radius: 999px;
+    background: rgba(20, 42, 56, 0.22);
+  }
+
+  .catalog-filter-sheet__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .catalog-filter-sheet__title-row p {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--text-heading);
+  }
+
+  .catalog-filter-sheet__title-row button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(20, 42, 56, 0.06);
+    color: var(--navy);
+    cursor: pointer;
+  }
+
+  .catalog-filter-sheet .catalog-filter-card {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    padding: 0.35rem 1rem 1rem;
+  }
+
+  .catalog-filter-sheet__foot {
+    position: sticky;
+    bottom: 0;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(20, 42, 56, 0.08);
+    background: #fff;
+  }
+
+  .catalog-filter-sheet__clear {
+    border: 0;
+    background: transparent;
+    color: var(--navy);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0 0.4rem;
+  }
+
+  .catalog-filter-sheet__apply {
+    flex: 1 1 auto;
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--navy);
+    color: var(--white);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .catalog-filter-sheet__apply:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+
+  .catalog-filter-more {
+    margin-top: 0.35rem;
+    border-top: 1px solid rgba(20, 42, 56, 0.08);
+    padding-top: 0.55rem;
+  }
+
+  .catalog-filter-more > summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--navy);
+    padding: 0.55rem 0;
+  }
+
+  .catalog-filter-more > summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalog-filter-button {
+    display: none;
+  }
+
+  .catalog-filter-sheet__veil,
+  .catalog-filter-sheet__chrome,
+  .catalog-filter-sheet__foot {
+    display: none !important;
+  }
+
+  .catalog-filter-more > summary {
+    display: none;
+  }
+
+  .catalog-filter-more {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+}
