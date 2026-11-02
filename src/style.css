@@ -8534,6 +8534,108 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 /* Catalogue mobile — feuille montante (direction A) */
 @media (max-width: 1023px) {
+  .catalog-page .catalog-hero {
+    padding-top: 76px;
+    padding-bottom: 1rem;
+  }
+
+  .catalog-page .catalog-hero .premium-search--compact {
+    margin-top: 0.75rem;
+  }
+
+  /* Une ligne : Lieu + bouton ; Type/Budget uniquement dans la feuille */
+  .catalog-page .premium-search--compact .premium-search__fields > .premium-search__field:nth-child(1),
+  .catalog-page .premium-search--compact .premium-search__fields > .premium-search__field:nth-child(3) {
+    display: none;
+  }
+
+  .catalog-page .premium-search--compact .search-card__fields {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-page .catalog-hero__intro {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    margin-top: 0.35rem;
+  }
+
+  .catalog-page .catalog-toolbar {
+    margin-bottom: 8px;
+    gap: 0.45rem;
+  }
+
+  .catalog-page .catalog-toolbar__row {
+    min-height: 44px;
+    flex-wrap: nowrap;
+    gap: 0.45rem;
+  }
+
+  .catalog-page .catalog-toolbar__count {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .catalog-page .catalog-toolbar__end {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .catalog-page .catalog-toolbar__sort {
+    width: auto;
+  }
+
+  .catalog-page .catalog-toolbar__sort .catalog-filter__group {
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .catalog-page .catalog-toolbar__sort .catalog-filter__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .catalog-page .catalog-toolbar__sort .catalog-filter__trigger {
+    min-height: 44px;
+    padding: 0 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .catalog-page .catalog-view-toggle {
+    display: none;
+  }
+
+  .catalog-page .catalog-toolbar__hint[role='status'] {
+    display: none;
+  }
+
+  .catalog-page .catalog-layout {
+    gap: 0.75rem;
+  }
+
+  .catalog-page .catalog-body.section {
+    padding-top: 0.85rem;
+  }
+
+  .catalog-page .catalog-grid {
+    gap: 0.9rem;
+  }
+
   .catalog-filter-button {
     min-height: 44px;
     border-radius: 999px;

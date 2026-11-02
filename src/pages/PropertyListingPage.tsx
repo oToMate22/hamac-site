@@ -557,6 +557,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }
   const activeFilterCount = activeFilterChips.length
 
+  const remainingProperties = Math.max(listedProperties.length - visibleProperties.length, 0)
   const resultsCountLabel = isLoading
     ? 'Chargement...'
     : apiError === 'quota'
@@ -566,17 +567,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
         : zoneActive
           ? (
               <>
-                {hasMoreProperties
-                  ? `${visibleProperties.length} sur ${listedProperties.length} biens dans cette zone`
-                  : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} dans cette zone`}
-                <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
+                {`${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} dans cette zone`}
+                <span className="catalog-toolbar__hint">{catalogProperties.length} au total</span>
               </>
             )
           : listedProperties.length === 0
             ? 'Aucun bien'
-            : hasMoreProperties
-              ? `${visibleProperties.length} sur ${listedProperties.length} biens`
-              : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`
+            : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''}`
 
   return (
     <main className="catalog-page">
@@ -906,6 +903,19 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       Carte
                     </Link>
                   </nav>
+                  <div className="catalog-toolbar__sort">
+                    <FilterSelect
+                      label="Trier"
+                      value={sort}
+                      onValueChange={(value) => updateParam('sort', value)}
+                      options={[
+                        { value: 'recent', label: 'Plus récents' },
+                        { value: 'price-asc', label: 'Prix croissant' },
+                        { value: 'price-desc', label: 'Prix décroissant' },
+                        { value: 'surface', label: 'Surface' },
+                      ]}
+                    />
+                  </div>
                 </div>
               </div>
               {activeFilterChips.length > 0 ? (
@@ -930,19 +940,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   ))}
                 </div>
               ) : null}
-              <div className="catalog-toolbar__sort">
-                <FilterSelect
-                  label="Trier"
-                  value={sort}
-                  onValueChange={(value) => updateParam('sort', value)}
-                  options={[
-                    { value: 'recent', label: 'Plus récents' },
-                    { value: 'price-asc', label: 'Prix croissant' },
-                    { value: 'price-desc', label: 'Prix décroissant' },
-                    { value: 'surface', label: 'Surface' },
-                  ]}
-                />
-              </div>
             </div>
             {cacheServedAt && !apiError && !isLoading ? (
               <p className="catalog-toolbar__hint" role="status">
@@ -1013,11 +1010,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       {hasMoreProperties ? (
                         <div className="catalog-load-more">
                           <button type="button" className="is-primary" onClick={loadMoreProperties}>
-                            Voir plus de biens
+                            Voir les {remainingProperties} autres ({visibleProperties.length} affichés)
                           </button>
-                          <p>
-                            {visibleProperties.length} sur {listedProperties.length}
-                          </p>
                         </div>
                       ) : null}
                     </>
@@ -1061,10 +1055,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   {visibleProperties.map((property, index) => (
                     <motion.div
                       key={property.slug}
-                      initial={{ opacity: 0, y: 40 }}
-                      whileInView={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
                       viewport={{ once: true, amount: 0.2 }}
-                      transition={{ duration: 0.5, ease: 'easeOut', delay: Math.min(index * 0.1, 0.4) }}
+                      transition={{ duration: 0.4, ease: 'easeOut', delay: Math.min(index * 0.08, 0.32) }}
                     >
                       <PropertyCard
                         property={property}
@@ -1079,11 +1073,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 {hasMoreProperties ? (
                   <div className="catalog-load-more">
                     <button type="button" className="is-primary" onClick={loadMoreProperties}>
-                      Voir plus de biens
+                      Voir les {remainingProperties} autres ({visibleProperties.length} affichés)
                     </button>
-                    <p>
-                      {visibleProperties.length} sur {listedProperties.length}
-                    </p>
                   </div>
                 ) : null}
               </>
