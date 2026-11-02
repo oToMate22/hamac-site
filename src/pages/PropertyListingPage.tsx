@@ -13,8 +13,6 @@ import {
   TYPE_OPTIONS,
   BUDGET_SLIDER_CAP,
   BUDGET_SLIDER_STEP,
-  SALE_BUDGET_DEFAULT_MAX,
-  SALE_BUDGET_DEFAULT_MIN,
   applyCatalogParam,
   formatEuroAmount,
   parseBudgetMax,
@@ -31,6 +29,7 @@ import type { MapViewState } from '../components/PropertyMap'
 const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) => ({ default: mod.PropertyMap })))
 
 const MAP_VIEW_STORAGE_KEY = 'hamac:catalog-map-view'
+const CATALOG_PAGE_SIZE = 32
 
 type SavedMapView = { center: [number, number]; zoom: number }
 
@@ -122,7 +121,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
         : "Explorez nos biens disponibles dans l'Ouest Lyonnais : maisons, appartements et terrains sélectionnés par Hamac.",
   })
 
-  const [visibleCount, setVisibleCount] = useState(32)
+  const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [hoveredPropertySlug, setHoveredPropertySlug] = useState<string | null>(null)
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
@@ -138,11 +137,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const budgetSliderCap = BUDGET_SLIDER_CAP[mode]
   const budgetSliderStep = BUDGET_SLIDER_STEP[mode]
   const rentBudgetSuffix = mode === 'rent' ? ' / mois' : ''
-  const saleBudgetUnset =
-    mode === 'sale' &&
-    !searchParams.has('budgetMin') &&
-    !searchParams.has('budgetMax') &&
-    !searchParams.has('budget')
 
   // Mémorise les filtres pour le lien « retour au catalogue » de la fiche.
   const filtersStorageKey = `hamac:catalog-filters:${mode}`
@@ -158,15 +152,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   useEffect(() => {
     persistFilters(searchParams)
   }, [filtersStorageKey, searchParams])
-
-  useEffect(() => {
-    if (!saleBudgetUnset) return
-    const next = new URLSearchParams(searchParams)
-    applyCatalogParam(next, 'budgetMin', String(SALE_BUDGET_DEFAULT_MIN))
-    applyCatalogParam(next, 'budgetMax', String(SALE_BUDGET_DEFAULT_MAX))
-    persistFilters(next)
-    setSearchParams(next, { replace: true })
-  }, [saleBudgetUnset, searchParams, setSearchParams])
 
   useEffect(() => {
     const preview = window.matchMedia('(min-width: 768px)')
@@ -187,13 +172,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const type = searchParams.get('type') ?? 'all'
   const q = searchParams.get('q') ?? ''
   const locationQuery = q
-  const budgetMaxForFilter = saleBudgetUnset
-    ? SALE_BUDGET_DEFAULT_MAX
-    : parseBudgetMax(searchParams)
-  const budgetMinValue = Math.min(
-    saleBudgetUnset ? SALE_BUDGET_DEFAULT_MIN : parseBudgetMin(searchParams),
-    budgetSliderCap,
-  )
+  const budgetMaxForFilter = parseBudgetMax(searchParams)
+  const budgetMinValue = Math.min(parseBudgetMin(searchParams), budgetSliderCap)
   const budgetMaxThumb = budgetMaxForFilter == null ? budgetSliderCap : Math.min(budgetMaxForFilter, budgetSliderCap)
   const budgetForSearchBar = searchBarBudgetValue(searchParams)
   const surface = searchParams.get('surface') ?? 'all'
@@ -313,6 +293,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const properties = (() => {
     if (!apiProperties) return { listed: [] as Property[], catalog: [] as Property[] }
 
+    const applySort = (list: Property[]) => {
+      const sorted = [...list]
+      if (sort === 'price-asc') sorted.sort((a, b) => a.price - b.price)
+      if (sort === 'price-desc') sorted.sort((a, b) => b.price - a.price)
+      if (sort === 'surface') sorted.sort((a, b) => b.surface - a.surface)
+      if (sort === 'recent') sorted.sort((a, b) => (a.reference < b.reference ? 1 : -1))
+      return sorted
+    }
+
     const filters = {
       type: type.toLowerCase(),
       q,
@@ -351,15 +340,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       }
       return true
     })
-
-    const applySort = (list: Property[]) => {
-      const sorted = [...list]
-      if (sort === 'price-asc') sorted.sort((a, b) => a.price - b.price)
-      if (sort === 'price-desc') sorted.sort((a, b) => b.price - a.price)
-      if (sort === 'surface') sorted.sort((a, b) => b.surface - a.surface)
-      if (sort === 'recent') sorted.sort((a, b) => (a.reference < b.reference ? 1 : -1))
-      return sorted
-    }
 
     return { listed: applySort(listed), catalog: applySort(filtered) }
   })()
@@ -411,7 +391,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next, { replace: true })
   }, [mode, searchParams, setSearchParams])
 
-  useEffect(() => setVisibleCount(32), [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone])
+  useEffect(
+    () => setVisibleCount(CATALOG_PAGE_SIZE),
+    [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone],
+  )
   useEffect(() => {
     setCityFilterQuery(q)
   }, [q])
@@ -419,6 +402,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const isLoading = apiProperties === null && apiError === null
   const zoneActive = Boolean(visibleZone && isMapView)
   const propertiesForMap = !isLoading && !apiError ? catalogProperties : []
+  const visibleProperties = listedProperties.slice(0, visibleCount)
+  const hasMoreProperties = listedProperties.length > visibleCount
+  const loadMoreProperties = () => {
+    setVisibleCount((count) => Math.min(count + CATALOG_PAGE_SIZE, listedProperties.length))
+  }
 
   const handleMapViewChange = useCallback((view: MapViewState) => {
     writeSavedMapView({ center: view.center, zoom: view.zoom })
@@ -750,13 +738,17 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     : zoneActive
                       ? (
                           <>
-                            {listedProperties.length} bien{listedProperties.length !== 1 ? 's' : ''} dans cette zone
+                            {hasMoreProperties
+                              ? `${visibleProperties.length} sur ${listedProperties.length} biens dans cette zone`
+                              : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} dans cette zone`}
                             <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
                           </>
                         )
                       : listedProperties.length === 0
                         ? 'Aucun bien'
-                        : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`}
+                        : hasMoreProperties
+                          ? `${visibleProperties.length} sur ${listedProperties.length} biens`
+                          : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`}
               </p>
               <div className="catalog-toolbar__end">
                 <nav className="catalog-view-toggle" aria-label="Affichage des biens">
@@ -826,17 +818,29 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       </div>
                     </div>
                   ) : (
-                    listedProperties.slice(0, visibleCount).map((property, index) => (
-                      <div key={property.slug} data-property-slug={property.slug}>
-                        <PropertyCard
-                          property={property}
-                          light
-                          highlighted={hoveredPropertySlug === property.slug}
-                          onHoverChange={handleHoverFromList}
-                          priorityImage={index < 3}
-                        />
-                      </div>
-                    ))
+                    <>
+                      {visibleProperties.map((property, index) => (
+                        <div key={property.slug} data-property-slug={property.slug}>
+                          <PropertyCard
+                            property={property}
+                            light
+                            highlighted={hoveredPropertySlug === property.slug}
+                            onHoverChange={handleHoverFromList}
+                            priorityImage={index < 3}
+                          />
+                        </div>
+                      ))}
+                      {hasMoreProperties ? (
+                        <div className="catalog-load-more">
+                          <button type="button" className="is-primary" onClick={loadMoreProperties}>
+                            Voir plus de biens
+                          </button>
+                          <p>
+                            {visibleProperties.length} sur {listedProperties.length}
+                          </p>
+                        </div>
+                      ) : null}
+                    </>
                   )}
                 </div>
                 <div className="catalog-map-stage">{renderCatalogMap(true, true)}</div>
@@ -872,25 +876,37 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </p>
               </div>
             ) : (
-              <div className="catalog-grid">
-                {listedProperties.slice(0, visibleCount).map((property, index) => (
-                  <motion.div
-                    key={property.slug}
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.5, ease: 'easeOut', delay: Math.min(index * 0.1, 0.4) }}
-                  >
-                    <PropertyCard
-                      property={property}
-                      light
-                      highlighted={hoveredPropertySlug === property.slug}
-                      onHoverChange={setHoveredPropertySlug}
-                      priorityImage={index < 3}
-                    />
-                  </motion.div>
-                ))}
-              </div>
+              <>
+                <div className="catalog-grid">
+                  {visibleProperties.map((property, index) => (
+                    <motion.div
+                      key={property.slug}
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.5, ease: 'easeOut', delay: Math.min(index * 0.1, 0.4) }}
+                    >
+                      <PropertyCard
+                        property={property}
+                        light
+                        highlighted={hoveredPropertySlug === property.slug}
+                        onHoverChange={setHoveredPropertySlug}
+                        priorityImage={index < 3}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+                {hasMoreProperties ? (
+                  <div className="catalog-load-more">
+                    <button type="button" className="is-primary" onClick={loadMoreProperties}>
+                      Voir plus de biens
+                    </button>
+                    <p>
+                      {visibleProperties.length} sur {listedProperties.length}
+                    </p>
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
         </div>
