@@ -627,12 +627,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
               </div>
             </div>
             <div className="catalog-filter-card">
-              <FilterSelect
-                label="Type"
-                value={type}
-                onValueChange={(value) => updateParam('type', value)}
-                options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
-              />
+              {!desktopMapLayout ? (
+                <FilterSelect
+                  label="Type"
+                  value={type}
+                  onValueChange={(value) => updateParam('type', value)}
+                  options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                />
+              ) : null}
               <label className="catalog-filter__group">
                 <span className="catalog-filter__label">
                   {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
@@ -681,33 +683,51 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer maximum' : 'Budget maximum'} />
                 </Slider.Root>
               </label>
-              <label className="catalog-filter__group">
-                <span className="catalog-filter__label">Ville</span>
-                <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
-                  <Popover.Trigger asChild>
-                    <button type="button" className="catalog-filter__city-trigger" aria-label="Filtrer par ville">
-                      <Search size={14} />
-                      <span>{q ? q : 'Toutes les villes'}</span>
-                      <ChevronDown size={14} />
-                    </button>
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content className="catalog-filter__city-popover" sideOffset={8} align="start">
-                      <Command className="catalog-filter__city-command" shouldFilter={false}>
-                        <div className="catalog-filter__city-input-wrap">
-                          <Search size={14} />
-                          <Command.Input
-                            className="catalog-filter__city-input"
-                            placeholder="Ville, commune, arrondissement…"
-                            value={cityFilterQuery}
-                            onValueChange={setCityFilterQuery}
-                          />
-                          {q ? (
-                            <button
-                              type="button"
-                              className="catalog-filter__city-clear"
-                              aria-label="Réinitialiser la ville"
-                              onClick={() => {
+              {!desktopMapLayout ? (
+                <label className="catalog-filter__group">
+                  <span className="catalog-filter__label">Ville</span>
+                  <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
+                    <Popover.Trigger asChild>
+                      <button type="button" className="catalog-filter__city-trigger" aria-label="Filtrer par ville">
+                        <Search size={14} />
+                        <span>{q ? q : 'Toutes les villes'}</span>
+                        <ChevronDown size={14} />
+                      </button>
+                    </Popover.Trigger>
+                    <Popover.Portal>
+                      <Popover.Content className="catalog-filter__city-popover" sideOffset={8} align="start">
+                        <Command className="catalog-filter__city-command" shouldFilter={false}>
+                          <div className="catalog-filter__city-input-wrap">
+                            <Search size={14} />
+                            <Command.Input
+                              className="catalog-filter__city-input"
+                              placeholder="Ville, commune, arrondissement…"
+                              value={cityFilterQuery}
+                              onValueChange={setCityFilterQuery}
+                            />
+                            {q ? (
+                              <button
+                                type="button"
+                                className="catalog-filter__city-clear"
+                                aria-label="Réinitialiser la ville"
+                                onClick={() => {
+                                  updateParams([
+                                    { key: 'q', value: 'all' },
+                                    { key: 'radius', value: 'all' },
+                                  ])
+                                  setCityFilterQuery('')
+                                  setCityFilterOpen(false)
+                                }}
+                              >
+                                <X size={14} />
+                              </button>
+                            ) : null}
+                          </div>
+                          <Command.List className="catalog-filter__city-list">
+                            <Command.Item
+                              value="Toutes les villes"
+                              className="catalog-filter__city-item"
+                              onSelect={() => {
                                 updateParams([
                                   { key: 'q', value: 'all' },
                                   { key: 'radius', value: 'all' },
@@ -716,71 +736,55 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                                 setCityFilterOpen(false)
                               }}
                             >
-                              <X size={14} />
-                            </button>
-                          ) : null}
-                        </div>
-                        <Command.List className="catalog-filter__city-list">
-                          <Command.Item
-                            value="Toutes les villes"
-                            className="catalog-filter__city-item"
-                            onSelect={() => {
-                              updateParams([
-                                { key: 'q', value: 'all' },
-                                { key: 'radius', value: 'all' },
-                              ])
-                              setCityFilterQuery('')
-                              setCityFilterOpen(false)
-                            }}
-                          >
-                            <span>Toutes les villes</span>
-                            {q ? null : <Check size={14} />}
-                          </Command.Item>
-                          {communeLoading ? (
-                            <p className="catalog-filter__city-empty">Recherche en cours…</p>
-                          ) : null}
-                          {!communeLoading &&
-                          cityFilterQuery.trim().length >= 2 &&
-                          sidebarCityMatches.length === 0 &&
-                          sidebarRemoteCommunes.length === 0 ? (
-                            <Command.Empty className="catalog-filter__city-empty">Aucune ville trouvée.</Command.Empty>
-                          ) : null}
-                          {sidebarCityMatches.map((entry) => (
-                            <Command.Item
-                              key={entry}
-                              value={entry}
-                              className="catalog-filter__city-item"
-                              onSelect={() => {
-                                updateParam('q', entry)
-                                setCityFilterQuery(entry)
-                                setCityFilterOpen(false)
-                              }}
-                            >
-                              <span>{entry}</span>
-                              {q === entry ? <Check size={14} /> : null}
+                              <span>Toutes les villes</span>
+                              {q ? null : <Check size={14} />}
                             </Command.Item>
-                          ))}
-                          {sidebarRemoteCommunes.map((entry) => (
-                            <Command.Item
-                              key={entry.code}
-                              value={`${entry.name}-${entry.code}`}
-                              className="catalog-filter__city-item"
-                              onSelect={() => {
-                                updateParam('q', entry.name)
-                                setCityFilterQuery(entry.name)
-                                setCityFilterOpen(false)
-                              }}
-                            >
-                              <span>{formatCommuneLabel(entry)}</span>
-                              {q === entry.name ? <Check size={14} /> : null}
-                            </Command.Item>
-                          ))}
-                        </Command.List>
-                      </Command>
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
-              </label>
+                            {communeLoading ? (
+                              <p className="catalog-filter__city-empty">Recherche en cours…</p>
+                            ) : null}
+                            {!communeLoading &&
+                            cityFilterQuery.trim().length >= 2 &&
+                            sidebarCityMatches.length === 0 &&
+                            sidebarRemoteCommunes.length === 0 ? (
+                              <Command.Empty className="catalog-filter__city-empty">Aucune ville trouvée.</Command.Empty>
+                            ) : null}
+                            {sidebarCityMatches.map((entry) => (
+                              <Command.Item
+                                key={entry}
+                                value={entry}
+                                className="catalog-filter__city-item"
+                                onSelect={() => {
+                                  updateParam('q', entry)
+                                  setCityFilterQuery(entry)
+                                  setCityFilterOpen(false)
+                                }}
+                              >
+                                <span>{entry}</span>
+                                {q === entry ? <Check size={14} /> : null}
+                              </Command.Item>
+                            ))}
+                            {sidebarRemoteCommunes.map((entry) => (
+                              <Command.Item
+                                key={entry.code}
+                                value={`${entry.name}-${entry.code}`}
+                                className="catalog-filter__city-item"
+                                onSelect={() => {
+                                  updateParam('q', entry.name)
+                                  setCityFilterQuery(entry.name)
+                                  setCityFilterOpen(false)
+                                }}
+                              >
+                                <span>{formatCommuneLabel(entry)}</span>
+                                {q === entry.name ? <Check size={14} /> : null}
+                              </Command.Item>
+                            ))}
+                          </Command.List>
+                        </Command>
+                      </Popover.Content>
+                    </Popover.Portal>
+                  </Popover.Root>
+                </label>
+              ) : null}
               <details className="catalog-filter-more" {...(desktopMapLayout ? { open: true } : {})}>
                 <summary>Plus de filtres — surface, chambres, critères</summary>
                 <FilterSelect

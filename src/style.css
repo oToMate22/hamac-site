@@ -8698,6 +8698,16 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   .catalog-filter-more > summary::-webkit-details-marker {
     display: none;
   }
+
+  .catalog-page .search-field__label {
+    font-size: 0.75rem; /* 12 px — lisibilité mobile */
+  }
+
+  .catalog-page .premium-search__command-input,
+  .catalog-page .premium-search__select-trigger,
+  .catalog-page .premium-search__combobox-trigger {
+    font-size: 1rem; /* 16 px — évite le zoom Safari iOS */
+  }
 }
 
 @media (min-width: 1024px) {
