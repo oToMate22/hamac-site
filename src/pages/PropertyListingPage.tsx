@@ -569,6 +569,28 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const activeFilterCount = activeFilterChips.length
 
   const remainingProperties = Math.max(listedProperties.length - visibleProperties.length, 0)
+
+  // Animation d’entrée une seule fois ; filtres / pagination = apparition immédiate (opacity 1).
+  const filterSignature = [
+    type,
+    q,
+    budgetMinValue,
+    budgetMaxForFilter ?? '',
+    surface,
+    rooms,
+    amenities.join(','),
+    sort,
+    radiusKm,
+  ].join('|')
+  const cardMotionRef = useRef({ signature: filterSignature, visibleCount, enabled: true })
+  if (
+    cardMotionRef.current.signature !== filterSignature ||
+    cardMotionRef.current.visibleCount !== visibleCount
+  ) {
+    cardMotionRef.current = { signature: filterSignature, visibleCount, enabled: false }
+  }
+  const cardMotionEnabled = cardMotionRef.current.enabled
+
   const resultsCountLabel = isLoading
     ? 'Chargement...'
     : apiError === 'quota'
@@ -585,6 +607,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           : listedProperties.length === 0
             ? 'Aucun bien'
             : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''}`
+
+  const sheetCountLabel =
+    !isLoading && !apiError
+      ? `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''}`
+      : null
 
   return (
     <main className="catalog-page">
@@ -736,7 +763,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             <div className="catalog-filter-sheet__chrome">
               <div className="catalog-filter-sheet__handle" aria-hidden />
               <div className="catalog-filter-sheet__title-row">
-                <p>Filtres</p>
+                <p>
+                  Filtres
+                  {sheetCountLabel ? (
+                    <span className="catalog-filter-sheet__count">{` · ${sheetCountLabel}`}</span>
+                  ) : null}
+                </p>
                 <button type="button" aria-label="Fermer les filtres" onClick={() => setMobileFiltersOpen(false)}>
                   <X size={18} />
                 </button>
@@ -909,67 +941,71 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 {...(desktopMapLayout ? { open: true } : {})}
               >
                 <summary>Plus de filtres — surface, chambres, critères</summary>
-                <FilterSelect
-                  label="Rayon"
-                  value={String(radiusKm || 0)}
-                  disabled={!locationQuery}
-                  onValueChange={(value) => updateParam('radius', value === '0' ? 'all' : value)}
-                  options={[
-                    { value: '0', label: 'Ville uniquement' },
-                    { value: '5', label: '5 km autour' },
-                    { value: '10', label: '10 km autour' },
-                    { value: '15', label: '15 km autour' },
-                    { value: '20', label: '20 km autour' },
-                    { value: '30', label: '30 km autour' },
-                  ]}
-                />
-                <label className="catalog-filter__group">
-                  <span className="catalog-filter__label">Surface min</span>
-                  <p className="catalog-slider__value">
-                    {surfaceValue > 0 ? `à partir de ${surfaceValue} m²` : 'Toutes surfaces'}
-                  </p>
-                  <Slider.Root
-                    className="catalog-slider"
-                    min={0}
-                    max={300}
-                    step={10}
-                    value={[surfaceValue]}
-                    onValueChange={(values) => updateParam('surface', values[0] > 0 ? String(values[0]) : 'all')}
-                    aria-label="Surface minimum"
-                  >
-                    <Slider.Track className="catalog-slider__track">
-                      <Slider.Range className="catalog-slider__range" />
-                    </Slider.Track>
-                    <Slider.Thumb className="catalog-slider__thumb" aria-label="Surface minimum" />
-                  </Slider.Root>
-                </label>
-                <div id="catalog-filter-chambres">
-                  <FilterSelect
-                    label="Chambres min"
-                    value={rooms}
-                    onValueChange={(value) => updateParam('rooms', value)}
-                    options={[
-                      { value: 'all', label: 'Toutes' },
-                      { value: '1', label: '1+' },
-                      { value: '2', label: '2+' },
-                      { value: '3', label: '3+' },
-                      { value: '4', label: '4+' },
-                    ]}
-                  />
-                </div>
-                <div className="catalog-filter__group">
-                  <span className="catalog-filter__label">Critères</span>
-                  <div className="catalog-chips">
-                    {(['jardin', 'piscine', 'terrasse', 'garage'] as Amenity[]).map((amenity) => (
-                      <button
-                        key={amenity}
-                        type="button"
-                        className={`catalog-chip ${amenities.includes(amenity) ? 'is-active' : ''}`}
-                        onClick={() => toggleAmenity(amenity)}
+                <div className="catalog-filter-more__panel">
+                  <div className="catalog-filter-more__panel-inner">
+                    <FilterSelect
+                      label="Rayon"
+                      value={String(radiusKm || 0)}
+                      disabled={!locationQuery}
+                      onValueChange={(value) => updateParam('radius', value === '0' ? 'all' : value)}
+                      options={[
+                        { value: '0', label: 'Ville uniquement' },
+                        { value: '5', label: '5 km autour' },
+                        { value: '10', label: '10 km autour' },
+                        { value: '15', label: '15 km autour' },
+                        { value: '20', label: '20 km autour' },
+                        { value: '30', label: '30 km autour' },
+                      ]}
+                    />
+                    <label className="catalog-filter__group">
+                      <span className="catalog-filter__label">Surface min</span>
+                      <p className="catalog-slider__value">
+                        {surfaceValue > 0 ? `à partir de ${surfaceValue} m²` : 'Toutes surfaces'}
+                      </p>
+                      <Slider.Root
+                        className="catalog-slider"
+                        min={0}
+                        max={300}
+                        step={10}
+                        value={[surfaceValue]}
+                        onValueChange={(values) => updateParam('surface', values[0] > 0 ? String(values[0]) : 'all')}
+                        aria-label="Surface minimum"
                       >
-                        {amenity}
-                      </button>
-                    ))}
+                        <Slider.Track className="catalog-slider__track">
+                          <Slider.Range className="catalog-slider__range" />
+                        </Slider.Track>
+                        <Slider.Thumb className="catalog-slider__thumb" aria-label="Surface minimum" />
+                      </Slider.Root>
+                    </label>
+                    <div id="catalog-filter-chambres">
+                      <FilterSelect
+                        label="Chambres min"
+                        value={rooms}
+                        onValueChange={(value) => updateParam('rooms', value)}
+                        options={[
+                          { value: 'all', label: 'Toutes' },
+                          { value: '1', label: '1+' },
+                          { value: '2', label: '2+' },
+                          { value: '3', label: '3+' },
+                          { value: '4', label: '4+' },
+                        ]}
+                      />
+                    </div>
+                    <div className="catalog-filter__group">
+                      <span className="catalog-filter__label">Critères</span>
+                      <div className="catalog-chips">
+                        {(['jardin', 'piscine', 'terrasse', 'garage'] as Amenity[]).map((amenity) => (
+                          <button
+                            key={amenity}
+                            type="button"
+                            className={`catalog-chip ${amenities.includes(amenity) ? 'is-active' : ''}`}
+                            onClick={() => toggleAmenity(amenity)}
+                          >
+                            {amenity}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </details>
@@ -1166,14 +1202,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             ) : (
               <>
                 <div className="catalog-grid">
-                  {visibleProperties.map((property, index) => (
-                    <motion.div
-                      key={property.slug}
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true, amount: 0.2 }}
-                      transition={{ duration: 0.4, ease: 'easeOut', delay: Math.min(index * 0.08, 0.32) }}
-                    >
+                  {visibleProperties.map((property, index) => {
+                    const card = (
                       <PropertyCard
                         property={property}
                         light
@@ -1181,8 +1211,27 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                         onHoverChange={setHoveredPropertySlug}
                         priorityImage={index < 3}
                       />
-                    </motion.div>
-                  ))}
+                    )
+                    if (!cardMotionEnabled) {
+                      return (
+                        <div key={property.slug} className="catalog-grid__item">
+                          {card}
+                        </div>
+                      )
+                    }
+                    return (
+                      <motion.div
+                        key={property.slug}
+                        className="catalog-grid__item"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.4, ease: 'easeOut', delay: Math.min(index * 0.08, 0.32) }}
+                      >
+                        {card}
+                      </motion.div>
+                    )
+                  })}
                 </div>
                 {hasMoreProperties ? (
                   <div className="catalog-load-more">

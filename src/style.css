@@ -8771,6 +8771,13 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     color: var(--text-heading);
   }
 
+  .catalog-filter-sheet__count {
+    font-family: var(--font-sans, inherit);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: rgba(20, 42, 56, 0.62);
+  }
+
   .catalog-filter-sheet__title-row button {
     display: inline-flex;
     align-items: center;
@@ -8782,6 +8789,12 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     background: rgba(20, 42, 56, 0.06);
     color: var(--navy);
     cursor: pointer;
+  }
+
+  .catalog-filter-sheet #catalog-filter-type .catalog-filter__trigger,
+  .catalog-filter-sheet #catalog-filter-ville .catalog-filter__city-trigger {
+    min-height: 44px;
+    height: 44px;
   }
 
   .catalog-filter-sheet .catalog-filter-card {
@@ -8856,6 +8869,21 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     display: none;
   }
 
+  .catalog-filter-sheet .catalog-filter-more__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s ease;
+  }
+
+  .catalog-filter-sheet .catalog-filter-more[open] .catalog-filter-more__panel {
+    grid-template-rows: 1fr;
+  }
+
+  .catalog-filter-sheet .catalog-filter-more__panel-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+
   .catalog-page .search-field__label {
     font-size: 0.75rem; /* 12 px — lisibilité mobile */
   }
@@ -8886,5 +8914,10 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     border: 0;
     padding: 0;
     margin: 0;
+  }
+
+  .catalog-filter-more__panel,
+  .catalog-filter-more__panel-inner {
+    display: contents;
   }
 }
