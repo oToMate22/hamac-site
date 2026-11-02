@@ -717,7 +717,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     <main className="catalog-page">
       <section className={isMapView ? 'catalog-hero is-collapsed' : 'catalog-hero'}>
         <div className="container">
-          <h1 className="section-title">Nos biens dans l&apos;Ouest Lyonnais</h1>
+          <h1 className="section-title">
+            {mode === 'rent' ? 'Nos biens à louer' : 'Nos biens à vendre'}
+          </h1>
           <p className="catalog-hero__intro">
             {mode === 'rent'
               ? 'Des biens en location choisis pour leur emplacement, leur confort et leur qualité de vie.'
