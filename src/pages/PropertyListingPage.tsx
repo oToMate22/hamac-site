@@ -109,6 +109,66 @@ function FilterSelect({
   )
 }
 
+/** Pastilles feuille mobile — libellés courts (planche C). */
+const SHEET_TYPE_PILLS = [
+  { value: 'all', label: 'Tous' },
+  { value: 'maison', label: 'Maison' },
+  { value: 'appartement', label: 'Appartement' },
+  { value: 'terrain', label: 'Terrain' },
+  { value: 'commerce', label: 'Commerce' },
+  { value: 'bureau', label: 'Bureau' },
+  { value: 'garage', label: 'Garage' },
+  { value: 'immeuble', label: 'Immeuble' },
+] as const
+
+const SHEET_CITY_PILLS = [
+  'Sainte-Foy-lès-Lyon',
+  'Tassin-la-Demi-Lune',
+  'Écully',
+  'Francheville',
+  'Craponne',
+  'Oullins',
+] as const
+
+const SHEET_ROOMS_PILLS = [
+  { value: 'all', label: 'Toutes' },
+  { value: '1', label: '1+' },
+  { value: '2', label: '2+' },
+  { value: '3', label: '3+' },
+  { value: '4', label: '4+' },
+] as const
+
+function FilterPills({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: ReadonlyArray<{ value: string; label: string }>
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className="catalog-filter__group">
+      <span className="catalog-filter__label">{label}</span>
+      <div className="catalog-filter-pills" role="group" aria-label={label}>
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`catalog-filter-pill${value === option.value ? ' is-active' : ''}`}
+            aria-pressed={value === option.value}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sale' }: PropertyListingPageProps) {
   usePageMeta({
     title:
@@ -171,7 +231,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const type = searchParams.get('type') ?? 'all'
   const q = searchParams.get('q') ?? ''
-  const locationQuery = q
+  /** Une ou plusieurs villes (séparées par des virgules dans `q`). */
+  const selectedCities = q
+    ? q
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    : []
+  const locationQuery = selectedCities.length === 1 ? selectedCities[0] : ''
   const budgetMaxForFilter = parseBudgetMax(searchParams)
   const budgetMinValue = Math.min(parseBudgetMin(searchParams), budgetSliderCap)
   const budgetMaxThumb = budgetMaxForFilter == null ? budgetSliderCap : Math.min(budgetMaxForFilter, budgetSliderCap)
@@ -304,7 +371,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
     const filters = {
       type: type.toLowerCase(),
-      q,
+      cities: selectedCities,
       radiusKm,
       origin,
       budgetMin: budgetMinValue > 0 ? budgetMinValue : undefined,
@@ -314,7 +381,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       amenities,
     }
 
-    const useRadius = Boolean(filters.radiusKm > 0 && filters.origin)
+    const useRadius = Boolean(filters.radiusKm > 0 && filters.origin && filters.cities.length === 1)
     const center = filters.origin
 
     const filtered = apiProperties.filter((property) => {
@@ -322,7 +389,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       if (useRadius && center) {
         if (!Number.isFinite(property.lat) || !Number.isFinite(property.lng)) return false
         if (distanceKm(center, { lat: property.lat, lng: property.lng }) > filters.radiusKm) return false
-      } else if (filters.q && !matchesCitySearch(property.city, filters.q)) {
+      } else if (
+        filters.cities.length > 0 &&
+        !filters.cities.some((city) => matchesCitySearch(property.city, city))
+      ) {
         return false
       }
       if (filters.budgetMin !== undefined && property.price < filters.budgetMin) return false
@@ -396,7 +466,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone],
   )
   useEffect(() => {
-    setCityFilterQuery(q)
+    // Ne pas coller « Écully,Tassin… » dans le champ Autre commune
+    if (selectedCities.length === 1) setCityFilterQuery(selectedCities[0])
+    else if (selectedCities.length === 0) setCityFilterQuery('')
   }, [q])
 
   useEffect(() => {
@@ -511,6 +583,37 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next)
   }
 
+  const isCitySelected = (city: string) =>
+    selectedCities.some((entry) => normalize(entry) === normalize(city))
+
+  const writeSelectedCities = (cities: string[]) => {
+    const unique: string[] = []
+    for (const city of cities) {
+      const trimmed = city.trim()
+      if (!trimmed) continue
+      if (unique.some((entry) => normalize(entry) === normalize(trimmed))) continue
+      unique.push(trimmed)
+    }
+    updateParams([
+      { key: 'q', value: unique.length ? unique.join(',') : 'all' },
+      // Le rayon n’a de sens que pour une seule ville
+      ...(unique.length === 1 ? [] : [{ key: 'radius', value: 'all' }]),
+    ])
+  }
+
+  const toggleCitySelection = (city: string) => {
+    if (isCitySelected(city)) {
+      writeSelectedCities(selectedCities.filter((entry) => normalize(entry) !== normalize(city)))
+      return
+    }
+    writeSelectedCities([...selectedCities, city])
+  }
+
+  const clearCitySelections = () => {
+    writeSelectedCities([])
+    setCityFilterQuery('')
+  }
+
   const formatEuro = (value: number) => formatEuroAmount(value)
 
   const typeLabel = TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type
@@ -518,14 +621,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   if (type && type !== 'all') {
     activeFilterChips.push({ key: 'type', label: typeLabel, clear: [{ key: 'type', value: 'all' }] })
   }
-  if (q) {
+  for (const city of selectedCities) {
     activeFilterChips.push({
-      key: 'q',
-      label: q,
-      clear: [
-        { key: 'q', value: 'all' },
-        { key: 'radius', value: 'all' },
-      ],
+      key: `city:${city}`,
+      label: city,
+      clear: [],
     })
   }
   if (budgetMinValue > 0 || budgetMaxForFilter != null) {
@@ -628,7 +728,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             compact
             omitSubmit={!desktopMapLayout}
             cityOptions={availableCities}
-            initialValues={{ type, budget: budgetForSearchBar, city: q }}
+            initialValues={{
+              type,
+              budget: budgetForSearchBar,
+              city: selectedCities.length <= 1 ? (selectedCities[0] ?? '') : selectedCities.join(', '),
+            }}
             onSearch={(filters) => {
               updateParams([
                 { key: 'type', value: filters.type },
@@ -735,6 +839,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                         toggleAmenity(chip.key.replace('amenity-', '') as Amenity)
                         return
                       }
+                      if (chip.key.startsWith('city:')) {
+                        toggleCitySelection(chip.key.slice('city:'.length))
+                        return
+                      }
                       updateParams(chip.clear)
                     }}
                   >
@@ -777,11 +885,11 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             <div className="catalog-filter-card">
               {!desktopMapLayout ? (
                 <div id="catalog-filter-type">
-                  <FilterSelect
-                    label="Type"
+                  <FilterPills
+                    label="Type de bien"
+                    options={SHEET_TYPE_PILLS}
                     value={type}
-                    onValueChange={(value) => updateParam('type', value)}
-                    options={TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                    onChange={(value) => updateParam('type', value)}
                   />
                 </div>
               ) : null}
@@ -789,17 +897,19 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 <span className="catalog-filter__label">
                   {mode === 'rent' ? 'Loyer (min. — max.)' : 'Budget (min. — max.)'}
                 </span>
-                <p className="catalog-slider__value">
-                  {budgetMinValue > 0
-                    ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
-                    : mode === 'rent'
-                      ? 'Sans Plancher'
-                      : 'Sans Minimum'}
-                  {' — '}
-                  {budgetMaxForFilter == null
-                    ? 'Sans Budget Max'
-                    : `jusqu'à ${formatEuro(budgetMaxForFilter)}${rentBudgetSuffix}`}
-                </p>
+                {desktopMapLayout ? (
+                  <p className="catalog-slider__value">
+                    {budgetMinValue > 0
+                      ? `de ${formatEuro(budgetMinValue)}${rentBudgetSuffix}`
+                      : mode === 'rent'
+                        ? 'Sans Plancher'
+                        : 'Sans Minimum'}
+                    {' — '}
+                    {budgetMaxForFilter == null
+                      ? 'Sans Budget Max'
+                      : `jusqu'à ${formatEuro(budgetMaxForFilter)}${rentBudgetSuffix}`}
+                  </p>
+                ) : null}
                 <Slider.Root
                   className="catalog-slider"
                   min={0}
@@ -832,63 +942,105 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer minimum' : 'Budget minimum'} />
                   <Slider.Thumb className="catalog-slider__thumb" aria-label={mode === 'rent' ? 'Loyer maximum' : 'Budget maximum'} />
                 </Slider.Root>
+                {!desktopMapLayout ? (
+                  <div className="catalog-filter-budget-pills" aria-live="polite">
+                    <span className="catalog-filter-pill is-budget">
+                      de {formatEuro(budgetMinValue)}
+                      {rentBudgetSuffix}
+                    </span>
+                    <span className="catalog-filter-pill is-budget">
+                      jusqu&apos;à {formatEuro(budgetMaxThumb)}
+                      {rentBudgetSuffix}
+                    </span>
+                  </div>
+                ) : null}
               </label>
               {!desktopMapLayout ? (
-                <label className="catalog-filter__group" id="catalog-filter-ville">
-                  <span className="catalog-filter__label">Ville</span>
-                  <Popover.Root open={cityFilterOpen} onOpenChange={setCityFilterOpen}>
+                <div className="catalog-filter__group" id="catalog-filter-ville">
+                  <span className="catalog-filter__label">Ville (plusieurs possibles)</span>
+                  <div className="catalog-filter-pills" role="group" aria-label="Ville">
+                    <button
+                      type="button"
+                      className={`catalog-filter-pill${selectedCities.length === 0 ? ' is-active' : ''}`}
+                      aria-pressed={selectedCities.length === 0}
+                      onClick={clearCitySelections}
+                    >
+                      Toutes
+                    </button>
+                    {SHEET_CITY_PILLS.map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        className={`catalog-filter-pill${isCitySelected(city) ? ' is-active' : ''}`}
+                        aria-pressed={isCitySelected(city)}
+                        onClick={() => toggleCitySelection(city)}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                    {selectedCities
+                      .filter((city) => !(SHEET_CITY_PILLS as readonly string[]).some((entry) => normalize(entry) === normalize(city)))
+                      .map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          className="catalog-filter-pill is-active"
+                          aria-pressed
+                          onClick={() => toggleCitySelection(city)}
+                        >
+                          {city}
+                          <X size={12} aria-hidden />
+                        </button>
+                      ))}
+                  </div>
+                  <Popover.Root
+                    open={cityFilterOpen}
+                    onOpenChange={(open) => {
+                      setCityFilterOpen(open)
+                      if (open) setCityFilterQuery('')
+                    }}
+                  >
                     <Popover.Trigger asChild>
-                      <button type="button" className="catalog-filter__city-trigger" aria-label="Filtrer par ville">
-                        <Search size={14} />
-                        <span>{q ? q : 'Toutes les villes'}</span>
-                        <ChevronDown size={14} />
+                      <button type="button" className="catalog-filter__other-city" aria-label="Ajouter une autre commune">
+                        <Search size={14} aria-hidden />
+                        <span>Autre commune…</span>
                       </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                      <Popover.Content className="catalog-filter__city-popover" sideOffset={8} align="start">
+                      <Popover.Content
+                        className="catalog-filter__city-popover catalog-filter__city-popover--sheet"
+                        sideOffset={8}
+                        align="start"
+                        onOpenAutoFocus={(event) => {
+                          // Laisser le focus sur l’input cmdk
+                          event.preventDefault()
+                          const input = document.querySelector<HTMLInputElement>(
+                            '.catalog-filter__city-popover--sheet .catalog-filter__city-input',
+                          )
+                          input?.focus()
+                        }}
+                      >
                         <Command className="catalog-filter__city-command" shouldFilter={false}>
                           <div className="catalog-filter__city-input-wrap">
                             <Search size={14} />
                             <Command.Input
                               className="catalog-filter__city-input"
-                              placeholder="Ville, commune, arrondissement…"
+                              placeholder="Ajouter une commune…"
                               value={cityFilterQuery}
                               onValueChange={setCityFilterQuery}
                             />
-                            {q ? (
+                            {cityFilterQuery ? (
                               <button
                                 type="button"
                                 className="catalog-filter__city-clear"
-                                aria-label="Réinitialiser la ville"
-                                onClick={() => {
-                                  updateParams([
-                                    { key: 'q', value: 'all' },
-                                    { key: 'radius', value: 'all' },
-                                  ])
-                                  setCityFilterQuery('')
-                                  setCityFilterOpen(false)
-                                }}
+                                aria-label="Effacer la recherche"
+                                onClick={() => setCityFilterQuery('')}
                               >
                                 <X size={14} />
                               </button>
                             ) : null}
                           </div>
                           <Command.List className="catalog-filter__city-list">
-                            <Command.Item
-                              value="Toutes les villes"
-                              className="catalog-filter__city-item"
-                              onSelect={() => {
-                                updateParams([
-                                  { key: 'q', value: 'all' },
-                                  { key: 'radius', value: 'all' },
-                                ])
-                                setCityFilterQuery('')
-                                setCityFilterOpen(false)
-                              }}
-                            >
-                              <span>Toutes les villes</span>
-                              {q ? null : <Check size={14} />}
-                            </Command.Item>
                             {communeLoading ? (
                               <p className="catalog-filter__city-empty">Recherche en cours…</p>
                             ) : null}
@@ -898,19 +1050,21 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                             sidebarRemoteCommunes.length === 0 ? (
                               <Command.Empty className="catalog-filter__city-empty">Aucune ville trouvée.</Command.Empty>
                             ) : null}
+                            {cityFilterQuery.trim().length < 2 ? (
+                              <p className="catalog-filter__city-empty">Tapez au moins 2 lettres</p>
+                            ) : null}
                             {sidebarCityMatches.map((entry) => (
                               <Command.Item
                                 key={entry}
                                 value={entry}
                                 className="catalog-filter__city-item"
                                 onSelect={() => {
-                                  updateParam('q', entry)
-                                  setCityFilterQuery(entry)
-                                  setCityFilterOpen(false)
+                                  toggleCitySelection(entry)
+                                  setCityFilterQuery('')
                                 }}
                               >
                                 <span>{entry}</span>
-                                {q === entry ? <Check size={14} /> : null}
+                                {isCitySelected(entry) ? <Check size={14} /> : null}
                               </Command.Item>
                             ))}
                             {sidebarRemoteCommunes.map((entry) => (
@@ -919,13 +1073,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                                 value={`${entry.name}-${entry.code}`}
                                 className="catalog-filter__city-item"
                                 onSelect={() => {
-                                  updateParam('q', entry.name)
-                                  setCityFilterQuery(entry.name)
-                                  setCityFilterOpen(false)
+                                  toggleCitySelection(entry.name)
+                                  setCityFilterQuery('')
                                 }}
                               >
                                 <span>{formatCommuneLabel(entry)}</span>
-                                {q === entry.name ? <Check size={14} /> : null}
+                                {isCitySelected(entry.name) ? <Check size={14} /> : null}
                               </Command.Item>
                             ))}
                           </Command.List>
@@ -933,7 +1086,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       </Popover.Content>
                     </Popover.Portal>
                   </Popover.Root>
-                </label>
+                </div>
               ) : null}
               <details
                 id="catalog-filter-more"
@@ -978,18 +1131,27 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       </Slider.Root>
                     </label>
                     <div id="catalog-filter-chambres">
-                      <FilterSelect
-                        label="Chambres min"
-                        value={rooms}
-                        onValueChange={(value) => updateParam('rooms', value)}
-                        options={[
-                          { value: 'all', label: 'Toutes' },
-                          { value: '1', label: '1+' },
-                          { value: '2', label: '2+' },
-                          { value: '3', label: '3+' },
-                          { value: '4', label: '4+' },
-                        ]}
-                      />
+                      {desktopMapLayout ? (
+                        <FilterSelect
+                          label="Chambres min"
+                          value={rooms}
+                          onValueChange={(value) => updateParam('rooms', value)}
+                          options={[
+                            { value: 'all', label: 'Toutes' },
+                            { value: '1', label: '1+' },
+                            { value: '2', label: '2+' },
+                            { value: '3', label: '3+' },
+                            { value: '4', label: '4+' },
+                          ]}
+                        />
+                      ) : (
+                        <FilterPills
+                          label="Chambres min"
+                          options={SHEET_ROOMS_PILLS}
+                          value={rooms}
+                          onChange={(value) => updateParam('rooms', value)}
+                        />
+                      )}
                     </div>
                     <div className="catalog-filter__group">
                       <span className="catalog-filter__label">Critères</span>
@@ -1079,6 +1241,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       onClick={() => {
                         if (chip.key.startsWith('amenity-')) {
                           toggleAmenity(chip.key.replace('amenity-', '') as Amenity)
+                          return
+                        }
+                        if (chip.key.startsWith('city:')) {
+                          toggleCitySelection(chip.key.slice('city:'.length))
                           return
                         }
                         updateParams(chip.clear)

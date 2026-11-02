@@ -715,6 +715,12 @@ a {
   box-shadow: var(--shadow-card);
 }
 
+/* Au-dessus de la feuille montante (z-index 530) */
+.catalog-filter__city-popover--sheet {
+  z-index: 620;
+  width: min(22rem, calc(100vw - 1.5rem));
+}
+
 .catalog-filter__city-command {
   width: 100%;
 }
@@ -7214,30 +7220,53 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
 
 .notre-maison__visual {
   position: relative;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-soft);
+  isolation: isolate;
 }
 
 .notre-maison__visual img {
   display: block;
   width: 100%;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-  object-position: center 50%;
-  transform: scale(1.09);
-  transform-origin: center center;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  /* Fond papier du dessin → se fond dans le cream */
+  mix-blend-mode: multiply;
+  /* Masque ellipse plus large : moins de « fumée », angles juste adoucis */
+  -webkit-mask-image: radial-gradient(
+    ellipse 88% 84% at 50% 48%,
+    #000 58%,
+    rgba(0, 0, 0, 0.7) 82%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 88% 84% at 50% 48%,
+    #000 58%,
+    rgba(0, 0, 0, 0.7) 82%,
+    transparent 100%
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* Voile cream léger — uniquement le pourtour */
+.notre-maison__visual::after {
+  content: '';
+  position: absolute;
+  inset: -1%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 82% 78% at 50% 48%,
+    transparent 72%,
+    rgba(247, 244, 239, 0.28) 90%,
+    var(--cream) 100%
+  );
 }
 
 .notre-maison__curve {
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 40%;
-  background: linear-gradient(to top, rgba(20, 42, 56, 0.15), transparent);
-  border-radius: 0 0 50% 50% / 0 0 18% 18%;
-  pointer-events: none;
+  display: none;
 }
 
 /* Bandeau chiffres clés — entre Notre maison et Territoire, navy / or */
@@ -8791,10 +8820,75 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
     cursor: pointer;
   }
 
-  .catalog-filter-sheet #catalog-filter-type .catalog-filter__trigger,
-  .catalog-filter-sheet #catalog-filter-ville .catalog-filter__city-trigger {
+  .catalog-filter-sheet .catalog-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .catalog-filter-sheet .catalog-filter-pill {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    height: 36px;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(20, 42, 56, 0.14);
+    background: #fff;
+    color: rgba(20, 42, 56, 0.88);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .catalog-filter-sheet .catalog-filter-pill.is-active {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #fff;
+  }
+
+  .catalog-filter-sheet .catalog-filter-budget-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+  }
+
+  .catalog-filter-sheet .catalog-filter-pill.is-budget {
+    cursor: default;
+    background: #f7f4ef;
+    border-color: rgba(20, 42, 56, 0.1);
+    color: rgba(20, 42, 56, 0.78);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .catalog-filter-sheet .catalog-filter__other-city {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
     min-height: 44px;
-    height: 44px;
+    margin-top: 0.55rem;
+    padding: 0 0.85rem;
+    border: 1px solid rgba(20, 42, 56, 0.14);
+    border-radius: 0.7rem;
+    background: #fdfcfa;
+    color: rgba(20, 42, 56, 0.55);
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .catalog-filter-sheet .catalog-filter__other-city.is-filled {
+    color: rgba(20, 42, 56, 0.92);
+    font-weight: 500;
   }
 
   .catalog-filter-sheet .catalog-filter-card {

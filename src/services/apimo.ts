@@ -98,23 +98,74 @@ function toNumber(value: unknown): number | undefined {
   return undefined
 }
 
-function extractAmenities(raw: ApimoRawProperty): FeaturedProperty['amenities'] {
-  const known: FeaturedProperty['amenities'] = []
-  const amenitiesRaw = (raw.amenities ?? raw.equipements ?? raw.features) as unknown
+/** Pièces Apimo (`areas[].type`) → critères catalogue jardin / terrasse / piscine / garage. */
+const AREA_TYPE_TO_AMENITY: Record<number, FeaturedProperty['amenities'][number]> = {
+  4: 'garage', // Garage
+  5: 'garage', // Parking
+  7: 'jardin', // Abri de jardin
+  17: 'terrasse', // Véranda
+  18: 'terrasse', // Terrasse
+  19: 'terrasse', // Solarium
+  23: 'piscine', // Pool house
+  26: 'terrasse', // Loggia
+  37: 'jardin', // Cour
+  43: 'terrasse', // Balcon
+  49: 'jardin', // Jardin
+  50: 'jardin', // Parc
+  52: 'jardin', // Patio
+  64: 'piscine', // Piscine intérieure
+  74: 'garage', // Parking intérieur
+  75: 'garage', // Parking extérieur
+  85: 'garage', // Box
+  113: 'jardin', // Jardin d'hiver
+}
 
+function extractAmenities(raw: ApimoRawProperty): FeaturedProperty['amenities'] {
+  const known = new Set<FeaturedProperty['amenities'][number]>()
+
+  // 1) Pièces structurées Apimo (source principale — pas de champ texte « amenities »)
+  const areasRaw = raw.areas
+  if (Array.isArray(areasRaw)) {
+    for (const item of areasRaw) {
+      if (!item || typeof item !== 'object') continue
+      const type = toOptionalNumber((item as { type?: unknown }).type)
+      if (type == null) continue
+      const amenity = AREA_TYPE_TO_AMENITY[type]
+      if (amenity) known.add(amenity)
+      // Secours via libellé catalogue si nouveau code Apimo
+      const label = (labelFrom(AREATYPE_LABELS, type) ?? '').toLowerCase()
+      if (label.includes('jardin') || label === 'parc' || label === 'cour' || label === 'patio') known.add('jardin')
+      if (label.includes('terrasse') || label.includes('balcon') || label.includes('loggia') || label.includes('solarium') || label.includes('véranda') || label.includes('veranda')) {
+        known.add('terrasse')
+      }
+      if (label.includes('piscine') || label.includes('pool')) known.add('piscine')
+      if (label.includes('garage') || label.includes('parking') || label === 'box') known.add('garage')
+    }
+  }
+
+  // 2) Champs texte éventuels (legacy / autres feeds)
+  const amenitiesRaw = (raw.amenities ?? raw.equipements ?? raw.features) as unknown
   const list: string[] = Array.isArray(amenitiesRaw)
-    ? (amenitiesRaw.filter(Boolean).map((x) => String(x)) as string[])
+    ? amenitiesRaw.filter(Boolean).map((x) => String(x))
     : typeof amenitiesRaw === 'string'
       ? [amenitiesRaw]
       : []
 
-  const joined = list.join(' ').toLowerCase()
-  if (joined.includes('jardin')) known.push('jardin')
-  if (joined.includes('piscine')) known.push('piscine')
-  if (joined.includes('terrasse')) known.push('terrasse')
-  if (joined.includes('garage')) known.push('garage')
+  // 3) Descriptions FR (souvent seules à mentionner piscine / jardin)
+  const comments = Array.isArray(raw.comments) ? raw.comments : []
+  for (const entry of comments) {
+    if (!entry || typeof entry !== 'object') continue
+    const comment = (entry as { comment?: unknown }).comment
+    if (typeof comment === 'string' && comment.trim()) list.push(comment)
+  }
 
-  return Array.from(new Set(known))
+  const joined = list.join(' ').toLowerCase()
+  if (joined.includes('jardin')) known.add('jardin')
+  if (joined.includes('piscine')) known.add('piscine')
+  if (joined.includes('terrasse')) known.add('terrasse')
+  if (/\bgarage\b/.test(joined) || joined.includes('parking')) known.add('garage')
+
+  return Array.from(known)
 }
 
 function normalizeBadge(raw: ApimoRawProperty): FeaturedProperty['badge'] {

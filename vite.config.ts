@@ -10,12 +10,15 @@ function redirectToFr() {
       server.middlewares.use((req, res, next) => {
         const raw = req.url ?? '/'
         const pathOnly = raw.split('?')[0]
+        // Avec base: '/fr/', les fichiers public/ sont servis sous /fr/images/… —
+        // ne pas réécrire /fr/images → /images (sinon 404 en local).
         const skip =
           pathOnly.startsWith('/fr') ||
           pathOnly.startsWith('/@') ||
           pathOnly.startsWith('/src') ||
           pathOnly.startsWith('/node_modules') ||
           pathOnly.startsWith('/images') ||
+          pathOnly.startsWith('/documents') ||
           pathOnly.startsWith('/favicon') ||
           pathOnly.startsWith('/apple-touch-icon') ||
           pathOnly.startsWith('/icons') ||
