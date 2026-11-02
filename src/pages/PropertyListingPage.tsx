@@ -676,7 +676,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   className="catalog-chip"
                   onClick={() => openSheetToSection('catalog-filter-budget')}
                 >
-                  <span>{mode === 'rent' ? '≤ 3 000 € / mois' : '≤ 1 500 000 €'}</span>
+                  <span>
+                    {mode === 'rent' ? `≤ ${formatEuro(3_000)} / mois` : `≤ ${formatEuro(1_500_000)}`}
+                  </span>
                 </button>
               )}
               <button

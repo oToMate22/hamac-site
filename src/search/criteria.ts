@@ -88,7 +88,8 @@ export function searchBarBudgetValue(params: URLSearchParams): string {
 
 export function applyCatalogParam(next: URLSearchParams, key: string, value: string) {
   if (key === 'budgetMax') {
-    if (!value) next.delete('budgetMax')
+    // 'all' = retrait de la puce / reset SearchBar — ne pas laisser budgetMax=all dans l’URL
+    if (!value || value === 'all') next.delete('budgetMax')
     else next.set('budgetMax', value)
     next.delete('budget')
     return
