@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
 import * as Slider from '@radix-ui/react-slider'
-import { Check, ChevronDown, Search, X } from 'lucide-react'
+import { Check, ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react'
 import { Command } from 'cmdk'
 import { PropertyCard } from '../components/PropertyCard'
 import { type Amenity, type Property } from '../data/properties'
@@ -488,6 +488,82 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const formatEuro = (value: number) => formatEuroAmount(value)
 
+  const typeLabel = TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type
+  const activeFilterChips: Array<{ key: string; label: string; clear: Array<{ key: string; value: string }> }> = []
+  if (type && type !== 'all') {
+    activeFilterChips.push({ key: 'type', label: typeLabel, clear: [{ key: 'type', value: 'all' }] })
+  }
+  if (q) {
+    activeFilterChips.push({
+      key: 'q',
+      label: q,
+      clear: [
+        { key: 'q', value: 'all' },
+        { key: 'radius', value: 'all' },
+      ],
+    })
+  }
+  if (budgetMinValue > 0 || budgetMaxForFilter != null) {
+    const budgetLabel =
+      budgetMinValue > 0 && budgetMaxForFilter != null
+        ? `${formatEuro(budgetMinValue)} – ${formatEuro(budgetMaxForFilter)}`
+        : budgetMinValue > 0
+          ? `≥ ${formatEuro(budgetMinValue)}`
+          : `≤ ${formatEuro(budgetMaxForFilter!)}`
+    activeFilterChips.push({
+      key: 'budget',
+      label: budgetLabel,
+      clear: [
+        { key: 'budgetMin', value: 'all' },
+        { key: 'budgetMax', value: 'all' },
+      ],
+    })
+  }
+  if (surface !== 'all') {
+    activeFilterChips.push({
+      key: 'surface',
+      label: `≥ ${surface} m²`,
+      clear: [{ key: 'surface', value: 'all' }],
+    })
+  }
+  if (rooms !== 'all') {
+    activeFilterChips.push({
+      key: 'rooms',
+      label: `${rooms}+ ch.`,
+      clear: [{ key: 'rooms', value: 'all' }],
+    })
+  }
+  for (const amenity of amenities) {
+    activeFilterChips.push({
+      key: `amenity-${amenity}`,
+      label: amenity,
+      clear: [],
+      // cleared via toggleAmenity below
+    })
+  }
+  const activeFilterCount = activeFilterChips.length
+
+  const resultsCountLabel = isLoading
+    ? 'Chargement...'
+    : apiError === 'quota'
+      ? 'Catalogue indisponible'
+      : apiError
+        ? 'Les biens ne se chargent pas'
+        : zoneActive
+          ? (
+              <>
+                {hasMoreProperties
+                  ? `${visibleProperties.length} sur ${listedProperties.length} biens dans cette zone`
+                  : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} dans cette zone`}
+                <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
+              </>
+            )
+          : listedProperties.length === 0
+            ? 'Aucun bien'
+            : hasMoreProperties
+              ? `${visibleProperties.length} sur ${listedProperties.length} biens`
+              : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`
+
   return (
     <main className="catalog-page">
       <section className={isMapView ? 'catalog-hero is-collapsed' : 'catalog-hero'}>
@@ -515,9 +591,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       </section>
       <section className="catalog-body section section--cream">
         <div className="container catalog-layout">
-          <button className="catalog-filter-toggle" type="button" onClick={() => setMobileFiltersOpen((value) => !value)}>
-            Filtres avancés
-          </button>
           <aside className={`catalog-sidebar ${mobileFiltersOpen ? 'is-open' : ''}`}>
             <div className="catalog-filter-card">
               <FilterSelect
@@ -728,40 +801,66 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
           </aside>
           <div className="catalog-main">
             <div className="catalog-toolbar">
-              <p>
-                {isLoading
-                  ? 'Chargement...'
-                  : apiError === 'quota'
-                    ? 'Catalogue indisponible'
-                    : apiError
-                    ? 'Les biens ne se chargent pas'
-                    : zoneActive
-                      ? (
-                          <>
-                            {hasMoreProperties
-                              ? `${visibleProperties.length} sur ${listedProperties.length} biens dans cette zone`
-                              : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} dans cette zone`}
-                            <span className="catalog-toolbar__hint">sur {catalogProperties.length} au total</span>
-                          </>
-                        )
-                      : listedProperties.length === 0
-                        ? 'Aucun bien'
-                        : hasMoreProperties
-                          ? `${visibleProperties.length} sur ${listedProperties.length} biens`
-                          : `${listedProperties.length} bien${listedProperties.length !== 1 ? 's' : ''} trouvé${listedProperties.length !== 1 ? 's' : ''}`}
-              </p>
-              <div className="catalog-toolbar__end">
-                <nav className="catalog-view-toggle" aria-label="Affichage des biens">
-                  <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
-                    Liste
-                  </Link>
-                  <Link to={`${listingPath}${mapSearch}`} aria-current={isMapView ? 'page' : undefined}>
-                    Carte
-                  </Link>
-                </nav>
-                <FilterSelect label="Trier" value={sort} onValueChange={(value) => updateParam('sort', value)} options={[
-                  { value: 'recent', label: 'Plus récents' }, { value: 'price-asc', label: 'Prix croissant' }, { value: 'price-desc', label: 'Prix décroissant' }, { value: 'surface', label: 'Surface' },
-                ]} />
+              <div className="catalog-toolbar__row">
+                <p className="catalog-toolbar__count">{resultsCountLabel}</p>
+                <div className="catalog-toolbar__end">
+                  <button
+                    type="button"
+                    className="catalog-filter-button"
+                    aria-expanded={mobileFiltersOpen}
+                    aria-controls="catalog-filters"
+                    onClick={() => setMobileFiltersOpen((value) => !value)}
+                  >
+                    <SlidersHorizontal size={16} aria-hidden />
+                    <span>Filtres</span>
+                    {activeFilterCount > 0 ? (
+                      <span className="catalog-filter-button__badge">{activeFilterCount}</span>
+                    ) : null}
+                  </button>
+                  <nav className="catalog-view-toggle" aria-label="Affichage des biens">
+                    <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
+                      Liste
+                    </Link>
+                    <Link to={`${listingPath}${mapSearch}`} aria-current={isMapView ? 'page' : undefined}>
+                      Carte
+                    </Link>
+                  </nav>
+                </div>
+              </div>
+              {activeFilterChips.length > 0 ? (
+                <div className="catalog-active-chips" aria-label="Filtres actifs">
+                  {activeFilterChips.map((chip) => (
+                    <button
+                      key={chip.key}
+                      type="button"
+                      className="catalog-chip is-active"
+                      aria-label={`Retirer le filtre ${chip.label}`}
+                      onClick={() => {
+                        if (chip.key.startsWith('amenity-')) {
+                          toggleAmenity(chip.key.replace('amenity-', '') as Amenity)
+                          return
+                        }
+                        updateParams(chip.clear)
+                      }}
+                    >
+                      <span>{chip.label}</span>
+                      <X size={12} aria-hidden />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div className="catalog-toolbar__sort">
+                <FilterSelect
+                  label="Trier"
+                  value={sort}
+                  onValueChange={(value) => updateParam('sort', value)}
+                  options={[
+                    { value: 'recent', label: 'Plus récents' },
+                    { value: 'price-asc', label: 'Prix croissant' },
+                    { value: 'price-desc', label: 'Prix décroissant' },
+                    { value: 'surface', label: 'Surface' },
+                  ]}
+                />
               </div>
             </div>
             {cacheServedAt && !apiError && !isLoading ? (
