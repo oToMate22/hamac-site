@@ -154,7 +154,7 @@ export function PrivateVisitsLightbox({
                   <>
                     <img
                       src={visit.posterSrc}
-                      alt={`Aperçu — ${visit.title}, ${visit.commune}`}
+                      alt={`Aperçu — ${visit.title}`}
                       className="private-visits-lightbox__poster-fallback"
                     />
                     <p className="private-visits-lightbox__missing">
@@ -168,7 +168,6 @@ export function PrivateVisitsLightbox({
 
               <div className="private-visits-lightbox__meta" id="private-visits-lightbox-desc">
                 <h3 className="private-visits-lightbox__title">{visit.title}</h3>
-                <p className="private-visits-lightbox__commune">{visit.commune}</p>
                 <ul className="private-visits-lightbox__facts">
                   {visit.soldDate ? <li>Vendu — {formatSoldDate(visit.soldDate)}</li> : null}
                   {visit.surface ? <li>{visit.surface} m²</li> : null}

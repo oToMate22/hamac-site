@@ -1,7 +1,6 @@
 export type PrivateVisit = {
   id: string
   title: string
-  commune: string
   /** UID Cloudflare Stream (dashboard → Stream → vidéo). */
   streamVideoId?: string
   posterSrc: string
@@ -32,7 +31,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'maison-sainte-foy',
     title: 'Maison familiale avec jardin',
-    commune: 'Sainte-Foy-lès-Lyon',
     streamVideoId: CLOUDFLARE_STREAM_IDS.maisonSainteFoy,
     posterSrc: '/fr/images/Biens/maison-jardin.webp',
     soldDate: '2025-11-12',
@@ -44,7 +42,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'appartement-oullins',
     title: 'Appartement lumineux proche du métro',
-    commune: 'Oullins',
     streamVideoId: CLOUDFLARE_STREAM_IDS.appartementOullins,
     posterSrc: '/fr/images/Biens/appartement-interieur-2.webp',
     soldDate: '2025-01-18',
@@ -56,7 +53,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'appartement-tassin',
     title: 'Appartement traversant avec terrasse',
-    commune: 'Tassin-la-Demi-Lune',
     streamVideoId: CLOUDFLARE_STREAM_IDS.appartementTassin,
     posterSrc: '/fr/images/Biens/appartement-interieur-1.webp',
     soldDate: '2025-09-28',
@@ -68,7 +64,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'villa-ecully',
     title: 'Villa contemporaine de standing',
-    commune: 'Écully',
     streamVideoId: CLOUDFLARE_STREAM_IDS.villaEcully,
     posterSrc: '/fr/images/Biens/maison-art.webp',
     soldDate: '2025-07-15',
@@ -80,7 +75,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'maison-francheville',
     title: 'Maison de ville rénovée',
-    commune: 'Francheville',
     streamVideoId: CLOUDFLARE_STREAM_IDS.maisonFrancheville,
     posterSrc: '/fr/images/Biens/maison-city.webp',
     soldDate: '2025-05-03',
@@ -92,7 +86,6 @@ export const privateVisits: PrivateVisit[] = [
   {
     id: 'propriete-craponne',
     title: 'Propriété proche des espaces verts',
-    commune: 'Craponne',
     streamVideoId: CLOUDFLARE_STREAM_IDS.proprieteCraponne,
     posterSrc: '/fr/images/Biens/maison-bleu-2.webp',
     soldDate: '2025-02-20',

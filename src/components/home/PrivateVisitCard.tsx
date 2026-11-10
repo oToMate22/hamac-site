@@ -30,7 +30,7 @@ export function PrivateVisitCard({
       className={`private-visits-card ${isCenter ? 'is-center' : ''} ${showVideo ? 'is-previewing' : ''}`}
       role="listitem"
       onClick={() => onOpen(index)}
-      aria-label={`Voir la visite privée de ${visit.title} à ${visit.commune}`}
+      aria-label={`Voir la visite privée : ${visit.title}`}
     >
       <span className="private-visits-card__media">
         <img
@@ -59,16 +59,9 @@ export function PrivateVisitCard({
         ) : null}
         <span className="private-visits-card__badge">Vendu</span>
         <span className="private-visits-card__overlay" aria-hidden="true">
-          {isCenter ? (
-            <span className="private-visits-card__commune private-visits-card__commune--featured">
-              {visit.commune}
-            </span>
-          ) : (
-            <>
-              <span className="private-visits-card__title">{visit.title}</span>
-              <span className="private-visits-card__commune">{visit.commune}</span>
-            </>
-          )}
+          <span className={`private-visits-card__title${isCenter ? ' private-visits-card__title--featured' : ''}`}>
+            {visit.title}
+          </span>
         </span>
       </span>
     </button>

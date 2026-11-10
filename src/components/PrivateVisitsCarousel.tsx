@@ -83,10 +83,6 @@ function VisitSlide({ visit, isActive, showVideo }: VisitSlideProps) {
           />
         ) : null}
       </span>
-
-      <span className="visit-caption">
-        <span className="visit-city">{visit.commune}</span>
-      </span>
     </div>
   )
 }
