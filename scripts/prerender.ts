@@ -50,9 +50,22 @@ async function launchBrowser() {
   })
 }
 
+/** Flag JS + blocage GA/GTM via CDP — sans interception globale des autres requêtes. */
+async function preparePage(page: puppeteer.Page) {
+  await page.evaluateOnNewDocument(() => {
+    ;(window as Window & { __PRERENDER__?: boolean }).__PRERENDER__ = true
+  })
+  const client = await page.createCDPSession()
+  await client.send('Network.enable')
+  await client.send('Network.setBlockedURLs', {
+    urls: ['*googletagmanager.com*', '*google-analytics.com*'],
+  })
+}
+
 async function renderRoute(browser: puppeteer.Browser, route: string) {
   const page = await browser.newPage()
   try {
+    await preparePage(page)
     const url = `${BASE}${BASE_PATH}${route}`
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 })
     await page.waitForSelector('h1', { timeout: 20000 })
@@ -137,6 +150,7 @@ try {
 
     const { mkdir, writeFile } = await import('node:fs/promises')
     const notFoundPage = await browser.newPage()
+    await preparePage(notFoundPage)
     await notFoundPage.goto(`${BASE}${BASE_PATH}/route-inexistante-test`, {
       waitUntil: 'domcontentloaded',
       timeout: 45000,

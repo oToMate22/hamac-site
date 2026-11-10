@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
+import { Analytics } from './analytics/Analytics'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { CookieBanner } from './consent/CookieBanner'
+import { openConsentPreferences } from './consent/storage'
 import { SocialLinks } from './components/SocialLinks'
 import { AgencyPage } from './pages/AgencyPage'
 import { BlogPage, BlogPostPage } from './pages/BlogPage'
@@ -387,7 +390,18 @@ function SiteLayout() {
             <ul className="site-footer__links">
               <li><Link to="/mentions-legales">Mentions légales</Link></li>
               <li><Link to="/honoraires">Honoraires</Link></li>
-              <li><Link to="/confidentialite">Confidentialite</Link></li>
+              <li><Link to="/confidentialite">Confidentialité</Link></li>
+              <li>
+                <a
+                  href="/fr/confidentialite"
+                  onClick={(event) => {
+                    event.preventDefault()
+                    openConsentPreferences()
+                  }}
+                >
+                  Cookies
+                </a>
+              </li>
             </ul>
           </div>
           <div>
@@ -418,6 +432,8 @@ export function App({ homeMainHtml }: AppProps) {
   return (
     <ErrorBoundary>
       <ScrollToTop />
+      <Analytics />
+      <CookieBanner />
       <Routes>
         <Route element={<SiteLayout />}>
           <Route path="/" element={<HomePage homeMainHtml={homeMainHtml} />} />

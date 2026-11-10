@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { LegalDocument, LegalSection } from '../components/LegalDocument'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
 
-const LAST_UPDATED = '5 octobre 2026'
+const LAST_UPDATED = '10 novembre 2026'
 
 const AGENCY = {
   name: 'Hamac Investissements & Patrimoine',
@@ -111,29 +111,227 @@ export function LegalPage() {
   )
 }
 
+function FeesTable({
+  headers,
+  rows,
+  note,
+}: {
+  headers: [string, string]
+  rows: Array<[string, string]>
+  note?: string
+}) {
+  return (
+    <div className="legal-table-wrap">
+      <table className="legal-table">
+        <thead>
+          <tr>
+            <th scope="col">{headers[0]}</th>
+            <th scope="col">{headers[1]}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([left, right]) => (
+            <tr key={`${left}-${right}`}>
+              <td>{left}</td>
+              <td>{right}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {note ? <p className="legal-section__note">{note}</p> : null}
+    </div>
+  )
+}
+
 export function FeesPage() {
+  const chargeVendeur =
+    'Sauf convention contraire, les honoraires seront à la charge du vendeur et les pourcentages des honoraires appliqués sont calculés sur le prix de vente TTC (incluant une TVA à 20 %).'
+  const chargeAcquereur =
+    "Sauf convention contraire, les honoraires seront à la charge de l'acquéreur et les pourcentages des honoraires appliqués sont calculés sur le prix de vente TTC (incluant une TVA à 20 %)."
+
   return (
     <LegalDocument
       title="Honoraires — Hamac Investissements & Patrimoine"
-      metaDescription="Barème et modalités d'honoraires de l'agence Hamac Investissements & Patrimoine."
+      metaDescription="Grille d'honoraires Hamac : transaction, location, gestion courte durée et investissement clé en main."
       heading="Honoraires d'agence"
-      lastUpdated={LAST_UPDATED}
+      lastUpdated="30 octobre 2026"
     >
       <p>
         Conformément à la réglementation en vigueur, {AGENCY.name} communique ses honoraires de manière transparente avant
         toute mission.
       </p>
       <p>
-        Notre barème tarifaire est disponible sur notre site, ou sur simple demande par e-mail, courrier, téléphone ou
-        depuis la rubrique <Link to="/contact">contact</Link>.
+        Vous pouvez aussi{' '}
+        <a href="/fr/documents/honoraires-hamac.pdf" download>
+          télécharger la grille d&apos;honoraires (PDF)
+        </a>
+        , ou nous écrire via <Link to="/contact">contact</Link>.
       </p>
-      <LegalSection title="Demande de renseignements">
+
+      <LegalSection title="Grille honoraires « Transaction »">
+        <h3>Vente de locaux à usage d&apos;habitation</h3>
+        <FeesTable
+          headers={['Montant de la transaction', 'Honoraires T.T.C']}
+          rows={[
+            ['Entre 0 € et 50 000 €', 'Forfait de 3 600 €'],
+            ['Entre 50 001 € et 100 000 €', '8,00 %'],
+            ['Entre 100 001 € et 200 000 €', '7,00 %'],
+            ['Entre 200 001 € et 250 000 €', '6,00 %'],
+            ['Entre 250 001 € et 300 000 €', '5,50 %'],
+            ['Entre 300 001 € et 600 000 €', '5,00 %'],
+            ['Plus de 600 001 €', '4,00 %'],
+          ]}
+          note={chargeVendeur}
+        />
+        <h3>Vente de locaux à usage professionnel, commercial, industriel et cession de bail</h3>
+        <FeesTable
+          headers={['Montant de la transaction', 'Honoraires T.T.C']}
+          rows={[
+            ['Entre 0 € et 100 000 €', 'Forfait de 8 000 €'],
+            ['Entre 100 001 € et 200 000 €', '8 %'],
+            ['Plus de 200 000 €', '7 %'],
+          ]}
+          note={chargeAcquereur}
+        />
+        <h3>Vente de terrains à bâtir</h3>
+        <FeesTable
+          headers={['Montant de la transaction', 'Honoraires T.T.C']}
+          rows={[
+            ['Entre 0 € et 500 000 €', '10,00 %'],
+            ['Plus de 500 001 €', '7,00 %'],
+          ]}
+          note={chargeVendeur}
+        />
+      </LegalSection>
+
+      <LegalSection title="Location de locaux à usage d'habitation">
+        <p className="legal-section__note">
+          Conforme aux dispositions de la loi ALUR du 24 mars 2014 et au décret d&apos;application du 1er août 2014.
+        </p>
+        <h3>Part du locataire</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Rédaction de l'annonce, visites, constitution du dossier locataire, rédaction du bail",
+              '10,00 € TTC par m² de surface habitable',
+            ],
+            ['État des lieux', '3,00 € TTC par m² de surface habitable'],
+          ]}
+        />
+        <h3>Part du propriétaire-bailleur</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Rédaction de l'annonce, visites, constitution du dossier locataire, rédaction du bail",
+              'Égale à un mois de loyer hors charge et hors état des lieux TTC',
+            ],
+            ['État des lieux', '3,00 € TTC par m² de surface habitable'],
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection title="Location de locaux à usage professionnel, commercial, ou stationnements">
+        <h3>Part du locataire</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Rédaction de l'annonce, visites, constitution du dossier locataire, rédaction du bail",
+              '10 % HT du loyer annuel',
+            ],
+            ['État des lieux', '3,00 € TTC par m² de surface'],
+          ]}
+        />
+        <h3>Part du propriétaire-bailleur</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Rédaction de l'annonce, visites, constitution du dossier locataire, rédaction du bail",
+              'Égale à celle du locataire',
+            ],
+            ['État des lieux', '3,00 € TTC par m² de surface'],
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection title="Gestion à haute rentabilité — courte et moyenne durée">
+        <h3>Honoraires propriétaire</h3>
+        <FeesTable
+          headers={['Mandat de gestion', 'Honoraires T.T.C']}
+          rows={[
+            ['Location courte durée (de 1 à 30 nuits)', '25 % TTC'],
+            ['Location moyenne durée (supérieur à 30 nuits)', '20 % TTC'],
+          ]}
+        />
+        <h3>Pack d&apos;entrée à la charge des propriétaires</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Shooting photo professionnel · rédaction de l'annonce sur tous les supports de diffusion · ménage intégral avant la première mise en location · démarches administratives de conformité d'urbanisme",
+              '500 €',
+            ],
+          ]}
+        />
+        <h3>Honoraires locataires</h3>
+        <FeesTable
+          headers={['Prestation', 'Honoraires T.T.C']}
+          rows={[
+            [
+              "Frais de rédaction d'acte",
+              '150 € par chambre de colocation · 8 € / m² pour une location simple · 150 € pour un parking',
+            ],
+            [
+              'État des lieux entrant ou sortant',
+              '3 € / m² avec un minimum de 50 € (pour les colocations, forfait de 50 € par passage)',
+            ],
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection title="Investissement clé en main">
+        <ul>
+          <li>Validation de vos objectifs</li>
+          <li>Proposition d&apos;une stratégie d&apos;investissement</li>
+          <li>Identification des biens</li>
+          <li>Accompagnement dans le processus d&apos;acquisition</li>
+          <li>Suivi des travaux</li>
+        </ul>
+        <FeesTable
+          headers={["Montant de l'investissement (1)", 'Honoraires T.T.C']}
+          rows={[
+            ['Inférieur à 100 000 €', '8 100 €'],
+            ['Entre 100 000 € et 119 999 €', '8 800 €'],
+            ['Entre 120 000 € et 139 999 €', '9 800 €'],
+            ['Entre 140 000 € et 159 999 €', '11 900 €'],
+            ['Entre 160 000 € et 179 999 €', '13 200 €'],
+            ['Entre 180 000 € et 199 999 €', '14 900 €'],
+            ['Entre 200 000 € et 249 999 €', '16 700 €'],
+            ['Entre 250 000 € et 299 999 €', '18 100 €'],
+            ['Entre 300 000 € et 349 999 €', '20 500 €'],
+            ['Entre 350 000 € et 399 999 €', '23 600 €'],
+            ['Entre 400 000 € et 499 999 €', '26 250 €'],
+            ['Entre 500 000 € et 599 999 €', '30 000 €'],
+            ['Entre 600 000 € et 699 999 €', '35 000 €'],
+            ['Entre 700 000 € et 799 999 €', '40 000 €'],
+            ['Au-delà', 'Nous consulter'],
+          ]}
+          note="(1) Le montant de l'investissement = prix d'achat du bien (frais d'agent inclus) + montant des travaux et ameublement."
+        />
+      </LegalSection>
+
+      <LegalSection title="Informations légales">
         <p>
-          Pour obtenir le détail de nos honoraires (vente, achat, estimation) :{' '}
-          <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a> — {AGENCY.phone}.
+          Hamac Investissements &amp; Patrimoine SAS immatriculée au RCS de Lyon sous le n° 899 540 181 — Carte
+          professionnelle Transaction n° CPI 6901 2021 000 000 102 délivrée par la CCI de Lyon Métropole — Non
+          maniement de fonds — Capital : 1 000,00 € — 5 Place Bellecour, 69002 Lyon —{' '}
+          <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a>
         </p>
         <p>
-          {AGENCY.addressLine1}, {AGENCY.city}, {AGENCY.country}
+          Pour toute question : <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a> — {AGENCY.phone}.
         </p>
       </LegalSection>
     </LegalDocument>
@@ -237,6 +435,9 @@ export function PrivacyPage() {
             <strong>Supabase, Inc.</strong> — hébergement et stockage des données transmises via les formulaires en ligne
             (contact, estimation, off-market, fiche bien).
           </li>
+          <li>
+            <strong>Google Ireland Limited</strong> — mesure d&apos;audience, uniquement après votre consentement.
+          </li>
         </ul>
         <p>
           En dehors des cas énoncés ci-dessus, l&apos;Agence s&apos;engage à ne pas vendre, louer, céder ou donner accès à des
@@ -313,6 +514,59 @@ export function PrivacyPage() {
         <p>
           D&apos;autres cookies peuvent être ajoutés par des applications tierces telles que les boutons de partage des
           réseaux sociaux.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Mesure d'audience (Google Analytics 4)">
+        <h3>Finalité</h3>
+        <p>
+          Le site utilise Google Analytics 4 pour mesurer sa fréquentation : nombre de visites, pages consultées,
+          provenance des visites et type d&apos;appareil. Ces statistiques servent uniquement à améliorer le site et
+          l&apos;information qui y est publiée. Aucune donnée n&apos;est utilisée à des fins publicitaires, de profilage
+          individuel ou de revente.
+        </p>
+        <h3>Base légale et consentement</h3>
+        <p>
+          Ce traitement repose sur votre consentement (article 6.1.a du règlement européen n° 2016/679/UE et article 82
+          de la loi n° 78-17 du 6 janvier 1978). Tant que vous n&apos;avez pas accepté, aucun script de mesure n&apos;est
+          chargé et aucun cookie de mesure n&apos;est déposé : aucune donnée n&apos;est transmise à Google. Le refus est
+          aussi simple que l&apos;acceptation.
+        </p>
+        <h3>Cookies et stockages concernés</h3>
+        <ul>
+          <li>
+            <strong>_ga</strong> : identifiant de visite permettant de distinguer les visiteurs ; durée de vie de 2 ans ;
+          </li>
+          <li>
+            <strong>_ga_KCHSLFNCBR</strong> : identifiant de session propre à ce site ; durée de vie de 2 ans ;
+          </li>
+          <li>
+            <strong>hamac_consent_v1</strong> (stockage local du navigateur, et non cookie) : mémorise votre choix afin de
+            ne pas vous reposer la question à chaque page. Il est conservé dans votre navigateur et n&apos;est jamais
+            transmis à nos serveurs.
+          </li>
+        </ul>
+        <h3>Données traitées et conservation</h3>
+        <p>
+          Les données traitées sont les pages vues, les événements de navigation, l&apos;adresse des pages consultées,
+          la page de provenance, la langue, le type d&apos;appareil et de navigateur, une localisation approximative
+          (pays, région) et un identifiant aléatoire. Les adresses IP ne sont pas conservées par Google Analytics 4.
+        </p>
+        <p>
+          Ces données sont conservées <strong>14 mois</strong> dans Google Analytics 4, puis supprimées ou agrégées de
+          façon définitive.
+        </p>
+        <h3>Modifier ou retirer votre consentement</h3>
+        <p>
+          Le lien <strong>« Cookies »</strong> présent en pied de page de chaque page vous permet de revenir sur votre
+          choix à tout moment. En cas de retrait, la collecte cesse immédiatement et les cookies de mesure déjà déposés
+          sont supprimés. Vous pouvez également supprimer ces cookies depuis les réglages de votre navigateur.
+        </p>
+        <h3>Sous-traitant et transfert hors Union européenne</h3>
+        <p>
+          Le service est fourni par Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irlande), avec les
+          fonctions publicitaires désactivées. Des données peuvent être transférées vers les États-Unis dans le cadre des
+          clauses contractuelles types de la Commission européenne et du cadre de protection des données UE-États-Unis.
         </p>
       </LegalSection>
 
