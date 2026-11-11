@@ -53,7 +53,8 @@
   --swiper-theme-color: rgba(20, 42, 56, 0.45);
 
   overflow: hidden;
-  touch-action: none;
+  /* pan-y : scroll vertical page OK ; le horizontal reste au Swiper (trackpad / doigt) */
+  touch-action: pan-y;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;

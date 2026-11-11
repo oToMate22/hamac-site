@@ -26,38 +26,56 @@ const featuredIndex = Math.max(
   privateVisits.findIndex((visit) => visit.id === FEATURED_PRIVATE_VISIT_ID),
 )
 
-/** Mobile : swipe tactile. Desktop : drag souris + molette / trackpad, une photo à la fois. */
+/**
+ * Mobile : swipe tactile.
+ * Mac trackpad : balayage 2 doigts (wheel) + clic-glisser ; seuils bas pour les petits deltas pixel.
+ */
 const SWIPER_INTERACTION = {
   simulateTouch: true,
   allowTouchMove: true,
-  touchRatio: 1,
-  touchAngle: 45,
-  threshold: 8,
+  touchRatio: 1.15,
+  touchAngle: 55,
+  threshold: 4,
   longSwipes: true,
-  longSwipesRatio: 0.5,
+  longSwipesRatio: 0.35,
   shortSwipes: true,
   followFinger: true,
   watchSlidesProgress: true,
   slidesPerGroup: 1,
-  preventInteractionOnTransition: true,
+  // false : on peut enchaîner un second balayage pendant l’anim (trackpad)
+  preventInteractionOnTransition: false,
+  resistanceRatio: 0.65,
   mousewheel: {
     enabled: true,
     forceToAxis: true,
-    sensitivity: 0.5,
-    thresholdDelta: 40,
-    thresholdTime: 550,
+    sensitivity: 1.1,
+    // Trackpad Mac = beaucoup de petits deltaX ; 40 était trop élevé
+    thresholdDelta: 12,
+    thresholdTime: 320,
     releaseOnEdges: true,
   },
+}
+
+/** Précharge actif ± N (Instagram) pour éviter un cold start à chaque swipe. */
+const PRELOAD_RADIUS = 1
+
+function isNearActive(index: number, active: number, total: number, radius: number) {
+  const direct = Math.abs(index - active)
+  const wrap = total - direct
+  return Math.min(direct, wrap) <= radius
 }
 
 type VisitSlideProps = {
   visit: PrivateVisit
   isActive: boolean
+  shouldMount: boolean
   showVideo: boolean
 }
 
-function VisitSlide({ visit, isActive, showVideo }: VisitSlideProps) {
-  const shouldPlay = isActive && showVideo && Boolean(visit.streamVideoId)
+function VisitSlide({ visit, isActive, shouldMount, showVideo }: VisitSlideProps) {
+  const hasVideo = Boolean(visit.streamVideoId)
+  const shouldPlay = isActive && showVideo && hasVideo
+  const mountPlayer = shouldMount && hasVideo
 
   return (
     <div
@@ -68,18 +86,18 @@ function VisitSlide({ visit, isActive, showVideo }: VisitSlideProps) {
           src={visit.posterSrc}
           alt=""
           className="visit-poster"
-          loading={isActive ? 'eager' : 'lazy'}
+          loading={isActive || shouldMount ? 'eager' : 'lazy'}
           decoding="async"
           draggable={false}
         />
-        {shouldPlay ? (
+        {mountPlayer ? (
           <PropertyVideo
-            key={visit.id}
             videoId={visit.streamVideoId!}
             title={visit.title}
             poster={visit.posterSrc}
             preview
             muted
+            active={shouldPlay}
           />
         ) : null}
       </span>
@@ -109,6 +127,12 @@ export function PrivateVisitsCarousel() {
     observer.observe(section)
     return () => observer.disconnect()
   }, [])
+
+  // Prefetch hls.js dès que la section est visible (évite le délai du 1er dynamic import)
+  useEffect(() => {
+    if (!sectionVisible) return
+    void import('hls.js')
+  }, [sectionVisible])
 
   /** onTap = clic sans drag — n’interfère pas avec le glisser souris */
   const handleSwiperTap = useCallback(
@@ -144,16 +168,17 @@ export function PrivateVisitsCarousel() {
               slideShadows: true,
             }}
             initialSlide={featuredIndex}
-            speed={450}
+            speed={380}
             spaceBetween={12}
             rewind
             resistance
-            resistanceRatio={0.85}
             slideToClickedSlide
             keyboard={{ enabled: true, onlyInViewport: true }}
             navigation
             pagination={{ clickable: true }}
             onTap={handleSwiperTap}
+            // TransitionStart : bascule l’index pendant le swipe → lecture quasi immédiate
+            onSlideChangeTransitionStart={(swiper) => setActiveIndex(swiper.activeIndex)}
             onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
             {...SWIPER_INTERACTION}
           >
@@ -162,6 +187,10 @@ export function PrivateVisitsCarousel() {
                 <VisitSlide
                   visit={visit}
                   isActive={activeIndex === index}
+                  shouldMount={
+                    canPlayVideo &&
+                    isNearActive(index, activeIndex, privateVisits.length, PRELOAD_RADIUS)
+                  }
                   showVideo={canPlayVideo}
                 />
               </SwiperSlide>

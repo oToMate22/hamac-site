@@ -40,8 +40,8 @@ function buildStreamEmbedUrl(
   return `https://iframe.cloudflarestream.com/${videoId}?${params.toString()}`
 }
 
-/** Démarrage rapide : on laisse l'ABR monter en qualité après les premières secondes. */
-const STREAM_START_BANDWIDTH_MBPS = 4
+/** Preview carte : partir bas pour un 1er frame immédiat (style Instagram), ABR ensuite. */
+const STREAM_START_BANDWIDTH_MBPS = 1.5
 
 function streamHlsUrl(videoId: string): string {
   const params = new URLSearchParams({
@@ -52,11 +52,14 @@ function streamHlsUrl(videoId: string): string {
 
 const HLS_PREVIEW_CONFIG: Partial<HlsConfig> = {
   enableWorker: true,
-  capLevelToPlayerSize: false,
-  startLevel: -1,
+  // Carte ~360 px : inutile de démarrer en 1080p
+  capLevelToPlayerSize: true,
+  startLevel: 0,
+  autoStartLoad: true,
   abrEwmaDefaultEstimate: STREAM_START_BANDWIDTH_MBPS * 1_000_000,
-  maxBufferLength: 12,
-  maxMaxBufferLength: 24,
+  maxBufferLength: 5,
+  maxMaxBufferLength: 10,
+  maxBufferSize: 2 * 1000 * 1000,
 }
 
 function StreamPreview({
@@ -99,8 +102,8 @@ function StreamPreview({
     const setup = async () => {
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src
-        video.addEventListener('loadedmetadata', playIfActive, { once: true })
-        video.addEventListener('canplay', playIfActive, { once: true })
+        video.addEventListener('loadeddata', playIfActive)
+        video.addEventListener('canplay', playIfActive)
         return
       }
 
@@ -108,10 +111,16 @@ function StreamPreview({
       if (cancelled || !Hls.isSupported()) return
 
       hlsInstance = new Hls(HLS_PREVIEW_CONFIG)
-
       hlsInstance.loadSource(src)
       hlsInstance.attachMedia(video)
-      hlsInstance.on(Hls.Events.MANIFEST_PARSED, playIfActive)
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        // Niveau le plus bas d’abord → premier frame rapide
+        if (hlsInstance && hlsInstance.levels.length > 0) {
+          hlsInstance.currentLevel = 0
+          hlsInstance.nextLevel = 0
+        }
+        playIfActive()
+      })
       hlsInstance.on(Hls.Events.FRAG_BUFFERED, playIfActive)
     }
 
@@ -120,7 +129,7 @@ function StreamPreview({
     return () => {
       cancelled = true
       hlsInstance?.destroy()
-      video.removeEventListener('loadedmetadata', playIfActive)
+      video.removeEventListener('loadeddata', playIfActive)
       video.removeEventListener('canplay', playIfActive)
       video.removeAttribute('src')
       video.load()
