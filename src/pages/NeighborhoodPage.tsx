@@ -53,7 +53,7 @@ export function NeighborhoodPage() {
       ? `Immobilier à ${neighborhood.name} — Hamac Investissements & Patrimoine`
       : 'Quartier — Hamac Investissements & Patrimoine',
     description: neighborhood
-      ? `${neighborhood.tagline}. Prix moyen : ${neighborhood.pricePerSqm}. Découvrez nos biens disponibles à ${neighborhood.name} dans l'Ouest Lyonnais.`
+      ? `${neighborhood.tagline}. Découvrez nos biens disponibles à ${neighborhood.name} dans l'Ouest Lyonnais.`
       : 'Découvrez nos communes dans l’Ouest lyonnais.',
     ogImage: neighborhood?.heroImage,
     jsonLd: neighborhood ? [{ id: 'ld-agent', data: realEstateAgentJsonLd(neighborhood.name) }] : undefined,
@@ -123,7 +123,6 @@ export function NeighborhoodPage() {
         <div className="container neighborhood-hero__content">
           <h1>{neighborhood.name}</h1>
           <p>{neighborhood.tagline}</p>
-          <span className="neighborhood-hero__price">{neighborhood.pricePerSqm}</span>
         </div>
         {neighborhood.photoCredit.license !== 'CC0' ? (
           <p className="neighborhood-hero__credit">
@@ -152,7 +151,6 @@ export function NeighborhoodPage() {
           <aside className="neighborhood-stats">
             <h2>Chiffres clés</h2>
             <ul>
-              <li><span>Prix moyen</span><strong>{neighborhood.pricePerSqm}</strong></li>
               <li><span>Évolution</span><strong>{neighborhood.priceEvolution}</strong></li>
               <li><span>Population</span><strong>{neighborhood.population}</strong></li>
               <li><span>Écoles</span><strong>{neighborhood.schools.length}</strong></li>
@@ -270,7 +268,6 @@ export function NeighborhoodPage() {
                 <div className="neighborhood-neighbor-card__content">
                   <h3>{entry.name}</h3>
                   <p>{entry.tagline}</p>
-                  <strong>{entry.pricePerSqm}</strong>
                 </div>
               </Link>
             ))}

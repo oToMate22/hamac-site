@@ -269,7 +269,8 @@ function staticHead(route: string): RouteHead | null {
     },
     '/honoraires': {
       title: `Honoraires — ${SUFFIX}`,
-      description: "Barème et modalités d'honoraires de l'agence Hamac Investissements & Patrimoine.",
+      description:
+        'Grille d’honoraires Hamac : transaction, location, gestion courte durée et investissement clé en main.',
       robots: 'noindex,follow',
     },
     '/confidentialite': {

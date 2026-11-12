@@ -245,6 +245,10 @@
       "destination": "/video/:path*"
     },
     {
+      "source": "/fr/documents/:path*",
+      "destination": "/documents/:path*"
+    },
+    {
       "source": "/fr/icons.svg",
       "destination": "/icons.svg"
     },

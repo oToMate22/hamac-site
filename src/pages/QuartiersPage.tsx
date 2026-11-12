@@ -38,7 +38,6 @@ export function QuartiersPage() {
               <div className="bento-card__content">
                 <h3>{entry.name}</h3>
                 <p>{entry.tagline}</p>
-                <p className="bento-card__meta">{entry.pricePerSqm}</p>
               </div>
             </Link>
           ))}

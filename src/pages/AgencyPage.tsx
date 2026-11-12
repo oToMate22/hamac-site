@@ -12,7 +12,7 @@ export function AgencyPage() {
   const team = [
     ['Romain Monneri-Fons', 'Directeur associé', '/fr/images/team/romain.webp?v=2', 'Une expertise solide, des conseils précis et surtout une vraie proximité : chaque projet mérite une attention particulière et un accompagnement à la hauteur.'],
     ['Victor Bonazza', 'Gérant associé', '/fr/images/team/victor.webp?v=6', "Expert de terrain, il sécurise vos étapes d'achat et de vente avec rigueur."],
-    ['Sarah Bodhuin', 'Agent commercial', '/fr/images/team/sarah-bodhuin.webp', 'Elle accompagne chaque projet avec écoute et exigence.'],
+    ['Sarah Bodhuin', 'Assistante de direction', '/fr/images/team/sarah-bodhuin.webp', 'Elle accompagne chaque projet avec écoute et exigence.'],
     ['Raphaël Lasbatx', 'Négociateur immobilier', '/fr/images/team/raphael.webp', 'Réactif et attentif, il vous guide sur chaque phase de la transaction.'],
     ['Samuel Ribes', 'Négociateur immobilier', '/fr/images/team/samuel.webp', "Au-delà d'un projet immobilier, je place l'humain au cœur de chaque rencontre, avec écoute, confiance et engagement."],
     ['Ana Sanabria', 'Assistante de direction', '/fr/images/team/ana-sanabria.webp?v=2', "Elle accompagne chaque projet avec écoute, exigence et une organisation au service de l'équipe et des clients."],
