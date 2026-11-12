@@ -28,3 +28,7 @@ supabase/.temp/
 .env
 .env.*
 !.env.example
+
+# Données sensibles / hors site — repo public
+LOG_imapsync/
+CONTRAT/
