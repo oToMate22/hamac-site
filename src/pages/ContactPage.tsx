@@ -4,6 +4,9 @@ import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { SocialLinks } from '../components/SocialLinks'
 import { submitLead } from '@/services/leads'
+import { submissionErrorMessage } from '../services/submissions'
+import { useTurnstile } from '../lib/turnstile'
+import { TurnstileField } from '../components/TurnstileField'
 import { realEstateAgentJsonLd } from '../seo/jsonld'
 import { usePageMeta } from '../utils/seo'
 
@@ -37,6 +40,7 @@ export function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const turnstile = useTurnstile('contact')
 
   useEffect(() => {
     const projet = searchParams.get('projet')
@@ -63,19 +67,20 @@ export function ContactPage() {
       : form.message.trim()
 
     try {
-      await submitLead({
-        nom,
-        email: form.email.trim(),
-        telephone: form.phone.trim(),
-        message: messageWithProject || null,
-        type_contact: 'contact',
-      })
+      const turnstileToken = await turnstile.getToken()
+      await submitLead(
+        {
+          nom,
+          email: form.email.trim(),
+          telephone: form.phone.trim(),
+          message: messageWithProject || null,
+          type_contact: 'contact',
+        },
+        turnstileToken,
+      )
     } catch (error) {
       console.error('Erreur:', error)
-      setFeedback({
-        type: 'error',
-        text: 'Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.',
-      })
+      setFeedback({ type: 'error', text: submissionErrorMessage(error) })
       setIsSubmitting(false)
       return
     }
@@ -201,6 +206,8 @@ export function ContactPage() {
                 {feedback.text}
               </p>
             ) : null}
+
+            <TurnstileField containerRef={turnstile.containerRef} />
 
             <button type="submit" className="search-card__submit" disabled={isSubmitting}>
               {isSubmitting ? 'Envoi en cours...' : 'Envoyer'}

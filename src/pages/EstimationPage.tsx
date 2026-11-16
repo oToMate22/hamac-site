@@ -6,6 +6,9 @@ import { CitySearchField } from '../components/CitySearchField'
 import { EstimationTypeIllustration } from '../components/EstimationTypeIllustration'
 import type { PropertyType } from '../data/properties'
 import { submitEstimation } from '../services/estimations'
+import { submissionErrorMessage } from '../services/submissions'
+import { useTurnstile } from '../lib/turnstile'
+import { TurnstileField } from '../components/TurnstileField'
 import { usePageMeta } from '../utils/seo'
 
 type EstimationForm = {
@@ -169,6 +172,7 @@ export function EstimationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const turnstile = useTurnstile('estimation')
 
   const isLastStep = step === 3
   const currentStep = STEPS[step - 1]
@@ -205,19 +209,23 @@ export function EstimationPage() {
     setSubmitSuccess(false)
 
     try {
-      await submitEstimation({
-        property_type: form.type,
-        city: form.city.trim(),
-        surface_habitable: form.surface ? Number.parseInt(form.surface, 10) : null,
-        nombre_pieces: form.rooms ? Number.parseInt(form.rooms, 10) : null,
-        nombre_chambres: form.bedrooms ? Number.parseInt(form.bedrooms, 10) : null,
-        surface_terrain: form.land ? Number.parseInt(form.land, 10) : null,
-        nom: form.lastName.trim(),
-        prenom: form.firstName.trim(),
-        email: form.email.trim(),
-        telephone: form.phone.trim(),
-        message: form.message.trim() || null,
-      })
+      const turnstileToken = await turnstile.getToken()
+      await submitEstimation(
+        {
+          property_type: form.type,
+          city: form.city.trim(),
+          surface_habitable: form.surface ? Number.parseInt(form.surface, 10) : null,
+          nombre_pieces: form.rooms ? Number.parseInt(form.rooms, 10) : null,
+          nombre_chambres: form.bedrooms ? Number.parseInt(form.bedrooms, 10) : null,
+          surface_terrain: form.land ? Number.parseInt(form.land, 10) : null,
+          nom: form.lastName.trim(),
+          prenom: form.firstName.trim(),
+          email: form.email.trim(),
+          telephone: form.phone.trim(),
+          message: form.message.trim() || null,
+        },
+        turnstileToken,
+      )
 
       setSubmitSuccess(true)
       setForm({
@@ -236,7 +244,7 @@ export function EstimationPage() {
       setStep(1)
     } catch (error) {
       console.error('Erreur estimation:', error)
-      setSubmitError('Une erreur est survenue. Merci de réessayer ou de nous contacter par téléphone.')
+      setSubmitError(submissionErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -474,6 +482,8 @@ export function EstimationPage() {
             ) : null}
               </motion.div>
             </AnimatePresence>
+
+            <TurnstileField containerRef={turnstile.containerRef} className="estimation-turnstile" />
 
             <div className="estimation-actions">
               {step > 1 ? (

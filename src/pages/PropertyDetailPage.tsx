@@ -3,6 +3,9 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { PropertyCard } from '../components/PropertyCard'
 import type { Property } from '../data/properties'
 import { submitLead } from '../services/leads'
+import { submissionErrorMessage } from '../services/submissions'
+import { useTurnstile } from '../lib/turnstile'
+import { TurnstileField } from '../components/TurnstileField'
 import {
   getProperties,
   getPropertyById,
@@ -183,6 +186,7 @@ export function PropertyDetailPage() {
   const [phone, setPhone] = useState('')
   const [message, setMessage] = useState(DEFAULT_CONTACT_MESSAGE)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<RequiredContactField, string>>>({})
+  const turnstile = useTurnstile('bien')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -377,19 +381,23 @@ export function PropertyDetailPage() {
     setSubmitError(null)
 
     try {
-      await submitLead({
-        nom: name.trim(),
-        email: email.trim(),
-        telephone: phone.trim(),
-        message: message.trim() || null,
-        type_contact: 'bien',
-        bien_ref: bienRef,
-      })
+      const turnstileToken = await turnstile.getToken()
+      await submitLead(
+        {
+          nom: name.trim(),
+          email: email.trim(),
+          telephone: phone.trim(),
+          message: message.trim() || null,
+          type_contact: 'bien',
+          bien_ref: bienRef,
+        },
+        turnstileToken,
+      )
 
       setSubmitSuccess(true)
     } catch (err) {
       console.error('Erreur fiche bien:', err)
-      setSubmitError('Une erreur est survenue, veuillez réessayer ou nous contacter directement.')
+      setSubmitError(submissionErrorMessage(err))
     } finally {
       setIsSubmitting(false)
     }
@@ -719,6 +727,8 @@ export function PropertyDetailPage() {
                       {submitError}
                     </p>
                   ) : null}
+                  <TurnstileField containerRef={turnstile.containerRef} className="detail-contact-turnstile" />
+
                   <button className="search-card__submit" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Envoi en cours…' : 'Envoyer ma demande'}
                   </button>

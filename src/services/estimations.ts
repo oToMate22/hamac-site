@@ -1,25 +1,16 @@
 // ─────────────────────────────────────────────
 // src/services/estimations.ts
-// Formulaire d'estimation depuis /estimation
+// Formulaire d'estimation depuis /estimation.
+// Passe par l'Edge Function submit-form (Turnstile + validation serveur).
 // ─────────────────────────────────────────────
-import { supabase } from '../lib/supabase'
+import { submitForm } from './submissions'
 import type { TablesInsert } from '../types/supabase'
 
 export type EstimationPayload = TablesInsert<'estimation_submissions'>
 
-export async function submitEstimation(payload: EstimationPayload): Promise<void> {
-  const { error } = await supabase.from('estimation_submissions').insert(payload)
-  if (error) throw new Error(error.message)
+export async function submitEstimation(
+  payload: EstimationPayload,
+  turnstileToken: string | null,
+): Promise<string | null> {
+  return submitForm('estimation', { ...payload } as Record<string, unknown>, turnstileToken)
 }
-
-// Usage :
-// await submitEstimation({
-//   nom: 'Martin',
-//   prenom: 'Sophie',
-//   email: 's@exemple.fr',
-//   telephone: '06...',
-//   property_type: 'maison',
-//   city: 'Sainte-Foy-lès-Lyon',
-//   surface_habitable: 120,
-//   nombre_pieces: 5,
-// })

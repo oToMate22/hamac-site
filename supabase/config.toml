@@ -14,3 +14,10 @@ entrypoint = "./functions/apimo-proxy/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/notify-lead/index.ts"
+
+# Formulaire public : appelé par le navigateur (clé publishable, pas de JWT utilisateur).
+# La sécurité vient de la validation serveur + Turnstile + quota par IP, pas du JWT.
+[functions.submit-form]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/submit-form/index.ts"

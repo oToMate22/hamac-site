@@ -2,6 +2,9 @@ import { useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Gem, Lock, ShieldCheck } from 'lucide-react'
 import { submitOffmarket } from '../services/offmarket'
+import { submissionErrorMessage } from '../services/submissions'
+import { useTurnstile } from '../lib/turnstile'
+import { TurnstileField } from '../components/TurnstileField'
 import { usePageMeta } from '../utils/seo'
 
 type OffMarketForm = {
@@ -120,6 +123,7 @@ export function OffMarketPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const turnstile = useTurnstile('offmarket')
 
   const updateField = <K extends keyof OffMarketForm>(key: K, value: OffMarketForm[K]) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -153,21 +157,25 @@ export function OffMarketPage() {
     setSubmitError(null)
 
     try {
-      await submitOffmarket({
-        first_name: form.firstName.trim(),
-        last_name: form.lastName.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        property_type: form.propertyType || null,
-        sector: form.sector || null,
-        budget: form.budget || null,
-      })
+      const turnstileToken = await turnstile.getToken()
+      await submitOffmarket(
+        {
+          first_name: form.firstName.trim(),
+          last_name: form.lastName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          property_type: form.propertyType || null,
+          sector: form.sector || null,
+          budget: form.budget || null,
+        },
+        turnstileToken,
+      )
 
       setSubmitSuccess(true)
       setForm(EMPTY_FORM)
     } catch (err) {
       console.error('Erreur off-market:', err)
-      setSubmitError('Une erreur est survenue, veuillez réessayer ou nous contacter directement.')
+      setSubmitError(submissionErrorMessage(err))
     } finally {
       setIsSubmitting(false)
     }
@@ -365,6 +373,8 @@ export function OffMarketPage() {
                   {submitError}
                 </p>
               ) : null}
+              <TurnstileField containerRef={turnstile.containerRef} className="offmarket-turnstile" />
+
               <button className="btn btn--gold" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Envoi en cours…' : 'Rejoindre le club'}
               </button>
