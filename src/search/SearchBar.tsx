@@ -267,7 +267,12 @@ export function SearchBar({
               <span className="search-field__label">Lieu</span>
               <Popover.Root open={cityOpen} onOpenChange={setCityOpen}>
                 <Popover.Trigger asChild>
-                  <button type="button" className="premium-search__combobox-trigger" aria-label="Choisir un lieu">
+                  <button
+                    type="button"
+                    className="premium-search__combobox-trigger"
+                    aria-label={city ? `Lieu : ${city}. Choisir un lieu` : 'Choisir un lieu'}
+                    title={city || undefined}
+                  >
                     <Search size={variant === 'hero-glass' ? 12 : 14} className="premium-search__search-icon" />
                     <span
                       className={

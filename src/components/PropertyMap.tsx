@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { divIcon, latLngBounds } from 'leaflet'
-import type { LeafletEvent, Marker as LeafletMarker } from 'leaflet'
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import type { LeafletEvent, Map as LeafletMap, Marker as LeafletMarker } from 'leaflet'
+import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
 import type { Property } from '../data/properties'
 import 'leaflet/dist/leaflet.css'
 
@@ -60,12 +60,52 @@ function boundsKeyFromProperties(properties: Property[]) {
     .join('|')
 }
 
-/** Plus le zoom est élevé, plus la grille de regroupement est fine (les marqueurs se séparent). */
-function clusterDecimalsForZoom(zoom: number): number | null {
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/** Cadre le cœur du catalogue (Ouest lyonnais) sans reculer jusqu'aux biens isolés. */
+function denseProperties(properties: Property[]): Property[] {
+  if (properties.length <= 6) return properties
+  const lats = properties.map((entry) => entry.lat).sort((a, b) => a - b)
+  const lngs = properties.map((entry) => entry.lng).sort((a, b) => a - b)
+  const lat0 = lats[Math.floor(lats.length / 2)] ?? 0
+  const lng0 = lngs[Math.floor(lngs.length / 2)] ?? 0
+  const distanceKm = (property: Property) => {
+    const dLat = (property.lat - lat0) * 110.574
+    const dLng = (property.lng - lng0) * 111.32 * Math.cos((lat0 * Math.PI) / 180)
+    return Math.hypot(dLat, dLng)
+  }
+  const nearby = properties.filter((property) => distanceKm(property) <= 26)
+  if (nearby.length >= 6) return nearby
+  return [...properties].sort((a, b) => distanceKm(a) - distanceKm(b)).slice(0, Math.max(6, Math.ceil(properties.length * 0.6)))
+}
+
+function fitMapFrame(
+  map: LeafletMap,
+  properties: Property[],
+  fitPadding: PropertyMapProps['fitPadding'],
+  animate: boolean,
+) {
+  const source = denseProperties(properties)
+  if (!source.length) return
+  const bounds = latLngBounds(source.map((entry) => [entry.lat, entry.lng] as [number, number]))
+  const paddingTopLeft = fitPadding?.topLeft ?? [24, 24]
+  const paddingBottomRight = fitPadding?.bottomRight ?? [24, 24]
+  const maxZoom = 13
+  if (animate && !prefersReducedMotion()) {
+    map.flyToBounds(bounds, { paddingTopLeft, paddingBottomRight, duration: 0.4, maxZoom })
+    return
+  }
+  map.fitBounds(bounds, { paddingTopLeft, paddingBottomRight, maxZoom, animate: false })
+}
+
+/** Distance en pixels sous laquelle deux pastilles se regroupent. null = on sépare. */
+function clusterPixelThreshold(zoom: number): number | null {
   if (zoom >= 16) return null
-  if (zoom >= 14) return 4
-  if (zoom >= 12) return 3
-  return 2
+  if (zoom >= 15) return 52
+  if (zoom >= 14) return 72
+  return 100
 }
 
 function groupProperties(properties: Property[], decimals: number | null): Property[][] {
@@ -108,21 +148,56 @@ type MapMarkerModel =
   | { kind: 'single'; property: Property; lat: number; lng: number }
   | { kind: 'cluster'; group: Property[]; lat: number; lng: number }
 
-function buildMarkerModels(properties: Property[], zoom: number): MapMarkerModel[] {
-  const decimals = clusterDecimalsForZoom(zoom)
-  const groups = groupProperties(properties, decimals)
-  const models: MapMarkerModel[] = []
+function buildMarkerModels(
+  properties: Property[],
+  zoom: number,
+  project: (lat: number, lng: number) => { x: number; y: number },
+): MapMarkerModel[] {
+  const threshold = clusterPixelThreshold(zoom)
+  if (threshold === null) {
+    return groupProperties(properties, null).flatMap((group) =>
+      spreadOverlappingGroup(group).map((entry) => ({
+        kind: 'single' as const,
+        property: entry.property,
+        lat: entry.lat,
+        lng: entry.lng,
+      })),
+    )
+  }
 
-  groups.forEach((group) => {
-    if (group.length > 1 && decimals !== null) {
-      const lat = group.reduce((sum, entry) => sum + entry.lat, 0) / group.length
-      const lng = group.reduce((sum, entry) => sum + entry.lng, 0) / group.length
-      models.push({ kind: 'cluster', group, lat, lng })
+  const pending = properties.map((property) => {
+    const point = project(property.lat, property.lng)
+    return { property, x: point.x, y: point.y }
+  })
+  const used = new Set<number>()
+  const models: MapMarkerModel[] = []
+  const reach = threshold * threshold
+
+  pending.forEach((entry, index) => {
+    if (used.has(index)) return
+    const group = [entry.property]
+    used.add(index)
+    pending.forEach((other, otherIndex) => {
+      if (used.has(otherIndex)) return
+      const dx = entry.x - other.x
+      const dy = entry.y - other.y
+      if (dx * dx + dy * dy <= reach) {
+        used.add(otherIndex)
+        group.push(other.property)
+      }
+    })
+
+    if (group.length === 1) {
+      const only = group[0]
+      if (only) models.push({ kind: 'single', property: only, lat: only.lat, lng: only.lng })
       return
     }
 
-    spreadOverlappingGroup(group).forEach((entry) => {
-      models.push({ kind: 'single', property: entry.property, lat: entry.lat, lng: entry.lng })
+    models.push({
+      kind: 'cluster',
+      group,
+      lat: group.reduce((sum, property) => sum + property.lat, 0) / group.length,
+      lng: group.reduce((sum, property) => sum + property.lng, 0) / group.length,
     })
   })
 
@@ -156,19 +231,22 @@ function FitBounds({
   const lastFitAllRef = useRef(0)
 
   useEffect(() => {
-    const markUserAdjusted = (event: LeafletEvent) => {
+    const markUserAdjusted = () => {
       if (programmaticFitRef.current) return
-      const original = (event as LeafletEvent & { originalEvent?: Event }).originalEvent
-      if (original) userAdjustedViewRef.current = true
+      userAdjustedViewRef.current = true
     }
 
     map.on('zoomstart', markUserAdjusted)
     map.on('dragstart', markUserAdjusted)
+    map.on('zoom', markUserAdjusted)
     return () => {
       map.off('zoomstart', markUserAdjusted)
       map.off('dragstart', markUserAdjusted)
+      map.off('zoom', markUserAdjusted)
     }
   }, [map, programmaticFitRef])
+
+  const allowResizeRefitRef = useRef(!skipFitOnMount)
 
   useEffect(() => {
     const fitAllRequested = fitAllSignal !== lastFitAllRef.current
@@ -185,10 +263,9 @@ function FitBounds({
       skippedInitialFitRef.current = true
       lastFittedKeyRef.current = fitBoundsKey
       if (isExpanded) expandedFitKeyRef.current = fitBoundsKey
+      allowResizeRefitRef.current = false
       return
     }
-
-    if (!autoFit && !fitAllRequested && lastFittedKeyRef.current !== null) return
 
     const isNewDataset = lastFittedKeyRef.current !== fitBoundsKey
     const shouldFitExpanded = isExpanded && expandedFitKeyRef.current !== fitBoundsKey
@@ -196,28 +273,35 @@ function FitBounds({
     if (!fitAllRequested && !isNewDataset && !shouldFitExpanded) return
     if (!fitAllRequested && userAdjustedViewRef.current && !isNewDataset) return
 
-    const bounds = latLngBounds(properties.map((entry) => [entry.lat, entry.lng] as [number, number]))
-    const paddingTopLeft = fitPadding?.topLeft ?? [24, 24]
-    const paddingBottomRight = fitPadding?.bottomRight ?? [24, 24]
-    const maxZoom = isExpanded ? 17 : 14
+    const animate = fitAllRequested
+    let cancelled = false
+    let retryTimer: number | null = null
+    let clearFlagTimer: number | null = null
 
-    const run = () => {
+    const run = (attempt = 0) => {
+      if (cancelled || !properties.length) return
+      const size = map.getSize()
+      if (isExpanded && (size.x < 240 || size.y < 240) && attempt < 10) {
+        retryTimer = window.setTimeout(() => run(attempt + 1), 80)
+        return
+      }
       programmaticFitRef.current = true
-      map.flyToBounds(bounds, { paddingTopLeft, paddingBottomRight, duration: 0.45, maxZoom })
+      fitMapFrame(map, properties, fitPadding, animate)
       lastFittedKeyRef.current = fitBoundsKey
       if (isExpanded) expandedFitKeyRef.current = fitBoundsKey
-      window.setTimeout(() => {
+      userAdjustedViewRef.current = false
+      allowResizeRefitRef.current = true
+      clearFlagTimer = window.setTimeout(() => {
         programmaticFitRef.current = false
-      }, 500)
+      }, animate ? 700 : 120)
     }
 
-    if (isExpanded && (isNewDataset || shouldFitExpanded)) {
-      const timer = window.setTimeout(run, 180)
-      return () => window.clearTimeout(timer)
-    }
-
-    if (isNewDataset) {
-      run()
+    const timer = window.setTimeout(() => run(0), isExpanded ? 60 : 0)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+      if (retryTimer) window.clearTimeout(retryTimer)
+      if (clearFlagTimer) window.clearTimeout(clearFlagTimer)
     }
   }, [
     map,
@@ -232,7 +316,41 @@ function FitBounds({
     fitPadding?.bottomRight[1],
     autoFit,
     fitAllSignal,
+    fitPadding,
+    properties,
   ])
+
+  useEffect(() => {
+    const el = map.getContainer()
+    let timer: number | null = null
+    let lastW = el.clientWidth
+    let lastH = el.clientHeight
+
+    const observer = new ResizeObserver(() => {
+      const width = el.clientWidth
+      const height = el.clientHeight
+      if (Math.abs(width - lastW) < 12 && Math.abs(height - lastH) < 12) return
+      lastW = width
+      lastH = height
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        map.invalidateSize()
+        if (!allowResizeRefitRef.current || userAdjustedViewRef.current || !properties.length) return
+        programmaticFitRef.current = true
+        fitMapFrame(map, properties, fitPadding, false)
+        window.setTimeout(() => {
+          programmaticFitRef.current = false
+        }, 120)
+      }, 80)
+    })
+
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [map, properties, fitPadding, programmaticFitRef])
+
   return null
 }
 
@@ -306,7 +424,7 @@ function InvalidateMapLayout({ isVisible, isExpanded }: { isVisible: boolean; is
   useEffect(() => {
     if (!isVisible) return
     const run = () => {
-      map.invalidateSize({ pan: false })
+        map.invalidateSize()
     }
     const t1 = window.setTimeout(run, 50)
     const t2 = window.setTimeout(run, 220)
@@ -322,7 +440,7 @@ function InvalidateMapLayout({ isVisible, isExpanded }: { isVisible: boolean; is
     const observer = new ResizeObserver(() => {
       if (timer) window.clearTimeout(timer)
       timer = window.setTimeout(() => {
-        map.invalidateSize({ pan: false })
+        map.invalidateSize()
       }, 100)
     })
     observer.observe(el)
@@ -384,8 +502,13 @@ function PropertyMapMarker({
   useEffect(() => () => clearCloseTimer(), [])
 
   const zoomIntoCluster = () => {
-    const targetZoom = Math.min(map.getZoom() + 2, 17)
-    map.flyTo([model.lat, model.lng], targetZoom, { duration: 0.4 })
+    if (model.kind !== 'cluster') return
+    const bounds = latLngBounds(model.group.map((entry) => [entry.lat, entry.lng] as [number, number]))
+    map.flyToBounds(bounds, {
+      padding: [72, 72],
+      maxZoom: 16,
+      duration: prefersReducedMotion() ? 0 : 0.45,
+    })
   }
 
   return (
@@ -481,7 +604,14 @@ function PropertyMapMarkers({
     zoomend: () => setZoom(map.getZoom()),
   })
 
-  const markerModels = useMemo(() => buildMarkerModels(properties, zoom), [properties, zoom])
+  const markerModels = useMemo(
+    () =>
+      buildMarkerModels(properties, zoom, (lat, lng) => {
+        const point = map.latLngToContainerPoint([lat, lng])
+        return { x: point.x, y: point.y }
+      }),
+    [properties, zoom, map],
+  )
 
   return (
     <>
@@ -538,7 +668,16 @@ export function PropertyMap({
         center={hasInitialView && initialCenter ? initialCenter : [45.75, 4.79]}
         zoom={hasInitialView && initialZoom != null ? initialZoom : 12}
         className="property-map__canvas"
+        zoomControl={!isExpanded}
         scrollWheelZoom={isExpanded}
+        zoomSnap={isExpanded ? 0 : 1}
+        zoomDelta={isExpanded ? 0.4 : 1}
+        wheelPxPerZoomLevel={isExpanded ? 180 : 60}
+        wheelDebounceTime={isExpanded ? 16 : 40}
+        bounceAtZoomLimits={false}
+        fadeAnimation={false}
+        zoomAnimation
+        markerZoomAnimation
         dragging={isExpanded}
         touchZoom={isExpanded}
         doubleClickZoom={isExpanded}
@@ -549,7 +688,11 @@ export function PropertyMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="property-map__tiles"
+          updateWhenZooming={false}
+          updateWhenIdle
+          keepBuffer={4}
         />
+        {isExpanded ? <ZoomControl position="topright" /> : null}
         <InvalidateMapLayout isVisible={isVisible} isExpanded={isExpanded} />
         <FitBounds
           properties={validProperties}

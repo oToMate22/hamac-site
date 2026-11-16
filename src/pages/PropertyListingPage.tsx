@@ -267,11 +267,24 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     next.set('view', 'map')
     return `?${next.toString()}`
   })()
-  const restoreMapFrame = isMapView && openedAsMapViewRef.current ? readSavedMapView() : null
+  const savedMapFrame = isMapView && openedAsMapViewRef.current ? readSavedMapView() : null
+  // Un zoom trop large est l'ancien cadrage automatique (jusqu'à Genève) : on l'ignore.
+  const restoreMapFrame = savedMapFrame && savedMapFrame.zoom >= 10 ? savedMapFrame : null
 
   useEffect(() => {
     if (!isMapView) openedAsMapViewRef.current = false
   }, [isMapView])
+
+  const desktopMapWorkspace = isMapView && desktopMapLayout
+
+  useEffect(() => {
+    if (!desktopMapWorkspace) return
+    document.body.classList.add('is-catalog-map')
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    return () => {
+      document.body.classList.remove('is-catalog-map')
+    }
+  }, [desktopMapWorkspace])
 
   const surfaceValue = surface !== 'all' ? Number(surface) : 0
 
@@ -714,12 +727,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       : null
 
   return (
-    <main className="catalog-page">
+    <main className={desktopMapWorkspace ? 'catalog-page catalog-page--map' : 'catalog-page'}>
       <section className={isMapView ? 'catalog-hero is-collapsed' : 'catalog-hero'}>
         <div className="container">
-          <h1 className="section-title">
-            {mode === 'rent' ? 'Nos biens à louer' : 'Nos biens à vendre'}
-          </h1>
+          {desktopMapWorkspace ? null : (
+            <h1 className="section-title">
+              {mode === 'rent' ? 'Nos biens à louer' : 'Nos biens à vendre'}
+            </h1>
+          )}
           <p className="catalog-hero__intro">
             {mode === 'rent'
               ? 'Des biens en location choisis pour leur emplacement, leur confort et leur qualité de vie.'
@@ -857,6 +872,63 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
         </div>
       </section>
       <section className="catalog-body section section--cream">
+        {desktopMapWorkspace ? (
+          <header className="catalog-map-chrome">
+            <div className="catalog-map-chrome__lead">
+              <h1>{mode === 'rent' ? 'Nos biens à louer' : 'Nos biens à vendre'}</h1>
+              <p className="catalog-map-chrome__count">{resultsCountLabel}</p>
+            </div>
+            {activeFilterChips.length > 0 ? (
+              <div className="catalog-map-chrome__chips catalog-active-chips" aria-label="Filtres actifs">
+                {activeFilterChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    className="catalog-chip is-active"
+                    aria-label={`Retirer le filtre ${chip.label}`}
+                    onClick={() => {
+                      if (chip.key.startsWith('amenity-')) {
+                        toggleAmenity(chip.key.replace('amenity-', '') as Amenity)
+                        return
+                      }
+                      if (chip.key.startsWith('city:')) {
+                        toggleCitySelection(chip.key.slice('city:'.length))
+                        return
+                      }
+                      updateParams(chip.clear)
+                    }}
+                  >
+                    <span>{chip.label}</span>
+                    <X size={12} aria-hidden />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="catalog-map-chrome__actions">
+              <nav className="catalog-view-toggle" aria-label="Affichage des biens">
+                <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
+                  Liste
+                </Link>
+                <Link to={`${listingPath}${mapSearch}`} aria-current={isMapView ? 'page' : undefined}>
+                  Carte
+                </Link>
+              </nav>
+              <div className="catalog-toolbar__sort">
+                <FilterSelect
+                  label="Trier"
+                  value={sort}
+                  onValueChange={(value) => updateParam('sort', value)}
+                  options={[
+                    { value: 'recent', label: 'Plus récents' },
+                    { value: 'price-asc', label: 'Prix croissant' },
+                    { value: 'price-desc', label: 'Prix décroissant' },
+                    { value: 'surface', label: 'Surface' },
+                  ]}
+                />
+              </div>
+            </div>
+          </header>
+        ) : null}
         <div className="container catalog-layout">
           {mobileFiltersOpen && !desktopMapLayout ? (
             <button
@@ -884,6 +956,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </button>
               </div>
             </div>
+            {desktopMapWorkspace ? <p className="catalog-map-filters__label">Filtres</p> : null}
             <div className="catalog-filter-card">
               {!desktopMapLayout ? (
                 <div id="catalog-filter-type">
@@ -1205,6 +1278,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             ) : null}
           </aside>
           <div className="catalog-main">
+            {desktopMapWorkspace ? null : (
             <div className="catalog-toolbar">
               <div className="catalog-toolbar__row">
                 <p className="catalog-toolbar__count">{resultsCountLabel}</p>
@@ -1259,7 +1333,8 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </div>
               ) : null}
             </div>
-            {cacheServedAt && !apiError && !isLoading ? (
+            )}
+            {cacheServedAt && !apiError && !isLoading && !desktopMapWorkspace ? (
               <p className="catalog-toolbar__hint" role="status">
                 Version enregistrée de{' '}
                 {new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date(cacheServedAt))}
@@ -1293,6 +1368,14 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
             ) : isMapView ? (
               <div className="catalog-map-view" role="region" aria-label="Carte des biens">
                 <div className="catalog-map-results" ref={mapResultsRef}>
+                  {desktopMapLayout ? (
+                    <div className="catalog-map-results__head">
+                      <p>{zoneActive ? 'Dans cette zone' : 'Sur la carte'}</p>
+                      <span>
+                        {listedProperties.length} bien{listedProperties.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ) : null}
                   {listedProperties.length === 0 && zoneActive ? (
                     <div className="catalog-map-empty">
                       <p>Aucun bien dans cette zone</p>
@@ -1335,7 +1418,18 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     </>
                   )}
                 </div>
-                <div className="catalog-map-stage">{renderCatalogMap(true, true)}</div>
+                <div className="catalog-map-stage">
+                  {renderCatalogMap(true, true)}
+                  {desktopMapLayout ? (
+                    <button
+                      type="button"
+                      className="catalog-map-recenter"
+                      onClick={() => setFitAllSignal((value) => value + 1)}
+                    >
+                      Recentrer
+                    </button>
+                  ) : null}
+                </div>
               </div>
             ) : listedProperties.length === 0 ? (
               <div className="catalog-map-empty">

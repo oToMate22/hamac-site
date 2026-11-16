@@ -169,6 +169,29 @@ function SiteLayout() {
   const isAutoHidePage = pathname === '/acheter' || pathname === '/louer'
 
   useEffect(() => {
+    setMobileOpen(false)
+    setMobileSellOpen(false)
+    setMobileQuartiersOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const scrollY = window.scrollY
+    document.body.classList.add('is-nav-open')
+    document.body.style.top = `-${scrollY}px`
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.classList.remove('is-nav-open')
+      document.body.style.top = ''
+      window.removeEventListener('keydown', onKey)
+      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' })
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
     const clearHideTimeout = () => {
       if (hideTimeoutRef.current) {
         window.clearTimeout(hideTimeoutRef.current)
@@ -273,7 +296,7 @@ function SiteLayout() {
             className="nav-toggle"
             aria-expanded={mobileOpen}
             aria-controls="nav-mobile"
-            aria-label="Ouvrir le menu"
+            aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             onClick={() =>
               setMobileOpen((value) => {
                 const next = !value
@@ -334,6 +357,9 @@ function SiteLayout() {
           <NavLink className="nav-mobile__primary-link" to="/agence" onClick={() => setMobileOpen(false)}>L'agence</NavLink>
 
           <NavLink className="nav-mobile__primary-link" to="/contact" onClick={() => setMobileOpen(false)}>Contact</NavLink>
+          <a className="nav-mobile__call" href="tel:+33478850827" onClick={() => setMobileOpen(false)}>
+            Appeler l'agence
+          </a>
         </div>
       </header>
 

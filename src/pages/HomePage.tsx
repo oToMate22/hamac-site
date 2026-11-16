@@ -192,6 +192,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
     }
 
     let handlers: Array<{ chip: HTMLButtonElement; onClick: () => void }> = []
+    let removeMobileLimit: (() => void) | undefined
     let cancelled = false
     const observers: IntersectionObserver[] = []
 
@@ -753,10 +754,14 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
         return true
       }
 
+      const mobileQuery = window.matchMedia('(max-width: 767px)')
       const applyFilter = (filter: string) => {
+        const limit = mobileQuery.matches ? 3 : cards.length
+        let shown = 0
         cards.forEach((card) => {
-          const visible = matchesFilter(card, filter)
-          card.hidden = !visible
+          const matches = matchesFilter(card, filter)
+          card.hidden = !matches || shown >= limit
+          if (matches && shown < limit) shown += 1
         })
         chips.forEach((chip) => {
           chip.classList.toggle('is-active', chip.dataset.biensFilter === filter)
@@ -769,13 +774,23 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
         return { chip, onClick }
       })
 
+      const onMobileChange = () => {
+        const active = chips.find((chip) => chip.classList.contains('is-active'))
+        applyFilter(active?.dataset.biensFilter || 'all')
+      }
+      mobileQuery.addEventListener('change', onMobileChange)
+      removeMobileLimit = () => mobileQuery.removeEventListener('change', onMobileChange)
+      applyFilter('all')
+
       setupSectionTitleTextReveal()
       setupSectionTitleUnderline()
       setupStatsCountAnimation()
       setupReveal('.section-header')
       setupReveal('.key-stats-banner__item', (index) => index * 0.15)
       setupReveal('[data-bien-card]', (index) => index * 0.15)
-      setupReveal('.home-team-preview__card', (index) => Math.min(index * 0.12, 1.2), { fromY: 50, fromScale: 1 })
+      if (!window.matchMedia('(max-width: 767px)').matches) {
+        setupReveal('.home-team-preview__card', (index) => Math.min(index * 0.12, 1.2), { fromY: 50, fromScale: 1 })
+      }
     }
 
     initFeatured()
@@ -786,6 +801,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       if (interval) window.clearInterval(interval)
       teardownTemoignagesCarousel?.()
       handlers.forEach(({ chip, onClick }) => chip.removeEventListener('click', onClick))
+      removeMobileLimit?.()
       observers.forEach((observer) => observer.disconnect())
     }
   }, [])
