@@ -58,8 +58,9 @@ html {
   scroll-behavior: smooth;
   max-width: 100%;
   overflow-x: clip;
+  overscroll-behavior-x: none;
   /* iOS augmente le texte tout seul (text-size-adjust: auto) et la page
-     semble zoomée. 100 % garde la taille prévue sans interdire le pinch. */
+     semble zoomée. 100 % garde la taille prévue sans interdire le zoom avant. */
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
 }
@@ -77,8 +78,10 @@ body {
   line-height: 1.6;
   color: var(--text);
   background: var(--cream);
+  width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  overscroll-behavior-x: none;
   overflow-wrap: break-word;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
