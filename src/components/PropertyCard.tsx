@@ -28,7 +28,7 @@ export function PropertyCard({ property, light = false, highlighted = false, onH
       onMouseEnter={() => onHoverChange?.(property.slug)}
       onMouseLeave={() => onHoverChange?.(null)}
     >
-      <Link to={`/acheter/${property.slug}`} className="bien-card__link">
+      <Link to={`/acheter/${property.slug}`} state={{ property }} className="bien-card__link">
         <div
           className="bien-card__img"
           data-photos={property.images.length > 1 ? encodeURIComponent(JSON.stringify(property.images)) : undefined}

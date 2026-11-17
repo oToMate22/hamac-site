@@ -45,6 +45,10 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   overflow: hidden;
+  /* Safari iOS : les slides 3D du coverflow échappent à overflow:hidden,
+     clip-path force le rognage et empêche le scroll horizontal de la page. */
+  clip-path: inset(0);
+  isolation: isolate;
 }
 
 .private-visits-swiper-wrap .mySwiper.private-visits-swiper {

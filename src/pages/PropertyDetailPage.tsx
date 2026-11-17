@@ -171,13 +171,17 @@ export function PropertyDetailPage() {
     }
   })()
 
-  const [property, setProperty] = useState<FeaturedProperty | null>(null)
+  // Bien déjà affiché dans la liste : transmis par la carte via le state du lien,
+  // ce qui évite l'écran « Chargement... » le temps de recharger tout le catalogue.
+  const routeSeed = (location.state as { property?: FeaturedProperty } | null)?.property ?? null
+  const seed = routeSeed && routeSeed.slug === slug ? routeSeed : null
+  const [property, setProperty] = useState<FeaturedProperty | null>(seed)
   const [similar, setSimilar] = useState<Property[]>([])
   const [activeImage, setActiveImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const galleryMainRef = useRef<HTMLDivElement>(null)
   const lightboxRef = useRef<HTMLDivElement>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!seed)
   const [error, setError] = useState<string | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
@@ -225,12 +229,19 @@ export function PropertyDetailPage() {
     let cancelled = false
 
     const load = async () => {
-      setLoading(true)
       setError(null)
-      setProperty(null)
       setSimilar([])
       setActiveImage(0)
       setIsLightboxOpen(false)
+
+      if (seed) {
+        setProperty(seed)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setProperty(null)
 
       if (!propertyId) {
         navigate(listingPath, { replace: true })
@@ -265,7 +276,7 @@ export function PropertyDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [isRentalRoute, listingPath, navigate, propertyId])
+  }, [isRentalRoute, listingPath, navigate, propertyId, seed])
 
   useEffect(() => {
     if (!property) return

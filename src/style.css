@@ -63,6 +63,7 @@ body {
   line-height: 1.6;
   color: var(--text);
   background: var(--cream);
+  overflow-x: clip;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
 }
@@ -4510,6 +4511,7 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   max-width: 100%;
   margin-inline: calc(50% - 50vw);
   overflow: hidden;
+  clip-path: inset(0);
 }
 
 .home-private-visits__carousel::before,
