@@ -560,7 +560,7 @@ export function HomePage({ homeMainHtml }: HomePageProps) {
       const underlines = Array.from(document.querySelectorAll<HTMLElement>('.section-title__underline'))
       underlines.forEach((underline) => {
         underline.style.transform = 'scaleX(0)'
-        underline.style.transformOrigin = 'left'
+        underline.style.transformOrigin = underline.closest('.temoignages__header') ? 'left' : 'center'
       })
 
       const observer = new IntersectionObserver(

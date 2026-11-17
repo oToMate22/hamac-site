@@ -39,6 +39,15 @@
   }
 }
 
+/* Mobile : une seule gouttière. La largeur calc(100% - 2rem) plus le padding
+   décalait le contenu de 2rem de chaque côté et le laissait trop étroit. */
+@media (max-width: 767px) {
+  :root {
+    --container: 100%;
+    --container-pad: 1rem;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -49,6 +58,10 @@ html {
   scroll-behavior: smooth;
   max-width: 100%;
   overflow-x: clip;
+  /* iOS augmente le texte tout seul (text-size-adjust: auto) et la page
+     semble zoomée. 100 % garde la taille prévue sans interdire le pinch. */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6053,6 +6066,10 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   background: rgba(20, 42, 56, 0.9);
 }
 
+.section-header:not(.temoignages__header) .section-title__underline {
+  margin-inline: auto;
+}
+
 .section-title--reveal {
   position: relative;
   overflow-x: clip;
@@ -6186,6 +6203,15 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   }
   100% {
     transform: scale(1.14) translate(-2.5%, 1.8%);
+  }
+}
+
+@keyframes kenburns-mobile {
+  0% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1.2) translate(-1.5%, 1%);
   }
 }
 
@@ -7512,6 +7538,18 @@ body:has(.site-footer--merged-top) .quartiers-hub__cta.section--navy::after {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   color: var(--text-heading);
+}
+
+@media (max-width: 767px) {
+  .legal-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .legal-table td:last-child {
+    white-space: normal;
+  }
 }
 
 .legal-table-wrap .legal-section__note {
@@ -9682,6 +9720,18 @@ body.is-nav-open .site-header .nav-toggle span {
 }
 
 @media (max-width: 767px) {
+  .hero {
+    overflow: clip;
+    contain: paint;
+  }
+
+  /* inset -10 % rend le visuel plus large que l'écran ; iOS s'en sert alors
+     comme largeur de page et autorise un dézoom. Le scale reste dans le transform. */
+  .hero-slide__ken {
+    inset: 0;
+    animation-name: kenburns-mobile;
+  }
+
   .hero__copy {
     padding-block: 0.25rem 0.5rem;
   }
@@ -9705,6 +9755,34 @@ body.is-nav-open .site-header .nav-toggle span {
   .hero__bottom {
     gap: 0.75rem;
     padding-bottom: 1.5rem;
+  }
+
+  .hero__bottom > [data-searchbar-root] {
+    width: 100%;
+    max-width: 100%;
+    align-self: stretch;
+  }
+
+  /* Ces pistes sont volontairement plus larges que l'écran (carrousels, filtres).
+     contain empêche iOS de prendre cette largeur comme largeur du document. */
+  .private-visits-section,
+  .private-visits-swiper-wrap,
+  .mySwiper.private-visits-swiper,
+  .temoignages-carousel,
+  .temoignages-grid,
+  .home-team-preview__grid,
+  .home-journal__grid,
+  .biens-filters,
+  .section--territoire .bento,
+  .catalog-active-chips,
+  .legal-table-wrap {
+    max-width: 100%;
+    contain: inline-size;
+  }
+
+  .private-visits-swiper-wrap,
+  .mySwiper.private-visits-swiper {
+    contain: inline-size paint;
   }
 
   .hero__secondary {
@@ -9979,6 +10057,7 @@ body.is-nav-open .site-header .nav-toggle span {
   .search-field input,
   .search-field select,
   .premium-search__command-input,
+  .catalog-filter__city-input,
   .premium-search__select-trigger,
   .premium-search__combobox-trigger,
   .premium-search--hero-glass .premium-search__select-trigger,
