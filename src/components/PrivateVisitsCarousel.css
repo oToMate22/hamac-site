@@ -42,8 +42,9 @@
 
 .private-visits-swiper-wrap {
   position: relative;
-  width: 100vw;
-  margin-inline: calc(50% - 50vw);
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
   overflow: hidden;
   /* Safari iOS : les slides 3D du coverflow échappent à overflow:hidden,
      clip-path force le rognage et empêche le scroll horizontal de la page. */
@@ -246,6 +247,15 @@
 
 .mySwiper.private-visits-swiper .swiper-button-next {
   right: max(0.5rem, env(safe-area-inset-right));
+}
+
+@media (max-width: 767px) {
+  .mySwiper.private-visits-swiper .swiper-slide {
+    width: min(14.625rem, 68vw);
+    width: min(14.625rem, 68dvw);
+    height: auto;
+    aspect-ratio: 9 / 16;
+  }
 }
 
 @media (min-width: 768px) {

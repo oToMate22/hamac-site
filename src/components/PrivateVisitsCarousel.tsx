@@ -155,8 +155,9 @@ export function PrivateVisitsCarousel() {
           <h2 className="section-title">Visites privées</h2>
           <p className="section-subtitle">Nos dernières ventes filmées en immersion</p>
         </header>
+      </div>
 
-        <div className="private-visits-swiper-wrap">
+      <div className="private-visits-swiper-wrap">
           <SwiperCoverflow
             className="mySwiper private-visits-swiper"
             modules={[EffectCoverflow, Pagination, Navigation, Keyboard, Mousewheel]}
@@ -197,7 +198,6 @@ export function PrivateVisitsCarousel() {
             ))}
           </SwiperCoverflow>
         </div>
-      </div>
 
       <PrivateVisitsLightbox
         visits={privateVisits}
