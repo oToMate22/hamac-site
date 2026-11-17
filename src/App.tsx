@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 import { Analytics } from './analytics/Analytics'
+import { pageTypeFromPath } from './analytics/pageType'
+import { track } from './analytics/track'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { CookieBanner } from './consent/CookieBanner'
 import { openConsentPreferences } from './consent/storage'
@@ -357,7 +359,14 @@ function SiteLayout() {
           <NavLink className="nav-mobile__primary-link" to="/agence" onClick={() => setMobileOpen(false)}>L'agence</NavLink>
 
           <NavLink className="nav-mobile__primary-link" to="/contact" onClick={() => setMobileOpen(false)}>Contact</NavLink>
-          <a className="nav-mobile__call" href="tel:+33478850827" onClick={() => setMobileOpen(false)}>
+          <a
+            className="nav-mobile__call"
+            href="tel:+33478850827"
+            onClick={() => {
+              setMobileOpen(false)
+              track('phone_click', { cta: 'nav_phone', page_type: pageTypeFromPath(pathname) })
+            }}
+          >
             Appeler l'agence
           </a>
         </div>
@@ -398,8 +407,18 @@ function SiteLayout() {
             <address className="site-footer__address">
               19 Boulevard Baron du Marais<br />
               69110 Sainte-Foy-lès-Lyon<br />
-              <a href="tel:+33478850827">04 78 85 08 27</a><br />
-              <a href="mailto:agence@hamacpatrimoine.com">agence@hamacpatrimoine.com</a>
+              <a
+                href="tel:+33478850827"
+                onClick={() => track('phone_click', { cta: 'footer_phone', page_type: pageTypeFromPath(pathname) })}
+              >
+                04 78 85 08 27
+              </a><br />
+              <a
+                href="mailto:agence@hamacpatrimoine.com"
+                onClick={() => track('email_click', { cta: 'footer_email', page_type: pageTypeFromPath(pathname) })}
+              >
+                agence@hamacpatrimoine.com
+              </a>
             </address>
           </div>
           <div>

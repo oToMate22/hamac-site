@@ -1,5 +1,9 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BUDGET_MAX, CATALOG_PROPERTY_TYPES, SORTS, SURFACE_MIN } from '../analytics/events'
+import { pageTypeFromPath } from '../analytics/pageType'
+import { track } from '../analytics/track'
+import { canonicalCommune } from '../analytics/url'
 import { motion } from 'framer-motion'
 import * as Popover from '@radix-ui/react-popover'
 import * as Select from '@radix-ui/react-select'
@@ -138,6 +142,125 @@ const SHEET_ROOMS_PILLS = [
   { value: '4', label: '4+' },
 ] as const
 
+function isCatalogType(value: string): value is (typeof CATALOG_PROPERTY_TYPES)[number] {
+  return (CATALOG_PROPERTY_TYPES as readonly string[]).includes(value)
+}
+
+function isSurfaceMin(value: string): value is (typeof SURFACE_MIN)[number] {
+  return (SURFACE_MIN as readonly string[]).includes(value)
+}
+
+function isSort(value: string): value is (typeof SORTS)[number] {
+  return (SORTS as readonly string[]).includes(value)
+}
+
+function trackTypeFilter(next: string, current: string) {
+  if (next === current || !isCatalogType(next)) return
+  track('property_filter', { filter_axis: 'property_type', property_type: next })
+}
+
+function trackCityFilter(city: string) {
+  const canonical = canonicalCommune(city)
+  if (canonical) track('property_filter', { filter_axis: 'city', city: canonical })
+  else if (city.trim()) track('property_filter', { filter_axis: 'city' })
+}
+
+function trackRoomsFilter(next: string, current: string) {
+  if (next === current) return
+  const count = Number(next)
+  if (!Number.isInteger(count) || count < 1 || count > 4) return
+  track('property_filter', { filter_axis: 'bedrooms_min', bedrooms_min: count })
+}
+
+function trackSortFilter(next: string, current: string) {
+  if (next === current || !isSort(next)) return
+  track('property_filter', { filter_axis: 'sort', sort: next })
+}
+
+function trackViewFilter(next: 'map' | 'list', mapOpen: boolean) {
+  if ((next === 'map') === mapOpen) return
+  track('property_filter', { filter_axis: 'view', view: next })
+}
+
+function trackSurfaceFilter(next: string, previous: string) {
+  if (next === previous || !isSurfaceMin(next)) return
+  track('property_filter', { filter_axis: 'surface_min', surface_min: next })
+}
+
+function budgetToken(mode: 'sale' | 'rent', amount: number | null | undefined) {
+  if (amount == null || !Number.isInteger(amount)) return null
+  const token = `${mode}_to_${amount}`
+  return (BUDGET_MAX as readonly string[]).includes(token) ? (token as (typeof BUDGET_MAX)[number]) : null
+}
+
+function clampBudgetThumbs(values: number[], cap: number, step: number) {
+  const rawMin = values[0] ?? 0
+  const rawMax = values[1] ?? cap
+  let minV = Math.min(rawMin, rawMax)
+  let maxV = Math.max(rawMin, rawMax)
+  minV = Math.min(Math.max(0, minV), cap)
+  maxV = Math.min(Math.max(0, maxV), cap)
+  if (maxV < minV + step) maxV = minV + step
+  if (maxV > cap) maxV = cap
+  const minParam = minV <= 0 ? '0' : String(minV)
+  const maxAtCap = maxV >= cap - step / 2
+  const maxParam = maxAtCap ? 'all' : String(maxV)
+  return { minParam, maxParam }
+}
+
+type CatalogSearchCriteria = {
+  listing_kind: 'sale' | 'rent'
+  property_type?: (typeof CATALOG_PROPERTY_TYPES)[number]
+  city?: string
+  budget_max?: (typeof BUDGET_MAX)[number]
+  surface_min?: (typeof SURFACE_MIN)[number]
+  bedrooms_min?: number
+  sort?: (typeof SORTS)[number]
+  view: 'map' | 'list'
+}
+
+function buildCatalogSearch(input: {
+  mode: 'sale' | 'rent'
+  type: string
+  cities: string[]
+  budgetMin: number
+  budgetMax: number | undefined
+  surface: string
+  rooms: string
+  amenityCount: number
+  radiusKm: number
+  sort: string
+  map: boolean
+}): CatalogSearchCriteria | null {
+  const active =
+    input.type !== 'all' ||
+    input.cities.length > 0 ||
+    input.budgetMin > 0 ||
+    input.budgetMax != null ||
+    input.surface !== 'all' ||
+    input.rooms !== 'all' ||
+    input.amenityCount > 0 ||
+    input.radiusKm > 0
+  if (!active) return null
+
+  const criteria: CatalogSearchCriteria = {
+    listing_kind: input.mode,
+    view: input.map ? 'map' : 'list',
+  }
+  if (isCatalogType(input.type)) criteria.property_type = input.type
+  if (input.cities.length === 1) {
+    const city = canonicalCommune(input.cities[0] ?? '')
+    if (city) criteria.city = city
+  }
+  const budget = budgetToken(input.mode, input.budgetMax)
+  if (budget) criteria.budget_max = budget
+  if (isSurfaceMin(input.surface)) criteria.surface_min = input.surface
+  const rooms = Number(input.rooms)
+  if (Number.isInteger(rooms) && rooms >= 1 && rooms <= 4) criteria.bedrooms_min = rooms
+  if (isSort(input.sort)) criteria.sort = input.sort
+  return criteria
+}
+
 function FilterPills({
   label,
   options,
@@ -244,6 +367,17 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const budgetMaxThumb = budgetMaxForFilter == null ? budgetSliderCap : Math.min(budgetMaxForFilter, budgetSliderCap)
   const budgetForSearchBar = searchBarBudgetValue(searchParams)
   const surface = searchParams.get('surface') ?? 'all'
+  const surfaceAtGesture = useRef<string | null>(null)
+  const surfaceCommitted = useRef(surface)
+  const budgetAtGesture = useRef<string | null>(null)
+  const budgetCommitted = useRef<string | null>(budgetToken(mode, budgetMaxForFilter))
+  const reportedSearch = useRef<string | null>(null)
+  useEffect(() => {
+    if (surfaceAtGesture.current === null) surfaceCommitted.current = surface
+  }, [surface])
+  useEffect(() => {
+    if (budgetAtGesture.current === null) budgetCommitted.current = budgetToken(mode, budgetMaxForFilter)
+  }, [mode, budgetMaxForFilter])
   const rooms = searchParams.get('rooms') ?? 'all'
   const radiusParam = searchParams.get('radius')
   const radiusKm = (() => {
@@ -510,6 +644,50 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   }, [])
 
   const isLoading = apiProperties === null && apiError === null
+
+  useEffect(() => {
+    if (isLoading || apiError || !apiProperties) return
+    const criteria = buildCatalogSearch({
+      mode,
+      type,
+      cities: selectedCities,
+      budgetMin: budgetMinValue,
+      budgetMax: budgetMaxForFilter,
+      surface,
+      rooms,
+      amenityCount: amenities.length,
+      radiusKm,
+      sort,
+      map: isMapView,
+    })
+    if (!criteria) return
+    const count = catalogProperties.length
+    if (count > 500) return
+    const eventName = count === 0 ? 'no_search_results' : 'property_search'
+    const signature = `${eventName}:${count}:${JSON.stringify(criteria)}`
+    if (reportedSearch.current === signature) return
+    const sent =
+      count === 0
+        ? track('no_search_results', { ...criteria, results_count: 0 })
+        : track('property_search', { ...criteria, results_count: count })
+    if (sent) reportedSearch.current = signature
+  }, [
+    amenities.length,
+    apiError,
+    apiProperties,
+    budgetMaxForFilter,
+    budgetMinValue,
+    catalogProperties.length,
+    isLoading,
+    isMapView,
+    mode,
+    radiusKm,
+    q,
+    rooms,
+    sort,
+    surface,
+    type,
+  ])
   const zoneActive = Boolean(visibleZone && isMapView)
   const propertiesForMap = !isLoading && !apiError ? catalogProperties : []
   const visibleProperties = listedProperties.slice(0, visibleCount)
@@ -620,6 +798,7 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       return
     }
     writeSelectedCities([...selectedCities, city])
+    trackCityFilter(city)
   }
 
   const clearCitySelections = () => {
@@ -964,7 +1143,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     label="Type de bien"
                     options={SHEET_TYPE_PILLS}
                     value={type}
-                    onChange={(value) => updateParam('type', value)}
+                    onChange={(value) => {
+                      updateParam('type', value)
+                      trackTypeFilter(value, type)
+                    }}
                   />
                 </div>
               ) : null}
@@ -992,22 +1174,24 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   step={budgetSliderStep}
                   minStepsBetweenThumbs={1}
                   value={[budgetMinValue, budgetMaxThumb]}
+                  onPointerDown={() => {
+                    budgetAtGesture.current = budgetCommitted.current
+                  }}
                   onValueChange={(values) => {
-                    const rawMin = values[0] ?? 0
-                    const rawMax = values[1] ?? budgetSliderCap
-                    let minV = Math.min(rawMin, rawMax)
-                    let maxV = Math.max(rawMin, rawMax)
-                    minV = Math.min(Math.max(0, minV), budgetSliderCap)
-                    maxV = Math.min(Math.max(0, maxV), budgetSliderCap)
-                    if (maxV < minV + budgetSliderStep) maxV = minV + budgetSliderStep
-                    if (maxV > budgetSliderCap) maxV = budgetSliderCap
-                    const minParam = minV <= 0 ? '0' : String(minV)
-                    const maxAtCap = maxV >= budgetSliderCap - budgetSliderStep / 2
-                    const maxParam = maxAtCap ? 'all' : String(maxV)
+                    const { minParam, maxParam } = clampBudgetThumbs(values, budgetSliderCap, budgetSliderStep)
                     updateParams([
                       { key: 'budgetMin', value: minParam },
                       { key: 'budgetMax', value: maxParam },
                     ])
+                  }}
+                  onValueCommit={(values) => {
+                    const { maxParam } = clampBudgetThumbs(values, budgetSliderCap, budgetSliderStep)
+                    const next = maxParam === 'all' ? null : budgetToken(mode, Number(maxParam))
+                    const previous = budgetAtGesture.current ?? budgetCommitted.current
+                    budgetAtGesture.current = null
+                    budgetCommitted.current = next
+                    if (!next || next === previous) return
+                    track('property_filter', { filter_axis: 'budget_max', budget_max: next })
                   }}
                   aria-label={mode === 'rent' ? 'Fourchette de loyer' : 'Fourchette de budget'}
                 >
@@ -1196,7 +1380,17 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                         max={300}
                         step={10}
                         value={[surfaceValue]}
+                        onPointerDown={() => {
+                          surfaceAtGesture.current = surfaceCommitted.current
+                        }}
                         onValueChange={(values) => updateParam('surface', values[0] > 0 ? String(values[0]) : 'all')}
+                        onValueCommit={(values) => {
+                          const next = values[0] > 0 ? String(values[0]) : 'all'
+                          const previous = surfaceAtGesture.current ?? surfaceCommitted.current
+                          surfaceAtGesture.current = null
+                          surfaceCommitted.current = next
+                          trackSurfaceFilter(next, previous)
+                        }}
                         aria-label="Surface minimum"
                       >
                         <Slider.Track className="catalog-slider__track">
@@ -1210,7 +1404,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                         <FilterSelect
                           label="Chambres min"
                           value={rooms}
-                          onValueChange={(value) => updateParam('rooms', value)}
+                          onValueChange={(value) => {
+                            updateParam('rooms', value)
+                            trackRoomsFilter(value, rooms)
+                          }}
                           options={[
                             { value: 'all', label: 'Toutes' },
                             { value: '1', label: '1+' },
@@ -1224,7 +1421,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                           label="Chambres min"
                           options={SHEET_ROOMS_PILLS}
                           value={rooms}
-                          onChange={(value) => updateParam('rooms', value)}
+                          onChange={(value) => {
+                            updateParam('rooms', value)
+                            trackRoomsFilter(value, rooms)
+                          }}
                         />
                       )}
                     </div>
@@ -1284,10 +1484,18 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 <p className="catalog-toolbar__count">{resultsCountLabel}</p>
                 <div className="catalog-toolbar__end">
                   <nav className="catalog-view-toggle" aria-label="Affichage des biens">
-                    <Link to={`${listingPath}${listSearch}`} aria-current={!isMapView ? 'page' : undefined}>
+                    <Link
+                      to={`${listingPath}${listSearch}`}
+                      aria-current={!isMapView ? 'page' : undefined}
+                      onClick={() => trackViewFilter('list', isMapView)}
+                    >
                       Liste
                     </Link>
-                    <Link to={`${listingPath}${mapSearch}`} aria-current={isMapView ? 'page' : undefined}>
+                    <Link
+                      to={`${listingPath}${mapSearch}`}
+                      aria-current={isMapView ? 'page' : undefined}
+                      onClick={() => trackViewFilter('map', isMapView)}
+                    >
                       Carte
                     </Link>
                   </nav>
@@ -1295,7 +1503,10 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                     <FilterSelect
                       label="Trier"
                       value={sort}
-                      onValueChange={(value) => updateParam('sort', value)}
+                      onValueChange={(value) => {
+                        updateParam('sort', value)
+                        trackSortFilter(value, sort)
+                      }}
                       options={[
                         { value: 'recent', label: 'Plus récents' },
                         { value: 'price-asc', label: 'Prix croissant' },
@@ -1346,12 +1557,22 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                   {apiError === 'quota' ? (
                     <p>
                       Le catalogue est momentanément indisponible, réessayez plus tard ou appelez le{' '}
-                      <a href="tel:+33478850827">04 78 85 08 27</a>.
+                      <a
+                        href="tel:+33478850827"
+                        onClick={() => track('phone_click', { cta: 'listing_phone', page_type: pageTypeFromPath(listingPath) })}
+                      >
+                        04 78 85 08 27
+                      </a>.
                     </p>
                   ) : (
                     <p>
                       Les biens ne se chargent pas.{' '}
-                      <a href="tel:+33478850827">04 78 85 08 27</a>
+                      <a
+                        href="tel:+33478850827"
+                        onClick={() => track('phone_click', { cta: 'listing_phone', page_type: pageTypeFromPath(listingPath) })}
+                      >
+                        04 78 85 08 27
+                      </a>
                     </p>
                   )}
                   <div className="catalog-map-empty__actions">
