@@ -1,7 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Clock3, Mail, MapPin, Phone } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import { trackFormFailure } from '../analytics/forms'
+import { pageTypeFromPath } from '../analytics/pageType'
+import { track } from '../analytics/track'
 import { SocialLinks } from '../components/SocialLinks'
 import { submitLead } from '@/services/leads'
 import { submissionErrorMessage } from '../services/submissions'
@@ -23,6 +26,7 @@ const PROJECT_OPTIONS = ['Acheter', 'Vendre', 'Estimer mon bien', 'Investir', 'A
 const ESTIMATION_PROJECT = 'Estimer mon bien'
 
 export function ContactPage() {
+  const { pathname } = useLocation()
   const [searchParams] = useSearchParams()
   usePageMeta({
     title: 'Contact — Hamac Investissements & Patrimoine',
@@ -80,11 +84,14 @@ export function ContactPage() {
       )
     } catch (error) {
       console.error('Erreur:', error)
+      trackFormFailure('contact', error)
       setFeedback({ type: 'error', text: submissionErrorMessage(error) })
       setIsSubmitting(false)
       return
     }
 
+    track('contact_submit', { form: 'contact' })
+    track('generate_lead', { form: 'contact' })
     setFeedback({ type: 'success', text: 'Votre demande a bien été envoyée. Nous revenons vers vous rapidement.' })
     setForm({
       firstName: '',
@@ -118,14 +125,28 @@ export function ContactPage() {
               <Phone size={18} />
               <div>
                 <h2>Téléphone</h2>
-                <p><a href="tel:+33478850827">04 78 85 08 27</a></p>
+                <p>
+                  <a
+                    href="tel:+33478850827"
+                    onClick={() => track('phone_click', { cta: 'contact_phone', page_type: pageTypeFromPath(pathname) })}
+                  >
+                    04 78 85 08 27
+                  </a>
+                </p>
               </div>
             </article>
             <article className="contact-info-card">
               <Mail size={18} />
               <div>
                 <h2>Email</h2>
-                <p><a href="mailto:agence@hamacpatrimoine.com">agence@hamacpatrimoine.com</a></p>
+                <p>
+                  <a
+                    href="mailto:agence@hamacpatrimoine.com"
+                    onClick={() => track('email_click', { cta: 'contact_email', page_type: pageTypeFromPath(pathname) })}
+                  >
+                    agence@hamacpatrimoine.com
+                  </a>
+                </p>
               </div>
             </article>
             <article className="contact-info-card">

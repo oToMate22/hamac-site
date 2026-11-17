@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { Check, ChevronDown, Gem, Lock, ShieldCheck } from 'lucide-react'
+import { OFFMARKET_PROPERTY_TYPES, OFFMARKET_SECTORS } from '../analytics/events'
+import { trackFormFailure } from '../analytics/forms'
+import { track } from '../analytics/track'
 import { submitOffmarket } from '../services/offmarket'
 import { submissionErrorMessage } from '../services/submissions'
 import { useTurnstile } from '../lib/turnstile'
@@ -171,10 +174,23 @@ export function OffMarketPage() {
         turnstileToken,
       )
 
+      const propertyType = (OFFMARKET_PROPERTY_TYPES as readonly string[]).includes(form.propertyType)
+        ? (form.propertyType as (typeof OFFMARKET_PROPERTY_TYPES)[number])
+        : null
+      const sector = (OFFMARKET_SECTORS as readonly string[]).includes(form.sector)
+        ? (form.sector as (typeof OFFMARKET_SECTORS)[number])
+        : null
+      track('offmarket_submit', {
+        form: 'offmarket',
+        ...(propertyType ? { property_type: propertyType } : {}),
+        ...(sector ? { sector } : {}),
+      })
+      track('generate_lead', { form: 'offmarket' })
       setSubmitSuccess(true)
       setForm(EMPTY_FORM)
     } catch (err) {
       console.error('Erreur off-market:', err)
+      trackFormFailure('offmarket', err)
       setSubmitError(submissionErrorMessage(err))
     } finally {
       setIsSubmitting(false)
