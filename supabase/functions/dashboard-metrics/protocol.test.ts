@@ -245,4 +245,21 @@ assert.equal(leakedText.includes("@"), false)
 assert.equal(leakedText.includes("person"), false)
 assert.equal(leaked.catalog.length, 1)
 
+for (const orgList of ["", `${ORG},${ORG}`, `${ORG},22222222-2222-4222-8222-222222222222`]) {
+  const callsBefore = calls.length
+  const closed = await handleMetrics(
+    new Request("https://hamac.example/functions/v1/dashboard-metrics", {
+      method: "POST",
+      headers,
+      body,
+    }),
+    { get: (name) => (name === "DASHBOARD_ORG_IDS" ? orgList : env.get(name)) },
+    rpc,
+    input.timestamp,
+  )
+  assert.equal(closed.status, 500)
+  assert.deepEqual(await closed.json(), { error: "unavailable" })
+  assert.equal(calls.length, callsBefore)
+}
+
 console.log("dashboard-metrics protocol: ok")

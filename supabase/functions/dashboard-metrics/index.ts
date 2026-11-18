@@ -38,14 +38,15 @@ function keys(env: Env): VerifyKey[] | null {
   return list
 }
 
-function allowedOrgs(env: Env): Set<string> | null {
-  const raw = env.get("DASHBOARD_ORG_IDS") ?? ""
-  const ids = raw.split(",").map((item) => item.trim()).filter((item) => item !== "")
-  if (ids.length === 0) return null
-  if (ids.some((id) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) {
-    return null
-  }
-  return new Set(ids.map((id) => id.toLowerCase()))
+function allowedOrg(env: Env): string | null {
+  const ids = (env.get("DASHBOARD_ORG_IDS") ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item !== "")
+  if (ids.length !== 1) return null
+  const id = ids[0].toLowerCase()
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) return null
+  return id
 }
 
 function calendarDate(value: unknown): value is string {
@@ -72,8 +73,8 @@ export async function handleMetrics(
   const url = new URL(request.url)
   if (url.search !== "") return json(401, rejectionBody())
   const keyList = keys(env)
-  const orgs = allowedOrgs(env)
-  if (!keyList || !orgs) return json(500, { error: "unavailable" })
+  const org = allowedOrg(env)
+  if (!keyList || !org) return json(500, { error: "unavailable" })
 
   const raw = await request.text()
   if (raw.length > BODY_LIMIT) return json(401, rejectionBody())
@@ -96,7 +97,7 @@ export async function handleMetrics(
   const body = parsed as Record<string, unknown>
   const fields = Object.keys(body).sort()
   if (fields.join(",") !== "from,orgId,to,version") return json(401, rejectionBody())
-  if (body.version !== 1 || typeof body.orgId !== "string" || !orgs.has(body.orgId.toLowerCase())) {
+  if (body.version !== 1 || typeof body.orgId !== "string" || body.orgId.toLowerCase() !== org) {
     return json(401, rejectionBody())
   }
   if (!calendarDate(body.from) || !calendarDate(body.to) || body.from > body.to) {
