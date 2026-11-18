@@ -21,3 +21,12 @@ entrypoint = "./functions/notify-lead/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/submit-form/index.ts"
+
+# Tableau de bord : appelé uniquement par OTOMATE, avec signature HMAC.
+# verify_jwt reste faux parce que l'appelant n'est pas un utilisateur Supabase.
+# La porte est la signature, le nonce persistant et la liste blanche d'organisations.
+[functions.dashboard-metrics]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/dashboard-metrics/index.ts"
+
