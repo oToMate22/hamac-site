@@ -82,7 +82,10 @@ export async function submitForm(
       }
     }
 
-    return (response as { id?: string } | null)?.id ?? null
+    const id = (response as { id?: string } | null)?.id
+    // Sans identifiant, l'enregistrement n'est pas confirmé : pas de generate_lead.
+    if (!id) throw new SubmissionError('server', MESSAGES.server)
+    return id
   } catch (err) {
     if (err instanceof SubmissionError) throw err
     throw new SubmissionError('network', MESSAGES.network)

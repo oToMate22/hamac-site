@@ -1,6 +1,8 @@
 import { Building2, Bus, ChevronLeft, Leaf, ShoppingBag } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import { pageTypeFromPath } from '../analytics/pageType'
+import { track } from '../analytics/track'
 import { PropertyCard } from '../components/PropertyCard'
 import { getNeighborhoodBySlug, NEIGHBORHOODS } from '../data/neighborhoods'
 import { realEstateAgentJsonLd } from '../seo/jsonld'
@@ -43,6 +45,7 @@ function toPropertyCard(p: FeaturedProperty) {
 type ListStatus = 'loading' | 'ok' | 'empty' | 'quota' | 'timeout' | 'network'
 
 export function NeighborhoodPage() {
+  const { pathname } = useLocation()
   const { slug = '' } = useParams()
   const neighborhood = getNeighborhoodBySlug(slug)
   const [status, setStatus] = useState<ListStatus>('loading')
@@ -220,12 +223,22 @@ export function NeighborhoodPage() {
                 {status === 'quota' ? (
                   <p>
                     Le catalogue est momentanément indisponible, réessayez plus tard ou appelez le{' '}
-                    <a href="tel:+33478850827">04 78 85 08 27</a>.
+                    <a
+                      href="tel:+33478850827"
+                      onClick={() => track('phone_click', { cta: 'neighborhood_phone', page_type: pageTypeFromPath(pathname) })}
+                    >
+                      04 78 85 08 27
+                    </a>.
                   </p>
                 ) : (
                   <p>
                     Les biens ne se chargent pas.{' '}
-                    <a href="tel:+33478850827">04 78 85 08 27</a>
+                    <a
+                      href="tel:+33478850827"
+                      onClick={() => track('phone_click', { cta: 'neighborhood_phone', page_type: pageTypeFromPath(pathname) })}
+                    >
+                      04 78 85 08 27
+                    </a>
                   </p>
                 )}
                 <div className="catalog-map-empty__actions">

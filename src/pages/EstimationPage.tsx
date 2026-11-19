@@ -4,6 +4,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight, Check, ChevronDown, ShieldCheck, Clock3, MapPinHouse, Sparkles } from 'lucide-react'
 import { CitySearchField } from '../components/CitySearchField'
 import { EstimationTypeIllustration } from '../components/EstimationTypeIllustration'
+import { canonicalCommune } from '../analytics/url'
+import { ESTIMATE_PROPERTY_TYPES } from '../analytics/events'
+import { trackFormFailure } from '../analytics/forms'
+import { track } from '../analytics/track'
 import type { PropertyType } from '../data/properties'
 import { submitEstimation } from '../services/estimations'
 import { submissionErrorMessage } from '../services/submissions'
@@ -227,6 +231,22 @@ export function EstimationPage() {
         turnstileToken,
       )
 
+      const surface = Number.parseInt(form.surface, 10)
+      const rooms = Number.parseInt(form.rooms, 10)
+      const propertyType = (ESTIMATE_PROPERTY_TYPES as readonly string[]).includes(form.type)
+        ? (form.type as (typeof ESTIMATE_PROPERTY_TYPES)[number])
+        : null
+      const city = canonicalCommune(form.city.trim())
+      if (propertyType && Number.isInteger(surface) && surface >= 0 && surface <= 9999) {
+        track('estimate_submit', {
+          form: 'estimation',
+          property_type: propertyType,
+          surface,
+          ...(Number.isInteger(rooms) && rooms >= 1 && rooms <= 7 ? { rooms } : {}),
+          ...(city ? { city } : {}),
+        })
+      }
+      track('generate_lead', { form: 'estimation' })
       setSubmitSuccess(true)
       setForm({
         type: '',
@@ -244,6 +264,7 @@ export function EstimationPage() {
       setStep(1)
     } catch (error) {
       console.error('Erreur estimation:', error)
+      trackFormFailure('estimation', error)
       setSubmitError(submissionErrorMessage(error))
     } finally {
       setIsSubmitting(false)
