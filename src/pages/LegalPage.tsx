@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { pageTypeFromPath } from '../analytics/pageType'
+import { track } from '../analytics/track'
 import { LegalDocument, LegalSection } from '../components/LegalDocument'
 import { NEIGHBORHOODS } from '../data/neighborhoods'
 
@@ -15,6 +17,7 @@ const AGENCY = {
 }
 
 export function LegalPage() {
+  const { pathname } = useLocation()
   return (
     <LegalDocument
       title="Mentions légales — Hamac Investissements & Patrimoine"
@@ -43,9 +46,21 @@ export function LegalPage() {
           <br />
           {AGENCY.country}
           <br />
-          Tél. : <a href="tel:+33478850827">{AGENCY.phone}</a>
+          Tél. :{' '}
+          <a
+            href="tel:+33478850827"
+            onClick={() => track('phone_click', { cta: 'legal_phone', page_type: pageTypeFromPath(pathname) })}
+          >
+            {AGENCY.phone}
+          </a>
           <br />
-          Email : <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a>
+          Email :{' '}
+          <a
+            href={`mailto:${AGENCY.email}`}
+            onClick={() => track('email_click', { cta: 'legal_email', page_type: pageTypeFromPath(pathname) })}
+          >
+            {AGENCY.email}
+          </a>
           <br />
           Tribunal de commerce : {AGENCY.tradeRegister}
         </p>
@@ -144,6 +159,7 @@ function FeesTable({
 }
 
 export function FeesPage() {
+  const { pathname } = useLocation()
   const chargeVendeur =
     'Sauf convention contraire, les honoraires seront à la charge du vendeur et les pourcentages des honoraires appliqués sont calculés sur le prix de vente TTC (incluant une TVA à 20 %).'
   const chargeAcquereur =
@@ -328,10 +344,22 @@ export function FeesPage() {
           Hamac Investissements &amp; Patrimoine SAS immatriculée au RCS de Lyon sous le n° 899 540 181 — Carte
           professionnelle Transaction n° CPI 6901 2021 000 000 102 délivrée par la CCI de Lyon Métropole — Non
           maniement de fonds — Capital : 1 000,00 € — 5 Place Bellecour, 69002 Lyon —{' '}
-          <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a>
+          <a
+            href={`mailto:${AGENCY.email}`}
+            onClick={() => track('email_click', { cta: 'legal_email', page_type: pageTypeFromPath(pathname) })}
+          >
+            {AGENCY.email}
+          </a>
         </p>
         <p>
-          Pour toute question : <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a> — {AGENCY.phone}.
+          Pour toute question :{' '}
+          <a
+            href={`mailto:${AGENCY.email}`}
+            onClick={() => track('email_click', { cta: 'legal_email', page_type: pageTypeFromPath(pathname) })}
+          >
+            {AGENCY.email}
+          </a>
+          {' '}— {AGENCY.phone}.
         </p>
       </LegalSection>
     </LegalDocument>
@@ -339,6 +367,7 @@ export function FeesPage() {
 }
 
 export function PrivacyPage() {
+  const { pathname } = useLocation()
   return (
     <LegalDocument
       title="Politique de confidentialité — Hamac Investissements & Patrimoine"
@@ -470,7 +499,12 @@ export function PrivacyPage() {
         <p>
           Ces différents droits sont à exercer soit directement sur le site à la rubrique{' '}
           <Link to="/contact">Contact</Link>, soit par courrier postal, soit par courriel à l&apos;adresse{' '}
-          <a href={`mailto:${AGENCY.email}`}>{AGENCY.email}</a>.
+          <a
+            href={`mailto:${AGENCY.email}`}
+            onClick={() => track('email_click', { cta: 'legal_email', page_type: pageTypeFromPath(pathname) })}
+          >
+            {AGENCY.email}
+          </a>.
         </p>
         <p>
           Pour des raisons de sécurité et éviter toute demande frauduleuse, cette demande devra être accompagnée d&apos;un
@@ -565,8 +599,9 @@ export function PrivacyPage() {
         <h3>Sous-traitant et transfert hors Union européenne</h3>
         <p>
           Le service est fourni par Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irlande), avec les
-          fonctions publicitaires désactivées. Des données peuvent être transférées vers les États-Unis dans le cadre des
-          clauses contractuelles types de la Commission européenne et du cadre de protection des données UE-États-Unis.
+          fonctions publicitaires désactivées. Des données peuvent être transférées vers Google LLC (1600 Amphitheatre
+          Parkway, Mountain View, California, États-Unis) dans le cadre des clauses contractuelles types de la Commission
+          européenne et du cadre de protection des données UE-États-Unis.
         </p>
       </LegalSection>
 

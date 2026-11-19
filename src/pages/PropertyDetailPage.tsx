@@ -13,6 +13,11 @@ import {
   type EnergyRating,
   type FeaturedProperty,
 } from '../services/apimo'
+import { CATALOG_PROPERTY_TYPES, PROPERTY_REF_PATTERN } from '../analytics/events'
+import { trackFormFailure } from '../analytics/forms'
+import { pageTypeFromPath } from '../analytics/pageType'
+import { track } from '../analytics/track'
+import { canonicalCommune } from '../analytics/url'
 import { AGENCY } from '../config/site'
 import { listingDocumentTitle, listingMetaDescription } from '../seo/listingTitle'
 import { listingJsonLd } from '../seo/jsonld'
@@ -22,6 +27,28 @@ import { imageApimo, srcsetApimo } from '../utils/images'
 import { PagePlaceholder } from './PagePlaceholder'
 
 const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
+
+function listingKindFromPath(pathname: string): 'sale' | 'rent' | null {
+  if (pathname.startsWith('/louer')) return 'rent'
+  if (pathname.startsWith('/acheter')) return 'sale'
+  return null
+}
+
+function isCatalogType(value: string): value is (typeof CATALOG_PROPERTY_TYPES)[number] {
+  return (CATALOG_PROPERTY_TYPES as readonly string[]).includes(value)
+}
+
+function propertyViewParams(property: FeaturedProperty, pathname: string) {
+  const listingKind = listingKindFromPath(pathname)
+  if (!listingKind || !PROPERTY_REF_PATTERN.test(property.slug) || !isCatalogType(property.type)) return null
+  const city = canonicalCommune(property.city)
+  return {
+    property_ref: property.slug,
+    property_type: property.type,
+    listing_kind: listingKind,
+    ...(typeof city === 'string' ? { city } : {}),
+  }
+}
 const DESCRIPTION_PREVIEW_LIMIT = 300
 const DEFAULT_CONTACT_MESSAGE = 'Je souhaite être recontacté au sujet de ce bien...'
 
@@ -171,13 +198,18 @@ export function PropertyDetailPage() {
     }
   })()
 
-  const [property, setProperty] = useState<FeaturedProperty | null>(null)
+  // Bien déjà affiché dans la liste : transmis par la carte via le state du lien,
+  // ce qui évite l'écran « Chargement... » le temps de recharger tout le catalogue.
+  const routeSeed = (location.state as { property?: FeaturedProperty } | null)?.property ?? null
+  const seed = routeSeed && routeSeed.slug === slug ? routeSeed : null
+  const [property, setProperty] = useState<FeaturedProperty | null>(seed)
   const [similar, setSimilar] = useState<Property[]>([])
   const [activeImage, setActiveImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const galleryMainRef = useRef<HTMLDivElement>(null)
   const lightboxRef = useRef<HTMLDivElement>(null)
-  const [loading, setLoading] = useState(true)
+  const viewedPropertySlug = useRef<string | null>(null)
+  const [loading, setLoading] = useState(!seed)
   const [error, setError] = useState<string | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
@@ -224,13 +256,27 @@ export function PropertyDetailPage() {
   useEffect(() => {
     let cancelled = false
 
+    const recordView = (loaded: FeaturedProperty) => {
+      if (viewedPropertySlug.current === loaded.slug) return
+      const params = propertyViewParams(loaded, location.pathname)
+      if (params && track('property_view', params)) viewedPropertySlug.current = loaded.slug
+    }
+
     const load = async () => {
-      setLoading(true)
       setError(null)
-      setProperty(null)
       setSimilar([])
       setActiveImage(0)
       setIsLightboxOpen(false)
+
+      if (seed) {
+        setProperty(seed)
+        setLoading(false)
+        recordView(seed)
+        return
+      }
+
+      setLoading(true)
+      setProperty(null)
 
       if (!propertyId) {
         navigate(listingPath, { replace: true })
@@ -252,6 +298,7 @@ export function PropertyDetailPage() {
         }
 
         setProperty(p)
+        recordView(p)
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : String(err))
@@ -265,7 +312,7 @@ export function PropertyDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [isRentalRoute, listingPath, navigate, propertyId])
+  }, [isRentalRoute, listingPath, location.pathname, navigate, propertyId, seed])
 
   useEffect(() => {
     if (!property) return
@@ -394,9 +441,14 @@ export function PropertyDetailPage() {
         turnstileToken,
       )
 
+      if (PROPERTY_REF_PATTERN.test(bienRef)) {
+        track('property_inquiry_submit', { form: 'bien', property_ref: bienRef })
+      }
+      track('generate_lead', { form: 'bien' })
       setSubmitSuccess(true)
     } catch (err) {
       console.error('Erreur fiche bien:', err)
+      trackFormFailure('bien', err)
       setSubmitError(submissionErrorMessage(err))
     } finally {
       setIsSubmitting(false)
@@ -647,8 +699,22 @@ export function PropertyDetailPage() {
                 <img src={agentPicture} alt={`Portrait de ${agentName}`} loading="lazy" />
                 <p>
                   <strong>{agentName}</strong>
-                  {agent?.phone ? <a href={`tel:${agent.phone}`}>{agent.phone}</a> : null}
-                  {agent?.email ? <a href={`mailto:${agent.email}`}>{agent.email}</a> : null}
+                  {agent?.phone ? (
+                    <a
+                      href={`tel:${agent.phone}`}
+                      onClick={() => track('phone_click', { cta: 'property_phone', page_type: pageTypeFromPath(location.pathname) })}
+                    >
+                      {agent.phone}
+                    </a>
+                  ) : null}
+                  {agent?.email ? (
+                    <a
+                      href={`mailto:${agent.email}`}
+                      onClick={() => track('email_click', { cta: 'property_email', page_type: pageTypeFromPath(location.pathname) })}
+                    >
+                      {agent.email}
+                    </a>
+                  ) : null}
                 </p>
               </div>
 
@@ -758,6 +824,7 @@ export function PropertyDetailPage() {
             className="detail-mobile-cta__btn detail-mobile-cta__btn--call"
             href={`tel:${agent?.phone ?? AGENCY.telephone}`}
             aria-label="Appeler l'agence au sujet de ce bien"
+            onClick={() => track('phone_click', { cta: 'property_mobile_phone', page_type: pageTypeFromPath(location.pathname) })}
           >
             Appeler
           </a>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { disableGa4 } from '../analytics/ga4'
+import { refuse } from '../analytics/gtm'
 import { OPEN_CONSENT_EVENT, readConsent, writeConsent } from './storage'
 
 export function CookieBanner() {
@@ -34,8 +34,10 @@ export function CookieBanner() {
   if (!ready || !open) return null
 
   const save = (analytics: boolean) => {
-    writeConsent(analytics)
-    if (!analytics) disableGa4()
+    // Refus / révocation : plus aucun événement, cookies purgés,
+    // puis rechargement si gtag était déjà chargé sur cette page.
+    if (analytics) writeConsent(true)
+    else refuse()
     setAnalyticsDraft(analytics)
     setPanel(false)
     setOpen(false)

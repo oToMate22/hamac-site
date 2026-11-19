@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createElement } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { App } from './App'
+import { bootTracking } from './analytics/boot'
 import homeMainHtml from './static/home-main.html?raw'
 
 const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
@@ -16,6 +17,9 @@ if (!underBasename) {
   const nextPath = pathname === '/' || pathname === '/index.html' ? '/' : pathname
   window.location.replace(`${routerBasename}${nextPath}${search}${hash}`)
 } else {
+  // Socle de tracking : avant le rendu, sans effet pendant le pré-rendu ni sans consentement.
+  bootTracking()
+
   const appRoot = document.createElement('div')
   appRoot.id = 'app'
   document.body.innerHTML = ''
