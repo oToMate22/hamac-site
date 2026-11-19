@@ -1,4 +1,4 @@
-import { buildDocument, type MetricsRead } from "./document.ts"
+import { acceptDelivery, buildDocument, type MetricsRead } from "./document.ts"
 import {
   SIGNATURE_WINDOW_SECONDS,
   SIGNED_PATH,
@@ -119,7 +119,19 @@ export async function handleMetrics(
       p_from: body.from,
       p_to: body.to,
     })) as MetricsRead
-    return json(200, buildDocument({ from: body.from, to: body.to }, metrics))
+    let sends = null
+    try {
+      sends = acceptDelivery(await rpc("dashboard_delivery_read", {
+        p_from: body.from,
+        p_to: body.to,
+      }))
+    } catch {
+      sends = null
+    }
+    return json(200, buildDocument(
+      { from: body.from, to: body.to },
+      sends ? { ...metrics, sends } : metrics,
+    ))
   } catch {
     return json(500, { error: "unavailable" })
   }

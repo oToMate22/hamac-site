@@ -40,6 +40,16 @@ export type CatalogSource = {
   last: string | null
 }
 
+export type DeliveryRead = {
+  since: string
+  failed?: {
+    value: number
+    previous: number
+    attempts: number
+    rows: { label: string; count: number }[]
+  }
+}
+
 export type MetricsRead = {
   received: CountPair
   estimations: CountPair
@@ -53,6 +63,48 @@ export type MetricsRead = {
   weekly: { date: string; value: number }[]
   latest: { kind: string; label: string; detail: string; when: string }[]
   catalog: CatalogSource[] | null
+  sends?: DeliveryRead
+}
+
+const STAGE_LABELS = new Set(["Enregistrement", "Notification agence", "Confirmation prospect"])
+
+function whole(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+}
+
+/** Accepte seulement la date de début et les comptes. Tout autre champ est rejeté. */
+export function acceptDelivery(value: unknown): DeliveryRead | null {
+  if (value === null || value === undefined) return null
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  const record = value as Record<string, unknown>
+  const keys = Object.keys(record).sort().join(",")
+  if (keys !== "since" && keys !== "failed,since") return null
+  if (typeof record.since !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.since)) return null
+  if (!("failed" in record)) return { since: record.since }
+  const failed = record.failed
+  if (!failed || typeof failed !== "object" || Array.isArray(failed)) return null
+  const counts = failed as Record<string, unknown>
+  if (Object.keys(counts).sort().join(",") !== "attempts,previous,rows,value") return null
+  if (!whole(counts.value) || !whole(counts.previous) || !whole(counts.attempts)) return null
+  if (!Array.isArray(counts.rows)) return null
+  const rows: { label: string; count: number }[] = []
+  for (const item of counts.rows) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return null
+    const entry = item as Record<string, unknown>
+    if (Object.keys(entry).sort().join(",") !== "count,label") return null
+    if (typeof entry.label !== "string" || !STAGE_LABELS.has(entry.label)) return null
+    if (!whole(entry.count) || entry.count === 0) return null
+    rows.push({ label: entry.label, count: entry.count })
+  }
+  return {
+    since: record.since,
+    failed: {
+      value: counts.value,
+      previous: counts.previous,
+      attempts: counts.attempts,
+      rows,
+    },
+  }
 }
 
 export function formatWhen(value: string): string {
@@ -118,6 +170,18 @@ export function buildDocument(
         }),
       },
     },
+  }
+  if (metrics.sends) {
+    const sends: Record<string, unknown> = { since: metrics.sends.since }
+    if (metrics.sends.failed) {
+      sends.failed = {
+        value: metrics.sends.failed.value,
+        previous: metrics.sends.failed.previous,
+        attempts: metrics.sends.failed.attempts,
+        rows: metrics.sends.failed.rows.map((row) => ({ label: row.label, count: row.count })),
+      }
+    }
+    document.sends = sends
   }
   if (metrics.catalog) {
     document.catalog = metrics.catalog.flatMap((row) => {

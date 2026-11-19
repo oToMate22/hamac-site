@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { formOf, notifyJournals, postDeliveryFailure, type JournalEvent } from "../_shared/delivery-journal.ts"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const TEXT_MAX = 4000
@@ -389,15 +390,6 @@ Deno.serve(async (req) => {
   const from =
     fromEnv && /^[\x00-\x7F]+$/.test(fromEnv) ? fromEnv : DEFAULT_FROM
 
-  if (!apiKey) {
-    console.error("[notify-lead] missing RESEND_API_KEY")
-    return json({ error: "unavailable" }, 500)
-  }
-  if (recipients.length === 0) {
-    console.error("[notify-lead] LEAD_NOTIFY_TO misconfigured")
-    return json({ error: "misconfigured" }, 500)
-  }
-
   let table: FormTable = "leads"
   let record: Record<string, unknown> = {}
   try {
@@ -416,6 +408,36 @@ Deno.serve(async (req) => {
   } catch {
     console.error("[notify-lead] invalid json")
     return json({ error: "invalid_body" }, 400)
+  }
+
+  const deliveryForm = formOf(table, record.type_contact)
+  const journal = async (events: JournalEvent[]) => {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const serviceKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY")
+    for (const event of events) {
+      await postDeliveryFailure({
+        supabaseUrl,
+        serviceKey,
+        form: deliveryForm,
+        stage: event.stage,
+        reason: event.reason,
+        source: "notify-lead",
+        log: (line) => console.error(line),
+      })
+    }
+  }
+
+  const wouldConfirm = buildConfirmation(table, record) ? "http" : "skipped"
+  if (!apiKey) {
+    console.error("[notify-lead] missing RESEND_API_KEY")
+    await journal(notifyJournals({ configured: false, agency: "http", prospect: wouldConfirm }))
+    return json({ error: "unavailable" }, 500)
+  }
+  if (recipients.length === 0) {
+    console.error("[notify-lead] LEAD_NOTIFY_TO misconfigured")
+    await journal(notifyJournals({ configured: false, agency: "http", prospect: wouldConfirm }))
+    return json({ error: "misconfigured" }, 500)
   }
 
   const recordId = field(record.id)
@@ -459,6 +481,18 @@ Deno.serve(async (req) => {
   console.log(
     `[notify-lead] table=${table} id=${refId} to=${recipients.length} resend=${internal.status} prospect=${prospectBody ? prospect.status : "skipped"}`,
   )
+
+  await journal(notifyJournals({
+    configured: true,
+    agency: internal.ok ? "ok" : internal.status === 0 ? "unreachable" : "http",
+    prospect: !prospectBody
+      ? "skipped"
+      : prospect.ok
+        ? "ok"
+        : prospect.status === 0
+          ? "unreachable"
+          : "http",
+  }))
 
   if (!internal.ok) return json({ error: "send_failed" }, 502)
 

@@ -17,6 +17,7 @@
 //   TURNSTILE_HOSTNAMES    domaines acceptés par siteverify (défaut : idem + localhost)
 // ─────────────────────────────────────────────
 
+import { postDeliveryFailure, recordJournal } from "../_shared/delivery-journal.ts"
 import { FORM_KINDS, validateSubmission, type FormKind } from "./validate.ts"
 import { verifyTurnstile } from "./turnstile.ts"
 import { claimSlot, clientIp, hashIp } from "./throttle.ts"
@@ -137,8 +138,19 @@ Deno.serve(async (req) => {
       signal: AbortSignal.timeout(8_000),
     })
     if (!res.ok) {
-      const detail = (await res.text()).slice(0, 300)
-      console.error(`[submit-form] insert ${validated.table} ${res.status}: ${detail}`)
+      console.error(`[submit-form] insert ${validated.table} ${res.status}`)
+      const journal = recordJournal("http")
+      if (journal) {
+        await postDeliveryFailure({
+          supabaseUrl,
+          serviceKey,
+          form,
+          stage: journal.stage,
+          reason: journal.reason,
+          source: "submit-form",
+          log: (line) => console.error(line),
+        })
+      }
       return json({ error: "insert_failed" }, 502, cors)
     }
     const rows = (await res.json()) as Array<{ id?: string }>
@@ -146,6 +158,18 @@ Deno.serve(async (req) => {
     return json({ ok: true, id: rows[0]?.id ?? null }, 200, cors)
   } catch (err) {
     console.error("[submit-form] insert unreachable", err instanceof Error ? err.name : "unknown")
+    const journal = recordJournal("unreachable")
+    if (journal) {
+      await postDeliveryFailure({
+        supabaseUrl,
+        serviceKey,
+        form,
+        stage: journal.stage,
+        reason: journal.reason,
+        source: "submit-form",
+        log: (line) => console.error(line),
+      })
+    }
     return json({ error: "insert_failed" }, 502, cors)
   }
 })

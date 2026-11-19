@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { buildDocument } from "./document.ts"
+import { acceptDelivery, buildDocument } from "./document.ts"
 import { handleMetrics } from "./index.ts"
 import { signHex } from "./signature.ts"
 
@@ -82,6 +82,8 @@ const env = new Map([
 ])
 const seen = new Set()
 const calls = []
+let delivery = null
+let deliveryError = false
 
 function rpc(name, args) {
   calls.push(name)
@@ -92,6 +94,10 @@ function rpc(name, args) {
     return true
   }
   if (name === "dashboard_metrics_read") return metrics
+  if (name === "dashboard_delivery_read") {
+    if (deliveryError) throw new Error("database")
+    return delivery
+  }
   throw new Error("unexpected")
 }
 
@@ -123,8 +129,13 @@ const accepted = await handleMetrics(
 assert.equal(accepted.status, 200)
 const payload = await accepted.json()
 assert.equal(payload.leads.received.value, 3)
+assert.equal(payload.sends, undefined)
 assert.equal(JSON.stringify(payload).includes("person@"), false)
-assert.deepEqual(calls, ["dashboard_nonce_consume", "dashboard_metrics_read"])
+assert.deepEqual(calls, [
+  "dashboard_nonce_consume",
+  "dashboard_metrics_read",
+  "dashboard_delivery_read",
+])
 
 const replay = await handleMetrics(
   new Request("https://hamac.example/functions/v1/dashboard-metrics", {
@@ -261,5 +272,77 @@ for (const orgList of ["", `${ORG},${ORG}`, `${ORG},22222222-2222-4222-8222-2222
   assert.deepEqual(await closed.json(), { error: "unavailable" })
   assert.equal(calls.length, callsBefore)
 }
+
+const counted = {
+  since: "2026-11-16",
+  failed: {
+    value: 2,
+    previous: 0,
+    attempts: 3,
+    rows: [{ label: "Notification agence", count: 2 }],
+  },
+}
+delivery = counted
+const countedBody = JSON.stringify({ version: 1, orgId: ORG, from: "2026-11-16", to: "2026-11-16" })
+const countedInput = { ...VECTOR, body: countedBody, nonce: "nonce-delivery-000001" }
+const countedResponse = await handleMetrics(
+  new Request("https://hamac.example/functions/v1/dashboard-metrics", {
+    method: "POST",
+    headers: {
+      "x-oto-key-id": "oto-test",
+      "x-oto-timestamp": String(countedInput.timestamp),
+      "x-oto-nonce": countedInput.nonce,
+      "x-oto-signature": await signHex(countedInput, SECRET),
+      "content-type": "application/json",
+    },
+    body: countedBody,
+  }),
+  { get: (name) => env.get(name) },
+  rpc,
+  countedInput.timestamp,
+)
+assert.equal(countedResponse.status, 200)
+const countedPayload = await countedResponse.json()
+assert.deepEqual(countedPayload.sends, counted)
+assert.equal(countedPayload.leads.received.value, 3)
+
+deliveryError = true
+const downBody = JSON.stringify({ version: 1, orgId: ORG, from: "2026-11-16", to: "2026-11-16" })
+const downInput = { ...VECTOR, body: downBody, nonce: "nonce-delivery-down-01" }
+const downResponse = await handleMetrics(
+  new Request("https://hamac.example/functions/v1/dashboard-metrics", {
+    method: "POST",
+    headers: {
+      "x-oto-key-id": "oto-test",
+      "x-oto-timestamp": String(downInput.timestamp),
+      "x-oto-nonce": downInput.nonce,
+      "x-oto-signature": await signHex(downInput, SECRET),
+      "content-type": "application/json",
+    },
+    body: downBody,
+  }),
+  { get: (name) => env.get(name) },
+  rpc,
+  downInput.timestamp,
+)
+assert.equal(downResponse.status, 200)
+const downPayload = await downResponse.json()
+assert.equal(downPayload.sends, undefined)
+assert.equal(downPayload.leads.received.value, 3)
+
+deliveryError = false
+delivery = { ...counted, email: "person@example.test" }
+assert.equal(acceptDelivery(delivery), null)
+const leakedDelivery = buildDocument({ from: "2026-11-16", to: "2026-11-16" }, {
+  ...metrics,
+  sends: counted,
+})
+assert.equal(JSON.stringify(leakedDelivery).includes("person@"), false)
+assert.throws(() =>
+  buildDocument({ from: "2026-11-16", to: "2026-11-16" }, {
+    ...metrics,
+    sends: { ...counted, email: "person@example.test" },
+  }),
+)
 
 console.log("dashboard-metrics protocol: ok")
