@@ -176,15 +176,22 @@ try {
   }
 
   if (CHROME_BUDGET_MS > 0) {
-    await Promise.race([
-      runChrome(),
-      new Promise((_, reject) => {
-        setTimeout(
-          () => reject(new Error(`budget Chromium ${Math.round(CHROME_BUDGET_MS / 1000)}s dépassé`)),
-          CHROME_BUDGET_MS,
-        )
-      }),
-    ])
+    // Le minuteur doit être annulé dès la fin du pré-rendu : sinon le processus attend
+    // le budget complet (6 min sur Vercel) avant de rendre la main au build.
+    let budgetTimer: ReturnType<typeof setTimeout> | undefined
+    try {
+      await Promise.race([
+        runChrome(),
+        new Promise((_, reject) => {
+          budgetTimer = setTimeout(
+            () => reject(new Error(`budget Chromium ${Math.round(CHROME_BUDGET_MS / 1000)}s dépassé`)),
+            CHROME_BUDGET_MS,
+          )
+        }),
+      ])
+    } finally {
+      clearTimeout(budgetTimer)
+    }
   } else {
     await runChrome()
   }

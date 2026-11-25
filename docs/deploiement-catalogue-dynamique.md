@@ -189,3 +189,45 @@ WhatsApp ne peut pas lire une Preview protégée.
 2. Dans une conversation où ces liens n'ont jamais été envoyés, envoyer chaque lien avec `?v=1`.
 3. Vérifier sur iPhone **et** Android que la vignette montre la photo du bien.
 4. Publier ou modifier un bien dans Apimo, puis vérifier son aperçu en moins de 20 minutes : 10 minutes de cycle, plus 5 minutes de cache `apimo-proxy`, plus la durée du run.
+
+## 10. Validation GA4 et CMP (absence de double comptage)
+
+Pourquoi le rendu serveur ne peut pas doubler les mesures :
+- Le serveur n'exécute **aucun** code de suivi : `bootTracking()` n'est appelé que dans `src/main.ts`, côté navigateur.
+- Le HTML rendu côté serveur ne contient aucun script gtag ou GTM, seulement le bundle habituel.
+- gtag est configuré avec `send_page_view: false`. Le `page_view` est envoyé manuellement, **une fois par chemin** (`lastPageViewRoute`), et seulement après consentement.
+- `main.ts` remplace le HTML serveur par le rendu React (`createRoot`), exactement comme avec l'ancien pré-rendu Chromium.
+
+Contrôle à faire sur la Preview (Tag Assistant ou GA4 DebugView, avec le jeton de contournement) :
+
+1. Première visite sans consentement : **0** requête vers `google-analytics.com` ou `g/collect`. Le bandeau CMP s'affiche.
+2. « Tout accepter » : **1** `page_view` pour la page courante.
+3. Rechargement : **1** `page_view`. Navigation interne vers une fiche : **1** `page_view`. Retour : **1** `page_view`.
+4. « Tout refuser » : plus aucune requête.
+5. Clic sur le téléphone et envoi d'un formulaire de test : **1** événement chacun.
+
+⚠️ La Preview utilise le même identifiant GA4 que la production (`VITE_GA_MEASUREMENT_ID` est défini pour la Preview). Faire ces tests en trafic interne (paramètre géré par `applyInternalTrafficParam`) ou en mode debug, pour ne pas polluer les statistiques.
+
+## 11. Surveillance
+
+**Synchronisation et quotas Apimo** (vue créée par la migration, réservée à la clé de service) :
+
+```sql
+select * from public.catalog_sync_health;   -- runs, ok, degraded, failed, 429, retraits, images, écart avec Apimo
+select started_at, outcome, http_status, reason from catalog_sync_runs
+ where outcome <> 'ok' order by id desc limit 20;
+```
+
+**Alertes automatiques par e-mail** (Resend, `ALERT_EMAIL_TO`) : 60 minutes sans run fiable, quota 429 compris, puis au plus une alerte toutes les 6 heures.
+
+**Seuils d'action :**
+- `quota_429_24h > 0` : passer à 15 minutes avec `catalog_sync_configure(p_interval_minutes := 15)`.
+- `withdrawn_24h` anormal : vérifier dans Apimo, puis `p_enabled := false` si besoin.
+- `og_failed > 0` : lire `og_last_error` dans `listing_snapshots`.
+
+**Vercel** (Dashboard → Usage, et Settings → Billing → Spend Management, plafond conseillé avec alerte à 50 %) :
+- Invocations et CPU actif des fonctions `api/*`, Fast Data Transfer, requêtes CDN.
+- **Minutes de build :** chaque build utilise une machine « enhanced » (8 vCPU), soit environ 56 minutes-CPU, surtout à cause du pré-rendu Chromium. Avec l'architecture dynamique, les redéploiements deviennent rares. Vérifier que ce type de machine est bien voulu (Settings → Build & Deployment → Build Machine).
+- **Logs :** Deployments → Functions → `api/listing` (statuts 503 et durées).
+
+**Supabase** (Dashboard → Usage) : invocations des fonctions Edge (`catalog-sync`, `listing-feed`, `apimo-proxy`), stockage du bucket `og-listings`, egress. Logs : Edge Functions → `catalog-sync`.
