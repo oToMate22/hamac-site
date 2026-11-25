@@ -3,6 +3,9 @@ import { useLocation } from 'react-router-dom'
 import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, shareUrl, socialOgImage } from '../config/site'
 import { breadcrumbJsonLd } from '../seo/jsonld'
 
+/** Balise posée par scripts/inject-route-heads.ts : route dont l'image de partage est figée au build. */
+const OG_ROUTE_META = 'hamac:og-route'
+
 type PageMeta = {
   title: string
   description: string
@@ -93,20 +96,32 @@ export const applyPageMeta = ({
   upsertMetaByProperty('og:url', ogUrl)
   upsertMetaByProperty('og:site_name', SITE_NAME)
   upsertMetaByProperty('og:locale', 'fr_FR')
-  upsertMetaByProperty('og:image', image)
-  if (isDefaultOg) {
-    upsertMetaByProperty('og:image:width', '1200')
-    upsertMetaByProperty('og:image:height', '630')
-    upsertMetaByProperty('og:image:type', 'image/jpeg')
-  } else {
-    document.head.querySelector('meta[property="og:image:width"]')?.remove()
-    document.head.querySelector('meta[property="og:image:height"]')?.remove()
-    document.head.querySelector('meta[property="og:image:type"]')?.remove()
+  // L'image de partage injectée au build (JPEG 1200×630 hébergé chez nous) prime : sans cette
+  // garde, le pré-rendu Chromium la remplacerait par la photo Apimo brute.
+  const staticOgRoute = document.head
+    .querySelector<HTMLMetaElement>(`meta[name="${OG_ROUTE_META}"]`)
+    ?.getAttribute('content')
+  const stripSlash = (value: string) => (value.length > 1 ? value.replace(/\/+$/, '') : value)
+  if (!staticOgRoute || stripSlash(staticOgRoute) !== stripSlash(canonicalPath)) {
+    upsertMetaByProperty('og:image', image)
+    if (image.startsWith('https://')) upsertMetaByProperty('og:image:secure_url', image)
+    else document.head.querySelector('meta[property="og:image:secure_url"]')?.remove()
+    if (isDefaultOg) {
+      upsertMetaByProperty('og:image:width', '1200')
+      upsertMetaByProperty('og:image:height', '630')
+      upsertMetaByProperty('og:image:type', 'image/jpeg')
+    } else {
+      document.head.querySelector('meta[property="og:image:width"]')?.remove()
+      document.head.querySelector('meta[property="og:image:height"]')?.remove()
+      document.head.querySelector('meta[property="og:image:type"]')?.remove()
+    }
+    upsertMetaByProperty('og:image:alt', title)
+    upsertMetaByName('twitter:image', image)
+    upsertMetaByName('twitter:image:alt', title)
   }
   upsertMetaByName('twitter:card', 'summary_large_image')
   upsertMetaByName('twitter:title', title)
   upsertMetaByName('twitter:description', description)
-  upsertMetaByName('twitter:image', image)
   upsertLink('canonical', url)
   upsertLink('alternate', url, { hreflang: 'fr-FR' })
   upsertLink('alternate', `${SITE_URL}/`, { hreflang: 'x-default' })

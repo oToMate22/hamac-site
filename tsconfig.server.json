@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "src",
+    "server",
+    "supabase/functions/_shared/catalog",
+    "scripts/og-images.ts",
+    "scripts/check-og-meta.ts",
+    "scripts/inject-route-heads.ts",
+    "scripts/dynamic-mode.ts",
+    "data/apimo-routes.json",
+    "data/google-reviews.json"
+  ]
+}

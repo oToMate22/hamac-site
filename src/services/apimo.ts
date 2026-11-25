@@ -381,7 +381,7 @@ function extractDetails(raw: ApimoRawProperty, surfaceValue?: number): PropertyD
   return details
 }
 
-function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
+export function mapFeaturedProperty(raw: ApimoRawProperty): FeaturedProperty {
   const property = raw as Record<string, unknown>
 
   const id = property.id
@@ -729,11 +729,19 @@ export async function fetchCatalogProperties(
   signal?: AbortSignal,
 ): Promise<CatalogFetchResult> {
   const result = await getAllMappedProperties(signal)
-  const properties =
-    mode === 'rent'
-      ? result.properties.filter((property) => property.isRental)
-      : result.properties.filter((property) => !property.isRental && property.agreementType !== 2)
-  return { properties, cacheServedAt: result.cacheServedAt }
+  return { properties: filterCatalogForMode(result.properties, mode), cacheServedAt: result.cacheServedAt }
+}
+
+/** Biens affichés par le catalogue d'une rubrique (partagé avec le rendu serveur). */
+export function filterCatalogForMode(properties: FeaturedProperty[], mode: 'sale' | 'rent') {
+  return mode === 'rent'
+    ? properties.filter((property) => property.isRental)
+    : properties.filter((property) => !property.isRental && property.agreementType !== 2)
+}
+
+/** Mappe une liste brute Apimo (rendu serveur) comme le fait le chargement côté navigateur. */
+export function mapRawProperties(rawList: unknown[]): FeaturedProperty[] {
+  return mapRawList({ properties: rawList })
 }
 
 export async function getPropertyById(id: string | number): Promise<FeaturedProperty | null> {

@@ -5,9 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsx scripts/sync-google-reviews.ts && tsc && vite build && tsx scripts/prerender.ts && tsx scripts/generate-sitemap.ts",
+    "build": "tsx scripts/sync-google-reviews.ts && tsc && vite build && vite build --config vite.ssr.config.ts && tsx scripts/prerender.ts && tsx scripts/check-og-meta.ts && tsx scripts/generate-sitemap.ts",
     "sync:routes": "tsx scripts/sync-routes.ts",
     "sync:reviews": "tsx scripts/sync-google-reviews.ts",
+    "test:og": "tsx scripts/og-images.test.ts",
+    "check:og": "tsx scripts/check-og-meta.ts",
+    "test:catalog": "tsx scripts/catalog-sync.test.ts",
+    "simulate:catalog": "tsx scripts/simulate-catalog.ts",
+    "check:deployment": "tsx scripts/check-deployment.ts",
+    "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "preview": "vite preview"
   },
   "devDependencies": {
@@ -15,13 +21,13 @@
     "@tailwindcss/cli": "^4.2.2",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/leaflet": "^1.9.21",
+    "@types/node": "^24.19.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "puppeteer": "^25.11.0",
-    "sharp": "^0.35.4",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
@@ -44,6 +50,7 @@
     "react-dom": "^19.2.4",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.13.2",
+    "sharp": "^0.35.4",
     "swiper": "^12.1.4"
   }
 }

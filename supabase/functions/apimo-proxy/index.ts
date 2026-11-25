@@ -292,6 +292,8 @@ Deno.serve(async (req) => {
       const firstItems = extractPropertiesArray(firstPage.parsedBody)
       const totalItems = extractTotalItems(firstPage.parsedBody, firstItems.length)
       const allItems: unknown[] = [...firstItems]
+      // Complétude de la lecture : lue par catalog-sync pour ne jamais retirer un bien sur une réponse partielle.
+      let complete = true
 
       for (let page = 1; page < MAX_PAGES; page++) {
         const offset = page * PAGE_SIZE
@@ -305,12 +307,17 @@ Deno.serve(async (req) => {
             allItems.length,
             "items",
           )
+          complete = false
           break
         }
         const nextItems = extractPropertiesArray(nextPage.parsedBody)
         allItems.push(...nextItems)
-        if (!nextItems.length) break
+        if (!nextItems.length) {
+          if (allItems.length < totalItems) complete = false
+          break
+        }
       }
+      if (allItems.length < totalItems) complete = false
 
       const responsePayload =
         firstPage.parsedBody && typeof firstPage.parsedBody === "object"
@@ -319,10 +326,11 @@ Deno.serve(async (req) => {
               properties: allItems,
               total_items: totalItems,
               fetched_items: allItems.length,
+              sync_meta: { complete },
             }
-          : { properties: allItems, total_items: totalItems, fetched_items: allItems.length }
+          : { properties: allItems, total_items: totalItems, fetched_items: allItems.length, sync_meta: { complete } }
 
-      return { apimoResponse: firstPage.apimoResponse, parsedBody: responsePayload, url: firstPage.url }
+      return { apimoResponse: firstPage.apimoResponse, parsedBody: responsePayload, url: firstPage.url, complete }
     }
 
     if (isAgenciesRoute) {
@@ -419,6 +427,7 @@ Deno.serve(async (req) => {
         } else {
           // Fusion multi-statuts (Apimo = 1 statut / requête).
           const byId = new Map<string, unknown>()
+          let allComplete = true
           let lastOk: { apimoResponse: Response; parsedBody: unknown } | null = null
           let firstError: { apimoResponse: Response; parsedBody: unknown } | null = null
 
@@ -428,9 +437,11 @@ Deno.serve(async (req) => {
             const page = await fetchAllPages(params)
             if (!page.apimoResponse.ok) {
               firstError ??= page
+              allComplete = false
               console.warn("[apimo-proxy] status", status, "HTTP", page.apimoResponse.status)
               continue
             }
+            if ("complete" in page && page.complete === false) allComplete = false
             lastOk = page
             for (const item of extractPropertiesArray(page.parsedBody)) {
               if (!item || typeof item !== "object") continue
@@ -456,6 +467,7 @@ Deno.serve(async (req) => {
                 total_items: merged.length,
                 fetched_items: merged.length,
                 status_filter: SITE_STATUSES.join(","),
+                sync_meta: { complete: allComplete },
               },
             }
           }

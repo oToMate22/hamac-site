@@ -1,131 +1,57 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { BLOG_POSTS } from '../src/data/blogPosts'
 import { NEIGHBORHOODS } from '../src/data/neighborhoods'
-import { canonicalUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, shareUrl, socialOgImage } from '../src/config/site'
+import { DEFAULT_OG_IMAGE, SERVED_SITE_URL } from '../src/config/site'
+import { blogPostingJsonLd, listingJsonLd, realEstateAgentJsonLd } from '../src/seo/jsonld'
 import {
-  blogPostingJsonLd,
-  breadcrumbJsonLd,
-  listingJsonLd,
-  realEstateAgentJsonLd,
-} from '../src/seo/jsonld'
+  applyHead,
+  notFoundHead,
+  staticHead,
+  SUFFIX,
+  DEFAULT_DESCRIPTION,
+  type RouteHead,
+} from '../src/seo/headHtml'
 import { listingDocumentTitle, listingMetaDescription } from '../src/seo/listingTitle'
 import type { FeaturedProperty } from '../src/services/apimo'
+import {
+  generateListingOgImage,
+  LISTING_OG_SUBDIR,
+  mapWithConcurrency,
+  needsMainPhotoRetry,
+  OG_HEIGHT,
+  OG_WIDTH,
+  type OgImageResult,
+  type OgPicture,
+} from './og-images'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const BASE_PATH = (process.env.VITE_BASE_PATH ?? '/fr').replace(/\/$/, '')
 
-export type RouteHead = {
-  title: string
-  description: string
-  ogType?: string
-  ogImage?: string
-  robots?: string
-  jsonLd?: Array<{ id: string; data: object }>
-}
+// Réexports : les scripts et tests existants importent ces fonctions depuis ce module.
+export { applyHead, applyOgImageTags, notFoundHead, OG_ROUTE_META, type RouteHead } from '../src/seo/headHtml'
+
 
 export type ListingHeadInput = Pick<
   FeaturedProperty,
   'slug' | 'title' | 'city' | 'type' | 'price' | 'surface' | 'rooms' | 'images' | 'description' | 'zipcode' | 'isRental'
->
-
-const SUFFIX = 'Hamac Investissements & Patrimoine'
-const DEFAULT_DESCRIPTION =
-  "Hamac Investissements & Patrimoine — agence immobilière premium dans l'Ouest Lyonnais. Immobilier de confiance, sur-mesure et humain."
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
+> & {
+  id: string
+  /** Photos Apimo brutes (rang, flag internet) pour choisir l'image de partage. */
+  ogPictures: OgPicture[]
+  /** Image de partage générée au build (null : échec, image Hamac par défaut). */
+  ogImage?: { url: string; width: number; height: number } | null
 }
+
 
 function outputDir(route: string) {
   if (route === '/') return path.join(DIST, BASE_PATH)
   return path.join(DIST, BASE_PATH, route.replace(/^\//, ''))
 }
 
-function setMetaByName(html: string, name: string, content: string) {
-  const tag = `<meta name="${name}" content="${escapeHtml(content)}" />`
-  const re = new RegExp(`<meta\\s+name="${name}"[^>]*>`, 'i')
-  if (re.test(html)) return html.replace(re, tag)
-  return html.replace('</head>', `    ${tag}\n  </head>`)
-}
-
-function setMetaByProperty(html: string, property: string, content: string) {
-  const tag = `<meta property="${property}" content="${escapeHtml(content)}" />`
-  const re = new RegExp(`<meta\\s+property="${property}"[^>]*>`, 'i')
-  if (re.test(html)) return html.replace(re, tag)
-  return html.replace('</head>', `    ${tag}\n  </head>`)
-}
-
-function setLink(html: string, rel: string, href: string, extra = '') {
-  const extraAttr = extra ? ` ${extra}` : ''
-  const tag = `<link rel="${rel}"${extraAttr} href="${escapeHtml(href)}" />`
-  if (rel === 'canonical') {
-    html = html.replace(/<link\s+rel="canonical"[^>]*>/gi, '')
-    return html.replace('</head>', `    ${tag}\n  </head>`)
-  }
-  if (rel === 'alternate' && extra.includes('hreflang="fr-FR"')) {
-    html = html.replace(/<link\s+rel="alternate"[^>]*hreflang="fr-FR"[^>]*>/gi, '')
-    return html.replace('</head>', `    ${tag}\n  </head>`)
-  }
-  if (rel === 'alternate' && extra.includes('hreflang="x-default"')) {
-    html = html.replace(/<link\s+rel="alternate"[^>]*hreflang="x-default"[^>]*>/gi, '')
-    return html.replace('</head>', `    ${tag}\n  </head>`)
-  }
-  return html.replace('</head>', `    ${tag}\n  </head>`)
-}
-
-function applyHead(shell: string, route: string, meta: RouteHead) {
-  const url = canonicalUrl(route)
-  const ogUrl = shareUrl(route)
-  const image = socialOgImage(meta.ogImage)
-  const robots = meta.robots ?? 'index,follow'
-  const ogType = meta.ogType ?? 'website'
-  let html = shell
-  html = html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(meta.title)}</title>`)
-  html = setMetaByName(html, 'description', meta.description)
-  html = setMetaByName(html, 'robots', robots)
-  html = setMetaByProperty(html, 'og:title', meta.title)
-  html = setMetaByProperty(html, 'og:description', meta.description)
-  html = setMetaByProperty(html, 'og:type', ogType)
-  html = setMetaByProperty(html, 'og:url', ogUrl)
-  html = setMetaByProperty(html, 'og:site_name', SITE_NAME)
-  html = setMetaByProperty(html, 'og:locale', 'fr_FR')
-  html = setMetaByProperty(html, 'og:image', image)
-  if (image === DEFAULT_OG_IMAGE) {
-    html = setMetaByProperty(html, 'og:image:width', '1200')
-    html = setMetaByProperty(html, 'og:image:height', '630')
-    html = setMetaByProperty(html, 'og:image:type', 'image/jpeg')
-  } else {
-    html = html.replace(/<meta\s+property="og:image:(?:width|height|type)"[^>]*>\s*/gi, '')
-  }
-  html = setMetaByName(html, 'twitter:card', 'summary_large_image')
-  html = setMetaByName(html, 'twitter:title', meta.title)
-  html = setMetaByName(html, 'twitter:description', meta.description)
-  html = setMetaByName(html, 'twitter:image', image)
-  html = setLink(html, 'canonical', url)
-  html = setLink(html, 'alternate', url, 'hreflang="fr-FR"')
-  html = setLink(html, 'alternate', `${SITE_URL}/`, 'hreflang="x-default"')
-  html = html.replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi, '')
-  const blocks = [
-    { id: 'ld-breadcrumb', data: breadcrumbJsonLd(route) },
-    ...(meta.jsonLd ?? []),
-  ]
-  const scripts = blocks
-    .map(
-      (block) =>
-        `    <script type="application/ld+json" id="${block.id}">${JSON.stringify(block.data)}</script>`,
-    )
-    .join('\n')
-  html = html.replace('</head>', `${scripts}\n  </head>`)
-  return html
-}
 
 function mapType(apimoType: unknown): FeaturedProperty['type'] {
   const n = typeof apimoType === 'number' ? apimoType : Number(apimoType)
@@ -148,7 +74,7 @@ function slimListing(raw: Record<string, unknown>): ListingHeadInput | null {
   const surface = typeof areaObj?.value === 'number' ? areaObj.value : Number(areaObj?.value) || 0
   const city = cityObj?.name ?? ''
   const reference = typeof raw.reference === 'string' ? raw.reference : String(id)
-  const pictures = Array.isArray(raw.pictures) ? (raw.pictures as Array<{ url?: string; rank?: number }>) : []
+  const pictures = Array.isArray(raw.pictures) ? (raw.pictures as OgPicture[]) : []
   const images = [...pictures]
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
     .map((p) => p.url)
@@ -162,6 +88,8 @@ function slimListing(raw: Record<string, unknown>): ListingHeadInput | null {
   }
   const isRental = priceObj?.period !== null && priceObj?.period !== undefined
   return {
+    id: String(id),
+    ogPictures: pictures,
     slug: reference,
     title: city && surface ? `${city} ${surface}m²` : reference,
     city,
@@ -210,77 +138,6 @@ export async function fetchListingsForHead(): Promise<Map<string, ListingHeadInp
   return map
 }
 
-function staticHead(route: string): RouteHead | null {
-  const pages: Record<string, RouteHead> = {
-    '/': {
-      title: 'Hamac — Immobilier premium | Ouest Lyonnais',
-      description: DEFAULT_DESCRIPTION,
-      jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
-    },
-    '/acheter': {
-      title: `Biens à vendre — ${SUFFIX}`,
-      description:
-        "Explorez nos biens disponibles dans l'Ouest Lyonnais : maisons, appartements et terrains sélectionnés par Hamac.",
-    },
-    '/louer': {
-      title: `Biens à louer — ${SUFFIX}`,
-      description:
-        "Explorez nos biens à louer dans l'Ouest Lyonnais : appartements, maisons et opportunités sélectionnés par Hamac.",
-    },
-    '/vendre': {
-      title: `Vendre avec Hamac — ${SUFFIX}`,
-      description: 'De l’estimation à la signature, Hamac vous accompagne pour vendre votre bien dans l’Ouest lyonnais.',
-    },
-    '/estimation': {
-      title: `Estimation immobilière gratuite — ${SUFFIX}`,
-      description: 'Obtenez une estimation précise et argumentée de votre bien sous 24 h avec un expert Hamac de votre quartier.',
-    },
-    '/off-market': {
-      title: `Off-market immobilier — ${SUFFIX}`,
-      description: 'Accédez aux biens off-market de l’Ouest lyonnais avant leur publication et rejoignez le club privé Hamac.',
-    },
-    '/quartiers': {
-      title: `Communes de l’Ouest Lyonnais — ${SUFFIX}`,
-      description: 'Découvrez nos communes, leurs atouts et les biens disponibles dans chaque secteur de l’Ouest lyonnais.',
-    },
-    '/agence': {
-      title: `L'agence Hamac — ${SUFFIX}`,
-      description: "Découvrez l'histoire, l'équipe et la vision de Hamac, agence immobilière spécialisée dans l’Ouest lyonnais.",
-      jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
-    },
-    '/contact': {
-      title: `Contact — ${SUFFIX}`,
-      description: 'Rencontrez l’équipe Hamac à Sainte-Foy-lès-Lyon ou envoyez-nous votre demande. Réponse sous 24 h.',
-      jsonLd: [{ id: 'ld-agent', data: realEstateAgentJsonLd() }],
-    },
-    '/investir': {
-      title: `Investir dans l’immobilier — ${SUFFIX}`,
-      description:
-        "Hamac accompagne vos projets d'investissement immobilier dans l'Ouest lyonnais avec une sélection locale et une lecture patrimoniale.",
-    },
-    '/blog': {
-      title: `Journal Hamac — ${SUFFIX}`,
-      description: "Analyses du marché, guides pratiques et vie locale dans l'Ouest Lyonnais.",
-    },
-    '/mentions-legales': {
-      title: `Mentions légales — ${SUFFIX}`,
-      description: 'Mentions légales du site Hamac Investissements & Patrimoine, agence immobilière à Sainte-Foy-lès-Lyon.',
-      robots: 'noindex,follow',
-    },
-    '/honoraires': {
-      title: `Honoraires — ${SUFFIX}`,
-      description:
-        'Grille d’honoraires Hamac : transaction, location, gestion courte durée et investissement clé en main.',
-      robots: 'noindex,follow',
-    },
-    '/confidentialite': {
-      title: `Politique de confidentialité — ${SUFFIX}`,
-      description: 'Données personnelles, cookies et droits des utilisateurs sur le site Hamac Investissements & Patrimoine.',
-      robots: 'noindex,follow',
-    },
-  }
-  return pages[route] ?? null
-}
 
 export function headForRoute(route: string, listings: Map<string, ListingHeadInput>): RouteHead {
   const staticMeta = staticHead(route)
@@ -325,7 +182,13 @@ export function headForRoute(route: string, listings: Map<string, ListingHeadInp
       title: listingDocumentTitle(listing),
       description: listingMetaDescription(listing),
       ogType: 'article',
-      ogImage: listing.images[0],
+      // Jamais la photo Apimo brute (trop lourde, domaine en « Disallow: / ») : l'image générée
+      // au build, sinon l'image Hamac par défaut.
+      ogImage: listing.ogImage?.url ?? DEFAULT_OG_IMAGE,
+      ogImageSize: listing.ogImage
+        ? { width: listing.ogImage.width, height: listing.ogImage.height, type: 'image/jpeg' }
+        : undefined,
+      ogImageAlt: listingDocumentTitle(listing),
       jsonLd: [{ id: 'ld-listing', data: listingJsonLd(property, pathname) }],
     }
   }
@@ -346,10 +209,56 @@ export function headForRoute(route: string, listings: Map<string, ListingHeadInp
   }
 }
 
-export const notFoundHead: RouteHead = {
-  title: `Page introuvable — ${SUFFIX}`,
-  description: 'Cette page n’existe pas. Revenez au catalogue des biens Hamac dans l’Ouest lyonnais.',
-  robots: 'noindex,follow',
+
+/**
+ * Génère une image de partage 1200×630 par bien (photo principale, puis les suivantes en cas d'échec)
+ * dans dist/images/og/listings/, et l'attache à chaque fiche. Écrit aussi un rapport JSON
+ * (dist/og-images-report.json) relu par scripts/check-og-meta.ts.
+ */
+/** File d'exécution séquentielle (un seul téléchargement de reprise à la fois). */
+const retryQueue = {
+  tail: Promise.resolve() as Promise<unknown>,
+  run<T>(task: () => Promise<T>): Promise<T> {
+    const next = this.tail.then(task, task)
+    this.tail = next.catch(() => undefined)
+    return next
+  },
+}
+
+export async function prepareListingOgImages(listings: Map<string, ListingHeadInput>) {
+  const unique = [...new Map([...listings.values()].map((listing) => [listing.id, listing])).values()]
+  if (unique.length === 0) return []
+  const outDir = path.join(DIST, LISTING_OG_SUBDIR)
+  const started = Date.now()
+  const results = await mapWithConcurrency(unique, 4, async (listing) => {
+    let result: OgImageResult = await generateListingOgImage(listing.id, listing.ogPictures, outDir)
+    if (needsMainPhotoRetry(result)) {
+      // media.apimo.pro ralentit sous charge : on retente seul (file séquentielle) avant
+      // d'accepter une photo secondaire ou l'image par défaut.
+      const retry = await retryQueue.run(() => generateListingOgImage(listing.id, listing.ogPictures, outDir))
+      const better = retry.ok && (!result.ok || retry.sourceIndex < result.sourceIndex)
+      if (better) {
+        if (result.ok) await rm(path.join(outDir, result.file), { force: true })
+        console.log(`Image OG ${listing.id} : photo ${retry.sourceIndex + 1} récupérée au second essai`)
+        result = retry
+      }
+    }
+    listing.ogImage = result.ok
+      ? { url: `${SERVED_SITE_URL}/${LISTING_OG_SUBDIR}/${result.file}`, width: OG_WIDTH, height: OG_HEIGHT }
+      : null
+    if (!result.ok) {
+      console.warn(`Image OG ${listing.id} : image Hamac par défaut — ${result.rejected.join(' ; ')}`)
+    } else if (result.rejected.length) {
+      console.warn(`Image OG ${listing.id} : photo ${result.sourceIndex + 1} utilisée — ${result.rejected.join(' ; ')}`)
+    }
+    return { id: listing.id, ...result }
+  })
+  const ok = results.filter((r) => r.ok).length
+  console.log(
+    `Images OG : ${ok}/${results.length} générées, ${results.length - ok} image(s) par défaut (${Math.round((Date.now() - started) / 1000)} s)`,
+  )
+  await writeFile(path.join(DIST, 'og-images-report.json'), JSON.stringify(results, null, 2))
+  return results
 }
 
 export async function injectRouteHeads(routes: Iterable<string>, listings: Map<string, ListingHeadInput>) {

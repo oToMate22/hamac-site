@@ -28,6 +28,7 @@ import { formatCommuneLabel, lookupCommuneCenter, matchesCitySearch, distanceKm 
 import { useFrenchCommuneSearch } from '../hooks/useFrenchCommuneSearch'
 import { usePageMeta } from '../utils/seo'
 import { fetchCatalogProperties, CatalogLoadError, type FeaturedProperty } from '../services/apimo'
+import { useSsrData } from '../ssr/SsrData'
 import { type PropertySort } from '../hooks/useProperties'
 import type { MapViewState } from '../components/PropertyMap'
 const PropertyMap = lazy(() => import('../components/PropertyMap').then((mod) => ({ default: mod.PropertyMap })))
@@ -292,7 +293,40 @@ function FilterPills({
   )
 }
 
+/** Numéro de page du catalogue (?page=N), borné. */
+function catalogPageFrom(searchParams: URLSearchParams) {
+  const value = Number(searchParams.get('page'))
+  return Number.isInteger(value) && value > 1 ? Math.min(value, 100) : 1
+}
+
+/** Carte de liste à partir d'un bien Apimo (au niveau module : utilisée dès l'état initial). */
+const mapFeaturedToProperty = (p: FeaturedProperty): Property => {
+  const fallbackImage = '/fr/images/Biens/maison-homepage.webp'
+  return {
+    slug: p.slug,
+    title: p.title,
+    city: p.city,
+    type: p.type,
+    price: p.price,
+    surface: p.surface,
+    rooms: p.rooms,
+    bedrooms: p.bedrooms,
+    badge: p.badge ?? 'Nouveau',
+    reference: p.slug,
+    description: '',
+    heating: '',
+    exposure: '',
+    year: 0,
+    dpe: '',
+    lat: p.lat ?? Number.NaN,
+    lng: p.lng ?? Number.NaN,
+    amenities: p.amenities,
+    images: p.images.length ? p.images : [fallbackImage],
+  }
+}
+
 export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sale' }: PropertyListingPageProps) {
+  const catalogPage = catalogPageFrom(searchParams)
   usePageMeta({
     title:
       mode === 'rent'
@@ -302,9 +336,13 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       mode === 'rent'
         ? "Explorez nos biens à louer dans l'Ouest Lyonnais : appartements, maisons et opportunités sélectionnés par Hamac."
         : "Explorez nos biens disponibles dans l'Ouest Lyonnais : maisons, appartements et terrains sélectionnés par Hamac.",
+    // Pages suivantes (?page=2…) : suivies par les robots, non indexées (doublons de la première).
+    robots: catalogPage > 1 ? 'noindex,follow' : undefined,
   })
 
-  const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE)
+  // ?page=N affiche directement N × 32 biens : le bouton « Voir les autres » est aussi un vrai lien,
+  // pour que les robots sans JavaScript atteignent tout le catalogue.
+  const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE * catalogPage)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [hoveredPropertySlug, setHoveredPropertySlug] = useState<string | null>(null)
   const [cityFilterOpen, setCityFilterOpen] = useState(false)
@@ -422,7 +460,12 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
 
   const surfaceValue = surface !== 'all' ? Number(surface) : 0
 
-  const [apiProperties, setApiProperties] = useState<Property[] | null>(null)
+  // Rendu serveur : le catalogue est fourni d'emblée (HTML complet sans JavaScript).
+  // Navigateur : contexte vide, chargement inchangé.
+  const ssrData = useSsrData()
+  const [apiProperties, setApiProperties] = useState<Property[] | null>(() =>
+    ssrData.catalog ? ssrData.catalog.map(mapFeaturedToProperty) : null,
+  )
   const [apiError, setApiError] = useState<'quota' | 'timeout' | 'network' | null>(null)
   const [cacheServedAt, setCacheServedAt] = useState<number | undefined>(undefined)
   const [catalogEpoch, setCatalogEpoch] = useState(0)
@@ -453,31 +496,6 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
       .trim()
 
   const toTokens = (value: string) => normalize(value).split(' ').filter(Boolean)
-
-  const mapFeaturedToProperty = (p: FeaturedProperty): Property => {
-    const fallbackImage = '/fr/images/Biens/maison-homepage.webp'
-    return {
-      slug: p.slug,
-      title: p.title,
-      city: p.city,
-      type: p.type,
-      price: p.price,
-      surface: p.surface,
-      rooms: p.rooms,
-      bedrooms: p.bedrooms,
-      badge: p.badge ?? 'Nouveau',
-      reference: p.slug,
-      description: '',
-      heating: '',
-      exposure: '',
-      year: 0,
-      dpe: '',
-      lat: p.lat ?? Number.NaN,
-      lng: p.lng ?? Number.NaN,
-      amenities: p.amenities,
-      images: p.images.length ? p.images : [fallbackImage],
-    }
-  }
 
   const reloadProperties = () => setCatalogEpoch((value) => value + 1)
 
@@ -608,10 +626,15 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
     setSearchParams(next, { replace: true })
   }, [mode, searchParams, setSearchParams])
 
-  useEffect(
-    () => setVisibleCount(CATALOG_PAGE_SIZE),
-    [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone],
-  )
+  // Au premier rendu, on garde la page demandée (?page=N) ; ensuite, tout changement de filtre repart de 32.
+  const keepRequestedPage = useRef(true)
+  useEffect(() => {
+    if (keepRequestedPage.current) {
+      keepRequestedPage.current = false
+      return
+    }
+    setVisibleCount(CATALOG_PAGE_SIZE)
+  }, [type, budgetMaxForFilter, budgetMinValue, surface, rooms, sort, q, radiusKm, visibleZone])
   useEffect(() => {
     // Ne pas coller « Écully,Tassin… » dans le champ Autre commune
     if (selectedCities.length === 1) setCityFilterQuery(selectedCities[0])
@@ -694,6 +717,16 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
   const hasMoreProperties = listedProperties.length > visibleCount
   const loadMoreProperties = () => {
     setVisibleCount((count) => Math.min(count + CATALOG_PAGE_SIZE, listedProperties.length))
+  }
+  const nextPageTo = (() => {
+    const params = new URLSearchParams(searchParams)
+    params.set('page', String(Math.floor(visibleCount / CATALOG_PAGE_SIZE) + 1))
+    return `${mode === 'rent' ? '/louer' : '/acheter'}?${params.toString()}`
+  })()
+  const onLoadMoreClick = (event: { preventDefault(): void }) => {
+    // Navigateur : même comportement qu'avant (pas de changement d'URL) ; le lien sert aux robots.
+    event.preventDefault()
+    loadMoreProperties()
   }
 
   const handleMapViewChange = useCallback((view: MapViewState) => {
@@ -1631,9 +1664,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                       ))}
                       {hasMoreProperties ? (
                         <div className="catalog-load-more">
-                          <button type="button" className="is-primary" onClick={loadMoreProperties}>
+                          <Link to={nextPageTo} className="is-primary catalog-load-more__link" onClick={onLoadMoreClick}>
                             Voir les {remainingProperties} autres ({visibleProperties.length} affichés)
-                          </button>
+                          </Link>
                         </div>
                       ) : null}
                     </>
@@ -1718,9 +1751,9 @@ export function PropertyListingPage({ searchParams, setSearchParams, mode = 'sal
                 </div>
                 {hasMoreProperties ? (
                   <div className="catalog-load-more">
-                    <button type="button" className="is-primary" onClick={loadMoreProperties}>
+                    <Link to={nextPageTo} className="is-primary catalog-load-more__link" onClick={onLoadMoreClick}>
                       Voir les {remainingProperties} autres ({visibleProperties.length} affichés)
-                    </button>
+                    </Link>
                   </div>
                 ) : null}
               </>

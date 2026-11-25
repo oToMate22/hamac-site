@@ -1144,7 +1144,8 @@ a {
   text-align: center;
 }
 
-.catalog-load-more button {
+.catalog-load-more button,
+.catalog-load-more__link {
   min-width: min(100%, 16rem);
   padding: 0.78rem 1.2rem;
   border: 0;
@@ -1156,11 +1157,21 @@ a {
   cursor: pointer;
 }
 
-.catalog-load-more button:hover {
+/* Lien « Voir les autres » (crawlable) : rendu identique à l'ancien bouton. */
+.catalog-load-more__link {
+  display: inline-block;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
+}
+
+.catalog-load-more button:hover,
+.catalog-load-more__link:hover {
   filter: brightness(1.06);
 }
 
-.catalog-load-more button:focus-visible {
+.catalog-load-more button:focus-visible,
+.catalog-load-more__link:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
 }

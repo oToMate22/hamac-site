@@ -25,6 +25,7 @@ import { usePageMeta } from '../utils/seo'
 import { bindHorizontalPhotoWheel } from '../lib/photoSwipe'
 import { imageApimo, srcsetApimo } from '../utils/images'
 import { PagePlaceholder } from './PagePlaceholder'
+import { useSsrData } from '../ssr/SsrData'
 
 const fallbackMainImage = '/fr/images/Biens/maison-homepage.webp'
 
@@ -175,6 +176,7 @@ function parseDescriptionBlocks(rawDescription: string): DescriptionBlock[] {
 export function PropertyDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const ssrStatus = useSsrData().listingStatus
   const { slug } = useParams()
   const propertyId = slug ?? ''
   const isRentalRoute =
@@ -455,6 +457,9 @@ export function PropertyDetailPage() {
     }
   }
 
+  // Rendu serveur d'une fiche retirée (410) ou inconnue (404) : jamais l'écran de chargement.
+  if (ssrStatus === 'withdrawn') return <PagePlaceholder title="Ce bien n’est plus disponible" />
+  if (ssrStatus === 'unknown') return <PagePlaceholder title="Bien introuvable" />
   if (isRedirecting || loading) return <PagePlaceholder title="Chargement..." />
   if (error) return <PagePlaceholder title="Erreur de chargement" />
   if (!property) return <PagePlaceholder title="Bien introuvable" />

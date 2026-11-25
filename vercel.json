@@ -8,14 +8,64 @@
       "/es/:page"
     ]
   },
+  "regions": [
+    "dub1"
+  ],
+  "functions": {
+    "api/listing.js": {
+      "maxDuration": 15,
+      "memory": 1024
+    },
+    "api/catalog.js": {
+      "maxDuration": 15,
+      "memory": 1024
+    },
+    "api/sitemap.js": {
+      "maxDuration": 15,
+      "memory": 512
+    },
+    "api/revalidate.js": {
+      "maxDuration": 15,
+      "memory": 512
+    },
+    "api/og-image.js": {
+      "maxDuration": 15,
+      "memory": 1024
+    },
+    "api/og-render.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
       ]
     }
   ],
@@ -270,11 +320,27 @@
     },
     {
       "source": "/fr/acheter/:id",
-      "destination": "/fr/200.html"
+      "destination": "/api/listing?kind=acheter&id=:id"
     },
     {
       "source": "/fr/louer/:id",
-      "destination": "/fr/200.html"
+      "destination": "/api/listing?kind=louer&id=:id"
+    },
+    {
+      "source": "/fr/acheter",
+      "destination": "/api/catalog?kind=acheter"
+    },
+    {
+      "source": "/fr/louer",
+      "destination": "/api/catalog?kind=louer"
+    },
+    {
+      "source": "/fr/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/fr/og/listings/:file",
+      "destination": "/api/og-image?file=:file"
     }
   ]
 }

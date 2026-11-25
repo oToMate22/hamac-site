@@ -3,7 +3,14 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import puppeteer from 'puppeteer'
 import { collectRoutes } from './collect-routes'
-import { fetchListingsForHead, injectRouteHeads } from './inject-route-heads'
+import {
+  applyOgImageTags,
+  fetchListingsForHead,
+  headForRoute,
+  injectRouteHeads,
+  prepareListingOgImages,
+} from './inject-route-heads'
+import { DYNAMIC_LISTINGS, isDynamicRoute } from './dynamic-mode'
 import { loadEnvFiles } from './load-env'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -79,7 +86,8 @@ async function renderRoute(browser: puppeteer.Browser, route: string) {
       )
       await page.waitForSelector('.detail-gallery__main img', { timeout: 15000 }).catch(() => undefined)
     }
-    const html = await page.content()
+    // Le client a pu réécrire og:image avec la photo Apimo brute : on réimpose l'image du build.
+    const html = applyOgImageTags(await page.content(), route, headForRoute(route, listings))
     const { mkdir, writeFile } = await import('node:fs/promises')
     const dir = outputDir(route)
     await mkdir(dir, { recursive: true })
@@ -89,8 +97,12 @@ async function renderRoute(browser: puppeteer.Browser, route: string) {
   }
 }
 
-const routes = await collectRoutes()
-const listings = await fetchListingsForHead()
+const allRoutes = await collectRoutes()
+// Mode dynamique : fiches et catalogues sont rendus par les fonctions Vercel (server/pages.tsx).
+const routes = DYNAMIC_LISTINGS ? new Set([...allRoutes].filter((route) => !isDynamicRoute(route))) : allRoutes
+const listings = DYNAMIC_LISTINGS ? new Map() : await fetchListingsForHead()
+if (!DYNAMIC_LISTINGS) await prepareListingOgImages(listings)
+else console.log(`Mode dynamique : ${allRoutes.size - routes.size} routes catalogue/fiches servies par les fonctions`)
 await injectRouteHeads(routes, listings)
 
 if (process.env.SKIP_PRERENDER === '1') {

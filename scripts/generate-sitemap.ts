@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SITE_ORIGIN, SITE_URL } from '../src/config/site'
 import { collectRoutes } from './collect-routes'
+import { DYNAMIC_LISTINGS } from './dynamic-mode'
 import { loadEnvFiles } from './load-env'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -40,9 +41,14 @@ function hostnameOf(value: string) {
 
 const productionHost = hostnameOf(process.env.VERCEL_PROJECT_PRODUCTION_URL ?? '')
 const siteHost = hostnameOf(SITE_ORIGIN)
+// Indexable seulement pour un déploiement de PRODUCTION Vercel : une Preview a le même
+// VERCEL_PROJECT_PRODUCTION_URL, elle ne doit pourtant jamais être indexée.
 const indexable =
   process.env.INDEXABLE === '1' ||
-  (process.env.INDEXABLE !== '0' && productionHost !== '' && productionHost === siteHost)
+  (process.env.INDEXABLE !== '0' &&
+    process.env.VERCEL_ENV === 'production' &&
+    productionHost !== '' &&
+    productionHost === siteHost)
 const robots = `User-agent: *
 ${indexable ? 'Allow: /' : 'Disallow: /'}
 
@@ -50,9 +56,14 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `
 
 await writeFile(path.join(DIST, 'robots.txt'), robots)
-await mkdir(path.join(DIST, BASE_PATH), { recursive: true })
-await writeFile(path.join(DIST, BASE_PATH, 'sitemap.xml'), xml)
-console.log(`sitemap : ${routes.size} URLs → ${SITE_URL}/sitemap.xml`)
+if (DYNAMIC_LISTINGS) {
+  // Servi par la fonction api/sitemap (toujours cohérent avec Apimo) : pas de fichier statique.
+  console.log(`sitemap : dynamique → ${SITE_URL}/sitemap.xml (api/sitemap)`)
+} else {
+  await mkdir(path.join(DIST, BASE_PATH), { recursive: true })
+  await writeFile(path.join(DIST, BASE_PATH, 'sitemap.xml'), xml)
+  console.log(`sitemap : ${routes.size} URLs → ${SITE_URL}/sitemap.xml`)
+}
 console.log(
   `robots.txt : ${indexable ? 'Allow: /' : 'Disallow: /'} (INDEXABLE=${process.env.INDEXABLE ?? 'unset'}, production=${productionHost || 'local'})`,
 )

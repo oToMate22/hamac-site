@@ -30,3 +30,19 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/dashboard-metrics/index.ts"
 
+
+# Synchronisation du catalogue : appelée par pg_cron avec la clé de service (vérifiée dans la fonction,
+# la clé anon publique est refusée). Voir docs/deploiement-catalogue-dynamique.md.
+[functions.catalog-sync]
+enabled = true
+verify_jwt = true
+import_map = "./functions/catalog-sync/deno.json"
+entrypoint = "./functions/catalog-sync/index.ts"
+
+# Flux en lecture seule pour les fonctions Vercel : jeton dédié LISTING_FEED_TOKEN (pas de JWT,
+# jamais la clé de service côté Vercel).
+[functions.listing-feed]
+enabled = true
+verify_jwt = false
+import_map = "./functions/listing-feed/deno.json"
+entrypoint = "./functions/listing-feed/index.ts"
