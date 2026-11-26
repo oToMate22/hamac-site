@@ -288,7 +288,25 @@ const deps: SyncDeps = {
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
   if (!isServiceCaller(req)) return json({ error: "Unauthorized" }, 401)
-  const wait = new URL(req.url).searchParams.get("wait") === "1"
+  const params = new URL(req.url).searchParams
+  // Test du canal d'alerte : un e-mail à ALERT_EMAIL_TO uniquement (jamais aux agents),
+  // sans lecture d'Apimo ni écriture en base.
+  if (params.get("test-alert") === "1") {
+    try {
+      await deps.alert(
+        "[Hamac] Test du canal d'alerte du catalogue",
+        [
+          "Message de test envoyé par catalog-sync (aucune panne en cours).",
+          `Destinataire configuré : ALERT_EMAIL_TO (${ALERT_EMAIL_TO.split(",").length} adresse(s)).`,
+          "Les vraies alertes partent après 60 min sans synchronisation fiable, au plus une fois toutes les 6 h.",
+        ].join("\n"),
+      )
+      return json({ alert: "sent", recipients: ALERT_EMAIL_TO.split(",").length })
+    } catch (error) {
+      return json({ alert: "failed", error: (error as Error).message }, 502)
+    }
+  }
+  const wait = params.get("wait") === "1"
   const task = runSync(deps).catch((error) => {
     console.error("[catalog-sync] run :", error)
     return null

@@ -234,19 +234,42 @@ select started_at, outcome, http_status, reason from catalog_sync_runs
 
 ## 12. Observation de 24 h (en cours depuis le 26/11/2026 à 00:59 UTC)
 
-- **État :** job `hamac-catalog-sync` toutes les 10 minutes, mode `observe` (instantanés et journal uniquement, aucun appel vers Vercel).
-- **Suivi :** `./scripts/catalog-health.sh` (24 h par défaut, ou `./scripts/catalog-health.sh 6`), en lecture seule.
-- **Appels Apimo réels :** un run dont la `source` vaut `miss` a relu Apimo, soit 4 appels aujourd'hui (3 statuts, dont 2 pages pour le statut 1). Avec `memory` ou `persistent`, il a utilisé le cache partagé avec les visiteurs.
-- **Critères de sortie** (à 24 h) :
-  - ≥ 95 % de runs `ok` ;
-  - 0 erreur 429 ;
-  - 0 retrait injustifié ;
-  - écart nul entre biens servis et `total_items` d'Apimo ;
-  - au moins un changement réel détecté ;
-  - aucune alerte.
-- ⚠️ `ALERT_EMAIL_TO` n'est pas encore défini : en cas de panne prolongée, l'alerte e-mail n'est pas envoyée (elle reste journalisée). Il faut indiquer l'adresse d'OTOMATE.
-- **Arrêt immédiat :**
+**Ce qui est installé :**
+- Supabase : historique des migrations réparé, migration `20261126090000` appliquée, `listing-feed`, `catalog-sync` et `apimo-proxy` (v47, avec `sync_meta`) déployées.
+- Secrets : `LISTING_FEED_TOKEN` (jetons Preview et production), `SYNC_HMAC_SECRET`, `SITE_ORIGIN` (Preview), `VERCEL_PROTECTION_BYPASS`, `ALERT_EMAIL_TO`.
+- Synchronisation initiale vers la Preview : 125 biens, 125 images stockées, 0 échec. Le mode actif n'a été utilisé que le temps de cette synchronisation initiale.
+- Observation : job `hamac-catalog-sync` toutes les 10 minutes, mode `observe`. Il enregistre les instantanés et le journal, **sans générer d'image ni appeler Vercel** : `og_generated` et `revalidated_tags` restent à 0.
+
+**Le suivi est indépendant de Claude Code.** Le planificateur `pg_cron` de Supabase déclenche les cycles. Chaque run est journalisé dans `catalog_sync_runs`. Les alertes partent par Resend vers `ALERT_EMAIL_TO` (OTOMATE uniquement, jamais vers `LEAD_NOTIFY_TO`). Aucun processus local n'est nécessaire.
+
+**Consulter le rapport (à partir du 27/11/2026 à 01:00 UTC, soit 02:00 à Paris) :**
+
+```bash
+cd ~/hamac-site && ./scripts/catalog-health.sh 24
+```
+
+La commande est en lecture seule et contrôle d'abord que la cible est bien `lxkhozdshbpdjnanbnzi`. Consultée plus tôt, la fenêtre de 24 h inclut les 11 runs de la synchronisation initiale (mode actif, entre 00:54 et 00:55 UTC). Pour les exclure, on peut utiliser par exemple `./scripts/catalog-health.sh 20`.
+
+**Appels Apimo réels :** un run dont la `source` vaut `miss` a relu Apimo, soit 4 appels aujourd'hui (3 statuts, dont 2 pages pour le statut 1). Avec `memory` ou `persistent`, il a utilisé le cache partagé avec les visiteurs, sans appel. Premiers cycles : 01:00 en `persistent` (0 appel), 01:10 en `miss` (4 appels).
+
+**Contrôles réalisés au démarrage :**
+- Alerte de test envoyée à `ALERT_EMAIL_TO` (`?test-alert=1`, réservé à la clé de service, sans lecture d'Apimo ni écriture).
+- Verrou en production : 1re prise acceptée, 2e refusée, libération correcte.
+- État : aucun backoff, 0 échec.
+- Le backoff sur 429 a été validé sur la pile Supabase réelle en local (Deno et Postgres) et par les tests unitaires.
+
+**Critères de sortie (à 24 h) :**
+- ≥ 95 % de runs `ok` ;
+- `quota_429_24h = 0` ;
+- `withdrawn_24h = 0`, ou chaque retrait confirmé dans Apimo ;
+- `servis = apimo` ;
+- au moins un changement réel détecté ;
+- aucune alerte reçue.
+
+**Arrêt immédiat :**
 
 ```sql
 select public.catalog_sync_configure(p_enabled := false);
 ```
+
+**Retour arrière d'`apimo-proxy` :** la version v46 téléchargée est sauvegardée dans `supabase/.temp/apimo-proxy-backup-v46/`. Le code de la v46 est aussi celui de `main` (`git show a6e7853:supabase/functions/apimo-proxy/index.ts`).
