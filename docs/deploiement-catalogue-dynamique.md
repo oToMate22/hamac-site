@@ -231,3 +231,22 @@ select started_at, outcome, http_status, reason from catalog_sync_runs
 - **Logs :** Deployments → Functions → `api/listing` (statuts 503 et durées).
 
 **Supabase** (Dashboard → Usage) : invocations des fonctions Edge (`catalog-sync`, `listing-feed`, `apimo-proxy`), stockage du bucket `og-listings`, egress. Logs : Edge Functions → `catalog-sync`.
+
+## 12. Observation de 24 h (en cours depuis le 26/11/2026 à 00:59 UTC)
+
+- **État :** job `hamac-catalog-sync` toutes les 10 minutes, mode `observe` (instantanés et journal uniquement, aucun appel vers Vercel).
+- **Suivi :** `./scripts/catalog-health.sh` (24 h par défaut, ou `./scripts/catalog-health.sh 6`), en lecture seule.
+- **Appels Apimo réels :** un run dont la `source` vaut `miss` a relu Apimo, soit 4 appels aujourd'hui (3 statuts, dont 2 pages pour le statut 1). Avec `memory` ou `persistent`, il a utilisé le cache partagé avec les visiteurs.
+- **Critères de sortie** (à 24 h) :
+  - ≥ 95 % de runs `ok` ;
+  - 0 erreur 429 ;
+  - 0 retrait injustifié ;
+  - écart nul entre biens servis et `total_items` d'Apimo ;
+  - au moins un changement réel détecté ;
+  - aucune alerte.
+- ⚠️ `ALERT_EMAIL_TO` n'est pas encore défini : en cas de panne prolongée, l'alerte e-mail n'est pas envoyée (elle reste journalisée). Il faut indiquer l'adresse d'OTOMATE.
+- **Arrêt immédiat :**
+
+```sql
+select public.catalog_sync_configure(p_enabled := false);
+```
