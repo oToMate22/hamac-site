@@ -15,7 +15,8 @@
     "simulate:catalog": "tsx scripts/simulate-catalog.ts",
     "check:deployment": "tsx scripts/check-deployment.ts",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:apimo-proxy-isolated": "${DENO:-deno} run --allow-env --allow-read=. --config scripts/apimo-proxy-isolated.deno.json scripts/apimo-proxy-isolated.test.ts"
   },
   "devDependencies": {
     "@sparticuz/chromium": "^153.0.0",

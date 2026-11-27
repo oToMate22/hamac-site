@@ -1,4 +1,7 @@
-// Contrôle en ligne d'apimo-proxy, tel qu'un visiteur l'appelle (clé anon) : lecture seule.
+// Contrôle en ligne d'apimo-proxy, tel qu'un visiteur l'appelle (clé anon) : lecture seule STRICTE.
+// N'envoie que les deux appels que fait le site (POST { route: 'properties' } et GET …/properties),
+// sans aucun paramètre : ni refresh, ni statut, ni route supprimée. Ces manipulations sont testées
+// uniquement en isolé (npm run test:apimo-proxy-isolated), jamais contre la production.
 // Usage : node scripts/check-apimo-proxy-live.mjs   (lit VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local)
 // N'affiche que des compteurs et des noms de champs, jamais une valeur.
 import { readFileSync } from 'node:fs'
@@ -34,7 +37,6 @@ function keysOf(value, out = new Set()) {
 
 const variants = [
   ['POST properties', { method: 'POST', body: JSON.stringify({ route: 'properties' }) }, ''],
-  ['POST properties + statut 30 + refresh', { method: 'POST', body: JSON.stringify({ route: 'properties', status: '30', refresh: true }) }, '?refresh=1&status=30'],
   ['GET properties', { method: 'GET' }, '/properties'],
 ]
 for (const [label, init, suffix] of variants) {
@@ -45,10 +47,8 @@ for (const [label, init, suffix] of variants) {
     break
   }
   const extraRoot = Object.keys(body).filter((k) => !ALLOWED_ROOT.has(k))
-  // Version non corrigée détectée : ne PAS envoyer refresh/status, qui videraient puis rempliraient
-  // le cache public avec des biens non publiés.
   if (label === 'POST properties' && (extraRoot.length || body.status_filter !== '1,22,29')) {
-    fail('version non corrigée en ligne : contrôles suivants annulés (aucun refresh ni statut envoyé)')
+    fail('version non corrigée en ligne')
     process.exit(1)
   }
   if (extraRoot.length) fail(`${label} : champs racine inattendus ${extraRoot.join(', ')}`)
@@ -57,15 +57,9 @@ for (const [label, init, suffix] of variants) {
   if (leaked.length) fail(`${label} : champs interdits ${leaked.join(', ')}`)
   const statuses = new Set(body.properties.map((p) => String(p.status)))
   if ([...statuses].some((s) => !['1', '22', '29'].includes(s))) fail(`${label} : statut non publié servi`)
-  const coarse = body.properties.filter((p) => !p.publish_address && typeof p.latitude === 'number' && String(p.latitude).split('.')[1]?.length > 3)
+  const coarse = body.properties.filter((p) => !p.publish_address && [p.latitude, p.longitude].some((v) => typeof v === 'number' && String(v).split('.')[1]?.length > 2))
   if (coarse.length) fail(`${label} : ${coarse.length} coordonnées exactes sans adresse publiée`)
   console.log(`ok  ${label} : ${body.properties.length} biens, ${keys.size} champs distincts, X-Cache ${res.headers.get('x-cache')}`)
-}
-
-for (const route of ['agencies', 'properties/probe', 'properties/87634540']) {
-  const res = await fetch(base, { method: 'POST', headers, body: JSON.stringify({ route }) })
-  if (res.status !== 404) fail(`route ${route} : HTTP ${res.status} (404 attendu)`)
-  else console.log(`ok  route ${route} refusée (404)`)
 }
 
 if (failures) process.exit(1)

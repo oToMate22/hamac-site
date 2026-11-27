@@ -185,7 +185,7 @@ await test('champs utiles conservés (prix, conseiller professionnel, photos pub
 await test('coordonnées : arrondies si l’adresse n’est pas publiée, exactes sinon, stables au second filtrage', () => {
   const hidden = sanitizeListing(fullListing())!
   const step = 10 ** -COARSE_COORDINATE_DECIMALS
-  check(hidden.latitude === 45.761 && hidden.longitude === 4.781, `arrondi ${hidden.latitude},${hidden.longitude}`)
+  check(hidden.latitude === 45.76 && hidden.longitude === 4.78, `arrondi ${hidden.latitude},${hidden.longitude}`)
   check(Math.abs((hidden.latitude as number) - 45.761234) <= step, 'arrondi proche')
   const shown = sanitizeListing(fullListing({ publish_address: true }))!
   check(shown.latitude === 45.761234 && !('address' in shown), 'exact sans adresse')

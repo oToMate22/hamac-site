@@ -16,8 +16,8 @@ type Rule =
 /** Statuts Apimo affichés par le site (1 = en cours, 22 = offre, 29 = autre). */
 export const PUBLISHED_STATUSES = ['1', '22', '29'] as const
 
-/** Coordonnées arrondies à 3 décimales (environ 110 m × 80 m) quand l'adresse n'est pas publiée. */
-export const COARSE_COORDINATE_DECIMALS = 3
+/** Coordonnées arrondies à 2 décimales (environ 1,1 km × 0,8 km à Lyon) quand l'adresse n'est pas publiée : la carte situe le quartier, pas le logement. */
+export const COARSE_COORDINATE_DECIMALS = 2
 
 const PUBLISHED_PICTURE = (item: Record<string, unknown>) => {
   const flag = item.internet
