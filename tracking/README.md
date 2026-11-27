@@ -2,7 +2,7 @@
 
 Le site envoie les événements avec gtag, vers le flux `VITE_GA_MEASUREMENT_ID`, uniquement après consentement analytics.
 Le conteneur `GTM-NH239JGT` n'est pas chargé : sa version publiée ne contient aucune balise, et l'ajouter à côté de gtag doublerait les pages vues.
-Les fichiers `gtm/` décrivent un import préparé. Ne pas le publier tant que le site envoie déjà par gtag.
+Les fichiers `gtm/` sont archivés et ne doivent pas être importés tant que le site envoie par gtag.
 
 ## Code (src/analytics/)
 
@@ -30,40 +30,30 @@ VITE_GA_MEASUREMENT_ID=G-KCHSLFNCBR
 
 À conserver dans `.env.local` et dans Vercel. Sans cet identifiant, rien n'est chargé. Ne pas ajouter `VITE_GTM_ID`.
 
-## Import dans GTM (container GTM-NH239JGT)
+## Fichiers `gtm/` (archivés)
 
-1. **Modèle** : Modèles → Modèles de balise → Nouveau → menu ⋮ → **Importer** → `gtm/otomate-consent-bridge.tpl` → Enregistrer.
-2. **Container** : Admin → Importer un conteneur → `gtm/hamac-container-socle.json` → espace de travail nouveau → **Fusionner** → Remplacer les éléments en conflit.
-3. **Balise Consent Bridge** (à créer à la main, une fois) :
-   type « OTOMATE – Consent Bridge », déclencheur **Consent Initialization - All Pages**, dossier `00 Core`.
-4. Vérifier sur chaque balise : Paramètres avancés → Consentement → **« Aucun consentement supplémentaire requis »**.
-5. Ne **pas** publier avant les réglages GA4 (mesure améliorée désactivée, détection automatique désactivée, données fournies par l'utilisateur désactivées, censure des données) et les tests bloquants ci-dessous.
+`gtm/hamac-container-socle.json` et `gtm/otomate-consent-bridge.tpl` décrivent un ancien projet d'import dans le conteneur GTM. Ils ne sont pas utilisés : le site n'injecte ni `gtm.js` ni conteneur. Ne pas les importer ni publier de balise GA4 dans GTM tant que le site envoie par gtag, sinon chaque événement partirait deux fois.
 
-Ce JSON et ce modèle n'ont pas encore été importés dans GTM : un écart de format reste possible (types de déclencheur `INIT`, clé `consentSettings`). En cas d'erreur à l'import, recréer l'élément concerné à la main avec les mêmes noms.
+## Contrôles
 
-## Tests bloquants du socle (avant tout événement P1)
+`node scripts/check-published-tracking.mjs [dist|https://hamacpatrimoine.com/fr/]` lit le HTML et le JavaScript publiés, sans rien envoyer. Il échoue si `gtm.js` ou un identifiant `GTM-` apparaît, si le flux GA4 manque ou si un événement attendu est absent du bundle.
 
-| Test | Attendu |
+Contrôles manuels (Tag Assistant ou GA4 DebugView, en trafic interne : `?otomate_internal=on`) :
+
+| Contrôle | Attendu |
 |---|---|
-| T-C6 | Sans choix, puis refus : 0 requête Google, aucun cookie `_ga` |
-| T-B1 / T-C1 | Preview, Consent Initialization : Default `analytics_storage` Granted, aucun Update ; Initialization : Google tag Fired |
-| T-C7 | 1 seul `gtm.js` ; 0 `collect` avant `en=page_view` |
-| T-CS1 / T-CS2 | Contrôles intégrés visibles, aucun contrôle supplémentaire ; 100 % des balises avec la condition `JS - otomate analytics granted` |
-| T-PV1 à T-PV4 | Aucun `page_view` automatique ni lié à l'historique |
-| T-RV1 à T-RV6 | Révocation : classement des requêtes par instant de création (`T_init`), variantes VR-1 / VR-2 / VR-3 |
-| T-DL1 à T-DL4 | Remise à zéro de `event_params` dans le vrai container |
-| T-A1 | Acceptation tardive : `campaign_*` sur le premier `page_view`, `dl` sans UTM |
-
-Réglages de test (développement uniquement, `npm run dev`) :
-- `localStorage.otomate_revoke_variant = 'VR-2' | 'VR-3'` : variante de révocation mesurée ;
-- `localStorage.otomate_revoke_no_reload = '1'` : révocation sans rechargement (isolement T-RV1 / T-RV2) ;
-- la console affiche `[otomate] R1 <timestamp>` au début de la révocation.
+| Sans choix, puis refus | 0 requête vers Google, aucun cookie `_ga` |
+| Acceptation | `gtag/js` chargé une seule fois, aucun `gtm.js`, 1 `page_view` pour la page courante |
+| Navigation interne, rechargement, retour | 1 `page_view` par changement de chemin, aucun `page_view` automatique de GA4 |
+| Révocation | consentement `denied`, cookies `_ga*` purgés, rechargement, plus aucune requête |
+| Acceptation tardive | champs `campaign_*` sur le premier `page_view`, `page_location` sans UTM |
+| Formulaire envoyé | 1 événement de formulaire et 1 `generate_lead` |
 
 ## Registre des événements
 
 Le registre vit dans `src/analytics/events.ts`. Il décrit les événements autorisés. Il ne les émet pas.
 
-Aujourd'hui, seule la vue de page part vers le dataLayer, via `trackPageView`. Les douze autres événements sont prêts dans le schéma et ne sont branchés sur aucune page. Leur activation attend un alignement GTM distinct.
+Les treize événements sont branchés et partent par `gtag('event', …)` : `page_view` via `trackPageView` (`Analytics.tsx`), les clics téléphone et e-mail, les filtres, la recherche et l'absence de résultats du catalogue, la vue d'une fiche, les quatre formulaires, `generate_lead` et `form_error` (`forms.ts`).
 
 | Événement | Obligatoire | Facultatif |
 |---|---|---|
@@ -123,10 +113,11 @@ Hors schéma, et donc refusés : texte libre, nom, adresse e-mail, téléphone, 
 
 `track()` suit cet ordre.
 
-1. `canTrack()` est faux : retour `false`, aucun push, aucun journal.
+1. `canTrack()` est faux : retour `false`, aucun envoi, aucun journal.
 2. `validateEvent` prépare `city`, puis vérifie le schéma, les clés obligatoires et les règles croisées.
 3. `looksPersonal` relit les chaînes déjà acceptées. Un `@`, un e-mail, un téléphone français, neuf chiffres ou plus, ou un condensat hexadécimal d'au moins 32 caractères rejette l'événement entier.
-4. Sinon les deux pushes partent et `track()` renvoie `true`.
+4. `generate_lead` est ignoré s'il arrive une seconde fois pour le même formulaire en moins de 1,5 s (`lead-dedup.ts`).
+5. Sinon l'événement part par gtag et `track()` renvoie `true`.
 
 Le rejet est intégral. Une clé inconnue ou une valeur invalide ne sont pas retirées pour laisser passer le reste. `sanitizeParams` n'existe plus.
 
@@ -144,29 +135,30 @@ Le moteur ne parcourt que les clés du schéma pour décider quoi transmettre. U
 
 ## Consentement et conditions d'envoi
 
-`canTrack()` est vrai seulement si les quatre conditions le sont :
+`canTrack()` est vrai seulement si les conditions suivantes le sont :
 
 - le suivi n'est pas en cours de révocation ;
-- GTM a été injecté sur cette page ;
-- `trackingConfigured()` est vrai : navigateur, pas de pré-rendu (`window.__PRERENDER__`), identifiant GTM au format `GTM-` suivi de lettres et de chiffres ;
+- `grant()` a configuré gtag sur cette page, sans conteneur GTM ;
+- `trackingConfigured()` est vrai : navigateur, pas de pré-rendu (`window.__PRERENDER__`), identifiant GA4 au format `G-` suivi de lettres et de chiffres ;
 - le consentement analytics est accordé.
 
 Sans ces conditions, l'événement est abandonné. Il n'est pas mis en file. Le refus de consentement remet `lastPageViewRoute` à vide, pour qu'une acceptation ultérieure sur la même page puisse renvoyer la vue.
 
 `trackPageView` mémorise la route seulement si `track('page_view', {})` renvoie `true`. Un second appel pour la même route ne renvoie pas la vue. Un `page_view` refusé par `track()` ne marque pas la route.
 
-## Contrat dataLayer
+## Contrat d'envoi gtag
 
-Un envoi réussi de `track()` produit exactement deux pushes, dans cet ordre :
+Un envoi réussi de `track()` produit exactement un appel :
 
 ```js
-dataLayer.push({ event_params: null })
-dataLayer.push({ event, event_params: params })
+gtag('event', event, { ...params, tracking_version: 'otomate-1.4', send_to: GA_MEASUREMENT_ID })
 ```
 
-`params` ne contient que les clés validées. `otomate_context` n'est pas dans ces deux pushes. Il part séparément : avant le marqueur `gtm.js`, et dans `trackPageView` juste avant `track('page_view', {})`.
+`params` ne contient que les clés validées. `traffic_type: 'internal'` s'ajoute quand le trafic est marqué interne. Les clés de valeur `undefined` sont retirées.
 
-Une vue de page acceptée ressemble donc à : contexte, puis remise à `null`, puis `page_view` avec `event_params` vide. Le second appel de la même route n'ajoute rien.
+Pour `page_view`, `track()` ajoute `page_path`, `page_location` et `page_referrer` nettoyés (`url.ts`), et `page_type` quand la route est connue. gtag est configuré avec `send_page_view: false` : GA4 n'envoie aucune vue automatique.
+
+Le site n'utilise pas d'objet `event_params` ni de remise à `null`. `window.dataLayer` sert seulement de file interne au snippet gtag.
 
 ## Journal de rejet en développement
 
@@ -180,7 +172,7 @@ Trois arguments, tous fermés : le préfixe, un nom présent dans `EVENT_SCHEMAS
 
 `import.meta.env.DEV` est faux dans un build de production : cet appel n'y figure plus. L'absence de consentement et le pré-rendu ne produisent pas ce journal.
 
-`[otomate] R1` reste le journal de révocation, distinct de celui des rejets.
+La révocation ne produit pas de journal : elle retire le consentement, purge les cookies `_ga*` et recharge la page.
 
 ## TypeScript et exécution
 
@@ -197,4 +189,4 @@ Limite de typage : `EventParams<'page_view'>` est `{}`. Une clé libre sur cet o
 1. Décrire le schéma et les clés obligatoires dans `events.ts`.
 2. Laisser `EventParams` en déduire le contrat, avec une règle croisée seulement si les clés ne suffisent pas.
 3. Ajouter un cas positif et un `@ts-expect-error` dans `type-tests.ts`.
-4. Ne pas appeler `track()` depuis une page tant que l'activation n'est pas décidée. L'alignement du container GTM se fait à ce moment-là, pas dans le registre.
+4. Appeler `track()` depuis la page concernée, puis ajouter le nom à `EVENTS` dans `scripts/check-published-tracking.mjs`. Aucune configuration GTM n'est nécessaire.
