@@ -9678,8 +9678,10 @@ body.is-nav-open .site-header .nav-toggle span {
     border-bottom-color: transparent;
   }
 
-  .notre-maison {
-    padding-top: 1.6rem;
+  /* Mobile : les biens en vedette suivent directement le hero. */
+  .notre-maison,
+  .key-stats-banner {
+    display: none;
   }
 
   .notre-maison__grid {
