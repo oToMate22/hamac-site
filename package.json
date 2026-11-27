@@ -16,7 +16,9 @@
     "check:deployment": "tsx scripts/check-deployment.ts",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
     "preview": "vite preview",
-    "test:apimo-proxy-isolated": "${DENO:-deno} run --allow-env --allow-read=. --config scripts/apimo-proxy-isolated.deno.json scripts/apimo-proxy-isolated.test.ts"
+    "test:apimo-proxy-isolated": "${DENO:-deno} run --no-lock --allow-env --allow-read=. --config scripts/apimo-proxy-isolated.deno.json scripts/apimo-proxy-isolated.test.ts",
+    "guard:apimo-proxy": "node scripts/guard-apimo-proxy.mjs",
+    "deploy:functions": "npm run guard:apimo-proxy && npm run test:apimo-public && npm run test:catalog && supabase functions deploy apimo-proxy listing-feed catalog-sync --project-ref lxkhozdshbpdjnanbnzi && node scripts/check-apimo-proxy-live.mjs"
   },
   "devDependencies": {
     "@sparticuz/chromium": "^153.0.0",

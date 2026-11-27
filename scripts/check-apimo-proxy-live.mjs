@@ -4,15 +4,26 @@
 // uniquement en isolé (npm run test:apimo-proxy-isolated), jamais contre la production.
 // Usage : node scripts/check-apimo-proxy-live.mjs   (lit VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local)
 // N'affiche que des compteurs et des noms de champs, jamais une valeur.
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 
-const env = Object.fromEntries(
-  readFileSync(new URL('../.env.local', import.meta.url), 'utf8')
-    .split('\n')
-    .map((line) => line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/))
-    .filter(Boolean)
-    .map((m) => [m[1], m[2].replace(/^["']|["']$/g, '')]),
-)
+// Variables d'environnement (CI) ou, à défaut, .env.local (poste de travail).
+const envFile = new URL('../.env.local', import.meta.url)
+const env = {
+  ...(existsSync(envFile)
+    ? Object.fromEntries(
+        readFileSync(envFile, 'utf8')
+          .split('\n')
+          .map((line) => line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/))
+          .filter(Boolean)
+          .map((m) => [m[1], m[2].replace(/^["']|["']$/g, '')]),
+      )
+    : {}),
+  ...Object.fromEntries(['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'].filter((k) => process.env[k]).map((k) => [k, process.env[k]])),
+}
+if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) {
+  console.error('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY requis')
+  process.exit(2)
+}
 const base = `${env.VITE_SUPABASE_URL}/functions/v1/apimo-proxy`
 const headers = { apikey: env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.VITE_SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' }
 

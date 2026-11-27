@@ -1,0 +1,53 @@
+# Sécurité du catalogue Apimo : empêche qu'une version vulnérable d'apimo-proxy soit fusionnée,
+# et surveille la production (lecture seule, les deux appels normaux du site).
+name: Sécurité apimo-proxy
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run guard:apimo-proxy
+      - run: npm run test:apimo-public
+      - run: npm run test:catalog
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm run test:apimo-proxy-isolated
+
+  production:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Contrôle en ligne (lecture seule)
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::warning::Secrets VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY absents : contrôle en ligne non exécuté"
+            exit 0
+          fi
+          node scripts/check-apimo-proxy-live.mjs

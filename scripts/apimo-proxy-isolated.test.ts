@@ -3,8 +3,9 @@
 // pourrait tenter (refresh forcé, statut libre, routes supprimées, paramètres arbitraires) sans
 // jamais toucher la production.
 // Usage : npm run test:apimo-proxy-isolated
-// Deno télécharge les dépendances npm/jsr, mais le code testé ne reçoit aucune permission réseau
-// (--allow-env, et lecture du dépôt pour charger la fonction) : tout appel non simulé échoue.
+// Aucune dépendance distante : le client Supabase est remplacé par un double local
+// (apimo-proxy-isolated.supabase-stub.ts) et Deno ne reçoit aucune permission réseau
+// (--allow-env et lecture du dépôt seulement) : tout appel non simulé échoue.
 
 const CANARY = 'CANARI-PRIVE'
 const BIRTHDAY = '1971-02-03'
