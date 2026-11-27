@@ -1,5 +1,11 @@
 import "@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "@supabase/supabase-js"
+import { PUBLISHED_STATUSES, publicCatalogEnvelope } from "../_shared/catalog/public.ts"
+import { isCatalogRoute } from "../_shared/catalog/public-route.ts"
+
+// Fonction PUBLIQUE (clé anon, appelée par le navigateur) : une seule action, le catalogue publié.
+// Aucun paramètre du client n'est transmis à Apimo. Chaque réponse, y compris celles lues
+// dans les caches, passe par publicCatalogEnvelope (liste blanche profonde, biens publiés seulement).
 
 const APIMO_BASE_URL = "https://api.apimo.pro"
 const APIMO_PROVIDER_ID = Deno.env.get("APIMO_PROVIDER_ID")
@@ -10,13 +16,6 @@ const CACHE_TTL_MS = 5 * 60 * 1000
 const PAGE_SIZE = 100
 const MAX_PAGES = 20
 
-/**
- * Apimo n'ORe pas `status=1,22,30` correctement : un seul statut par requête.
- * On fusionne donc plusieurs appels. Statuts « catalogue site » :
- * 1 = en cours, 22 = offre, 29 = autre (souvent encore affiché).
- */
-const SITE_STATUSES = ["1", "22", "29"]
-
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -24,17 +23,18 @@ const CORS_HEADERS = {
   "Content-Type": "application/json",
 }
 
-type MemoryEntry = { payload: unknown; fetchedAt: number; expiresAt: number }
+type MemoryEntry = { payload: unknown; expiresAt: number }
 const memoryCache = new Map<string, MemoryEntry>()
 
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS_HEADERS, ...extra } })
 
-function cacheHeaders(kind: "memory" | "persistent" | "stale" | "miss") {
-  const headers: Record<string, string> = { "X-Cache": kind }
-  if (kind !== "miss") headers["Cache-Control"] = "public, max-age=60"
-  return headers
-}
+/** Seule sortie des données de biens : filtrage serveur, quelle que soit la provenance (Apimo ou cache). */
+const catalogResponse = (payload: unknown, cache: "memory" | "persistent" | "stale" | "miss") =>
+  json(publicCatalogEnvelope(payload), 200, {
+    "X-Cache": cache,
+    ...(cache === "miss" ? {} : { "Cache-Control": "public, max-age=60" }),
+  })
 
 function cacheClient() {
   const url = Deno.env.get("SUPABASE_URL")
@@ -43,28 +43,13 @@ function cacheClient() {
   return createClient(url, key)
 }
 
-function readMemory(key: string): { payload: unknown; stale: boolean } | null {
-  const entry = memoryCache.get(key)
-  if (!entry) return null
-  return { payload: entry.payload, stale: Date.now() >= entry.expiresAt }
-}
-
-function writeMemory(key: string, payload: unknown) {
-  const fetchedAt = Date.now()
-  memoryCache.set(key, { payload, fetchedAt, expiresAt: fetchedAt + CACHE_TTL_MS })
-}
-
-function clearMemory(key: string) {
-  memoryCache.delete(key)
-}
-
-async function readPersistent(key: string): Promise<{ payload: unknown; fetchedAt: number } | null> {
+async function readPersistent(): Promise<{ payload: unknown; fetchedAt: number } | null> {
   const supabase = cacheClient()
   if (!supabase) return null
   const { data, error } = await supabase
     .from("apimo_cache")
     .select("payload, fetched_at")
-    .eq("key", key)
+    .eq("key", PROPERTIES_CACHE_KEY)
     .maybeSingle()
   if (error) {
     console.error("[apimo-proxy] cache read failed:", error.message)
@@ -75,450 +60,140 @@ async function readPersistent(key: string): Promise<{ payload: unknown; fetchedA
   return { payload: data.payload, fetchedAt }
 }
 
-async function writePersistent(key: string, payload: unknown) {
+async function writePersistent(payload: unknown) {
   const supabase = cacheClient()
   if (!supabase) return
   const { error } = await supabase.from("apimo_cache").upsert({
-    key,
+    key: PROPERTIES_CACHE_KEY,
     payload,
     fetched_at: new Date().toISOString(),
   })
   if (error) console.error("[apimo-proxy] cache write failed:", error.message)
 }
 
-async function deletePersistent(key: string) {
-  const supabase = cacheClient()
-  if (!supabase) return
-  const { error } = await supabase.from("apimo_cache").delete().eq("key", key)
-  if (error) console.error("[apimo-proxy] cache delete failed:", error.message)
-}
-
-async function readFreshListCache(): Promise<{ payload: unknown; source: "memory" | "persistent" } | null> {
-  const mem = readMemory(PROPERTIES_CACHE_KEY)
-  if (mem && !mem.stale) return { payload: mem.payload, source: "memory" }
-
-  const persistent = await readPersistent(PROPERTIES_CACHE_KEY)
-  if (persistent && Date.now() - persistent.fetchedAt < CACHE_TTL_MS) {
-    writeMemory(PROPERTIES_CACHE_KEY, persistent.payload)
-    return { payload: persistent.payload, source: "persistent" }
-  }
-  return null
-}
-
-async function readAnyListCache(): Promise<unknown | null> {
-  const mem = readMemory(PROPERTIES_CACHE_KEY)
-  if (mem) return mem.payload
-  const persistent = await readPersistent(PROPERTIES_CACHE_KEY)
-  return persistent?.payload ?? null
-}
-
 function extractPropertiesArray(payload: unknown): unknown[] {
   if (Array.isArray(payload)) return payload
   if (!payload || typeof payload !== "object") return []
   const obj = payload as Record<string, unknown>
-  if (Array.isArray(obj.properties)) return obj.properties
-  if (Array.isArray(obj.items)) return obj.items
-  if (Array.isArray(obj.results)) return obj.results
-  if (Array.isArray(obj.data)) return obj.data
+  for (const key of ["properties", "items", "results", "data"]) {
+    if (Array.isArray(obj[key])) return obj[key] as unknown[]
+  }
   return []
 }
 
 function extractTotalItems(payload: unknown, fallback: number): number {
   if (!payload || typeof payload !== "object") return fallback
   const obj = payload as Record<string, unknown>
-  const direct = obj.total_items
-  if (typeof direct === "number" && Number.isFinite(direct)) return direct
-  if (typeof direct === "string" && Number.isFinite(Number(direct))) return Number(direct)
-
-  const pagination = obj.pagination
-  if (pagination && typeof pagination === "object") {
-    const nested = (pagination as Record<string, unknown>).total_items
-    if (typeof nested === "number" && Number.isFinite(nested)) return nested
-    if (typeof nested === "string" && Number.isFinite(Number(nested))) return Number(nested)
+  const pagination = obj.pagination && typeof obj.pagination === "object" ? (obj.pagination as Record<string, unknown>) : {}
+  for (const value of [obj.total_items, pagination.total_items]) {
+    const number = Number(value)
+    if (value !== null && value !== undefined && value !== "" && Number.isFinite(number)) return number
   }
-
   return fallback
 }
 
-function buildApimoUrl(pathSuffix: string, searchParams: URLSearchParams) {
-  const url = new URL(`${APIMO_BASE_URL}/agencies/${APIMO_AGENCY_ID}/properties${pathSuffix}`)
-  for (const [key, value] of searchParams.entries()) {
-    url.searchParams.set(key, value)
-  }
-  return url
-}
-
-function buildApimoAgenciesUrl(searchParams: URLSearchParams) {
-  const url = new URL(`${APIMO_BASE_URL}/agencies`)
-  for (const [key, value] of searchParams.entries()) {
-    url.searchParams.set(key, value)
-  }
-  return url
-}
-
-function findPropertyInList(payload: unknown, id: string): unknown | null {
-  const match = extractPropertiesArray(payload).find((item) => {
-    if (!item || typeof item !== "object") return false
-    return String((item as Record<string, unknown>).id) === id
+async function fetchStatusPage(status: string, offset: number) {
+  const url = new URL(`${APIMO_BASE_URL}/agencies/${APIMO_AGENCY_ID}/properties`)
+  url.searchParams.set("status", status)
+  url.searchParams.set("limit", String(PAGE_SIZE))
+  url.searchParams.set("offset", String(offset))
+  const response = await fetch(url, {
+    method: "GET",
+    headers: { Authorization: `Basic ${btoa(`${APIMO_PROVIDER_ID}:${APIMO_TOKEN}`)}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
   })
-  return match ?? null
+  const body = await response.json().catch(() => null)
+  return { status: response.status, ok: response.ok, body }
 }
 
-function statusBreakdown(items: unknown[]) {
-  const counts: Record<string, number> = {}
-  for (const item of items) {
-    if (!item || typeof item !== "object") continue
-    const status = String((item as Record<string, unknown>).status ?? "null")
-    counts[status] = (counts[status] ?? 0) + 1
+/** Tous les biens d'un statut publié. complete = false si une page manque. */
+async function fetchStatus(status: string) {
+  const first = await fetchStatusPage(status, 0)
+  if (!first.ok) return { ok: false as const, httpStatus: first.status, items: [] as unknown[], complete: false }
+  const items = [...extractPropertiesArray(first.body)]
+  const total = extractTotalItems(first.body, items.length)
+  let complete = true
+  for (let page = 1; page < MAX_PAGES && items.length < total; page++) {
+    const next = await fetchStatusPage(status, page * PAGE_SIZE)
+    if (!next.ok) {
+      console.warn("[apimo-proxy] status", status, "page", page, "HTTP", next.status)
+      complete = false
+      break
+    }
+    const nextItems = extractPropertiesArray(next.body)
+    if (!nextItems.length) break
+    items.push(...nextItems)
   }
-  return counts
+  if (items.length < total) complete = false
+  return { ok: true as const, httpStatus: first.status, items, complete }
 }
 
 Deno.serve(async (req) => {
   try {
     if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS })
+    if (req.method !== "GET" && req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+
+    const body = req.method === "POST" ? await req.json().catch(() => null) : null
+    if (!isCatalogRoute(req.method, new URL(req.url).pathname, body)) return json({ error: "Route not found" }, 404)
 
     if (!APIMO_PROVIDER_ID || !APIMO_TOKEN || !APIMO_AGENCY_ID) {
-      console.error("[apimo-proxy] missing required env vars:", {
-        hasProviderId: Boolean(APIMO_PROVIDER_ID),
-        hasToken: Boolean(APIMO_TOKEN),
-        hasAgencyId: Boolean(APIMO_AGENCY_ID),
-      })
-      return json(
-        {
-          error: "Missing APIMO_PROVIDER_ID, APIMO_TOKEN or APIMO_AGENCY_ID in function secrets.",
-        },
-        500,
-      )
+      console.error("[apimo-proxy] missing Apimo secrets")
+      return json({ error: "Catalogue indisponible" }, 500)
     }
 
-    const incomingUrl = new URL(req.url)
-    const normalizedPath = incomingUrl.pathname.replace(/^\/+/, "")
-    const routePath =
-      normalizedPath.includes("apimo-proxy/") ? normalizedPath.split("apimo-proxy/")[1] : normalizedPath
+    const memory = memoryCache.get(PROPERTIES_CACHE_KEY)
+    if (memory && Date.now() < memory.expiresAt) return catalogResponse(memory.payload, "memory")
 
-    let apimoPath = ""
-    let isAgenciesRoute = false
-    let isProbeRoute = false
-    let forceRefresh = incomingUrl.searchParams.get("refresh") === "1"
-    let bodyParams: Record<string, unknown> = {}
-
-    if (req.method === "GET") {
-      if (routePath === "agencies") {
-        isAgenciesRoute = true
-      } else if (routePath === "properties/probe") {
-        isProbeRoute = true
-      } else if (routePath === "properties") {
-        apimoPath = ""
-      } else {
-        const propertyMatch = routePath.match(/^properties\/([^/]+)$/)
-        if (propertyMatch) apimoPath = `/${encodeURIComponent(propertyMatch[1])}`
-        else return json({ error: "Route not found" }, 404)
-      }
-    } else {
-      bodyParams = await req.json().catch(() => ({} as Record<string, unknown>))
-      const route = typeof bodyParams?.route === "string" ? bodyParams.route : ""
-      const normalizedRoute = route.replace(/^\/+/, "")
-      if (bodyParams.refresh === true || bodyParams.refresh === "1") forceRefresh = true
-
-      if (normalizedRoute === "agencies") {
-        isAgenciesRoute = true
-      } else if (normalizedRoute === "properties/probe") {
-        isProbeRoute = true
-      } else if (normalizedRoute === "properties") {
-        apimoPath = ""
-      } else {
-        const propertyMatch = normalizedRoute.match(/^properties\/([^/]+)$/)
-        if (propertyMatch) apimoPath = `/${encodeURIComponent(propertyMatch[1])}`
-        else return json({ error: "Route not found" }, 404)
-      }
+    const persistent = await readPersistent()
+    if (persistent && Date.now() - persistent.fetchedAt < CACHE_TTL_MS) {
+      memoryCache.set(PROPERTIES_CACHE_KEY, { payload: persistent.payload, expiresAt: persistent.fetchedAt + CACHE_TTL_MS })
+      return catalogResponse(persistent.payload, "persistent")
     }
 
-    const basicCreds = `${APIMO_PROVIDER_ID}:${APIMO_TOKEN}`
-    const basicEncoded = btoa(basicCreds)
-    const authorizationHeader = `Basic ${basicEncoded}`
+    const stale = () => memory?.payload ?? persistent?.payload ?? null
 
-    const fetchApimoPage = async (
-      offset: number,
-      limit: number,
-      extraParams?: URLSearchParams,
-      pathSuffix = apimoPath,
-    ) => {
-      const pageParams = new URLSearchParams(extraParams ?? incomingUrl.searchParams)
-      pageParams.delete("refresh")
-      pageParams.delete("probe")
-      pageParams.set("limit", String(limit))
-      pageParams.set("offset", String(offset))
-      const targetUrl = isAgenciesRoute
-        ? buildApimoAgenciesUrl(pageParams)
-        : buildApimoUrl(pathSuffix, pageParams)
-
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10_000)
-
-      let apimoResponse: Response
-      try {
-        apimoResponse = await fetch(targetUrl, {
-          method: "GET",
-          headers: {
-            Authorization: authorizationHeader,
-            Accept: "application/json",
-          },
-          signal: controller.signal,
-        })
-      } catch (fetchErr) {
-        console.error("[apimo-proxy] fetch failed for offset:", offset, "error:", fetchErr)
-        throw fetchErr
-      } finally {
-        clearTimeout(timeoutId)
-      }
-
-      const responseText = await apimoResponse.text()
-      let parsedBody: unknown = responseText
-
-      try {
-        parsedBody = JSON.parse(responseText)
-      } catch {
-        // keep raw text when API does not return JSON
-      }
-
-      return { apimoResponse, parsedBody, url: targetUrl.toString() }
-    }
-
-    const fetchAllPages = async (extraParams?: URLSearchParams) => {
-      const firstPage = await fetchApimoPage(0, PAGE_SIZE, extraParams)
-      if (!firstPage.apimoResponse.ok) return firstPage
-
-      const firstItems = extractPropertiesArray(firstPage.parsedBody)
-      const totalItems = extractTotalItems(firstPage.parsedBody, firstItems.length)
-      const allItems: unknown[] = [...firstItems]
-      // Complétude de la lecture : lue par catalog-sync pour ne jamais retirer un bien sur une réponse partielle.
-      let complete = true
-
-      for (let page = 1; page < MAX_PAGES; page++) {
-        const offset = page * PAGE_SIZE
-        if (totalItems <= offset || allItems.length >= totalItems) break
-        const nextPage = await fetchApimoPage(offset, PAGE_SIZE, extraParams)
-        if (!nextPage.apimoResponse.ok) {
-          console.warn(
-            "[apimo-proxy] additional page HTTP",
-            nextPage.apimoResponse.status,
-            "— keeping",
-            allItems.length,
-            "items",
-          )
-          complete = false
-          break
-        }
-        const nextItems = extractPropertiesArray(nextPage.parsedBody)
-        allItems.push(...nextItems)
-        if (!nextItems.length) {
-          if (allItems.length < totalItems) complete = false
-          break
-        }
-      }
-      if (allItems.length < totalItems) complete = false
-
-      const responsePayload =
-        firstPage.parsedBody && typeof firstPage.parsedBody === "object"
-          ? {
-              ...(firstPage.parsedBody as Record<string, unknown>),
-              properties: allItems,
-              total_items: totalItems,
-              fetched_items: allItems.length,
-              sync_meta: { complete },
-            }
-          : { properties: allItems, total_items: totalItems, fetched_items: allItems.length, sync_meta: { complete } }
-
-      return { apimoResponse: firstPage.apimoResponse, parsedBody: responsePayload, url: firstPage.url, complete }
-    }
-
-    if (isAgenciesRoute) {
-      let agenciesResponse: { apimoResponse: Response; parsedBody: unknown }
-      try {
-        agenciesResponse = await fetchApimoPage(0, 100)
-      } catch (agenciesErr) {
-        console.error("[apimo-proxy] agencies fetch failed:", agenciesErr)
-        return json({ error: "Apimo agencies fetch failed", details: String(agenciesErr) }, 502)
-      }
-
-      return json(agenciesResponse.parsedBody, agenciesResponse.apimoResponse.status)
-    }
-
-    if (isProbeRoute) {
-      const variants: Array<{ label: string; params: URLSearchParams }> = [
-        { label: "default", params: new URLSearchParams() },
-        { label: "status=1", params: new URLSearchParams({ status: "1" }) },
-        { label: "broader_status", params: new URLSearchParams({ status: BROADER_STATUS }) },
-        {
-          label: "broader_status+step=1",
-          params: new URLSearchParams({ status: BROADER_STATUS, step: "1" }),
-        },
-        { label: "status=1,20,22,24,30", params: new URLSearchParams({ status: "1,20,22,24,30" }) },
-        { label: "category=1", params: new URLSearchParams({ category: "1" }) },
-        { label: "category=2", params: new URLSearchParams({ category: "2" }) },
-        { label: "limit50_default", params: new URLSearchParams() },
-      ]
-
-      const results = []
-      for (const variant of variants) {
-        try {
-          const limit = variant.label === "limit50_default" ? 50 : 1
-          const page = await fetchApimoPage(0, limit, variant.params)
-          const items = extractPropertiesArray(page.parsedBody)
-          const total = extractTotalItems(page.parsedBody, items.length)
-          results.push({
-            label: variant.label,
-            http: page.apimoResponse.status,
-            total_items: total,
-            page_items: items.length,
-            query: Object.fromEntries(variant.params.entries()),
-          })
-        } catch (err) {
-          results.push({ label: variant.label, error: String(err) })
-        }
-      }
-
-      // Un appel complet élargi pour comparer le volume réel récupérable
-      let broaderFull: Record<string, unknown> | null = null
-      try {
-        const full = await fetchAllPages(new URLSearchParams({ status: BROADER_STATUS }))
-        const items = extractPropertiesArray(full.parsedBody)
-        broaderFull = {
-          http: full.apimoResponse.status,
-          total_items: extractTotalItems(full.parsedBody, items.length),
-          fetched_items: items.length,
-          statuses: statusBreakdown(items),
-        }
-      } catch (err) {
-        broaderFull = { error: String(err) }
-      }
-
-      return json({
-        agency_id: APIMO_AGENCY_ID,
-        variants: results,
-        broader_full: broaderFull,
-      })
-    }
-
-    if (apimoPath === "") {
-      if (forceRefresh) {
-        clearMemory(PROPERTIES_CACHE_KEY)
-        await deletePersistent(PROPERTIES_CACHE_KEY)
-      } else {
-        const fresh = await readFreshListCache()
-        if (fresh) {
-          console.log("[apimo-proxy] properties cache", fresh.source)
-          return json(fresh.payload, 200, cacheHeaders(fresh.source))
-        }
-      }
-
-      const listParams = new URLSearchParams(incomingUrl.searchParams)
-      listParams.delete("refresh")
-      const explicitStatus =
-        listParams.get("status") ||
-        (typeof bodyParams.status === "string" ? bodyParams.status : null)
-
-      let listResult: { apimoResponse: Response; parsedBody: unknown }
-      try {
-        if (explicitStatus) {
-          listParams.set("status", explicitStatus)
-          listResult = await fetchAllPages(listParams)
-        } else {
-          // Fusion multi-statuts (Apimo = 1 statut / requête).
-          const byId = new Map<string, unknown>()
-          let allComplete = true
-          let lastOk: { apimoResponse: Response; parsedBody: unknown } | null = null
-          let firstError: { apimoResponse: Response; parsedBody: unknown } | null = null
-
-          for (const status of SITE_STATUSES) {
-            const params = new URLSearchParams(listParams)
-            params.set("status", status)
-            const page = await fetchAllPages(params)
-            if (!page.apimoResponse.ok) {
-              firstError ??= page
-              allComplete = false
-              console.warn("[apimo-proxy] status", status, "HTTP", page.apimoResponse.status)
-              continue
-            }
-            if ("complete" in page && page.complete === false) allComplete = false
-            lastOk = page
-            for (const item of extractPropertiesArray(page.parsedBody)) {
-              if (!item || typeof item !== "object") continue
-              const id = String((item as Record<string, unknown>).id ?? "")
-              if (id) byId.set(id, item)
-            }
-          }
-
-          if (!lastOk) {
-            listResult = firstError ?? {
-              apimoResponse: new Response(null, { status: 502 }),
-              parsedBody: { error: "Apimo multi-status fetch failed" },
-            }
-          } else {
-            const merged = Array.from(byId.values())
-            listResult = {
-              apimoResponse: lastOk.apimoResponse,
-              parsedBody: {
-                ...(typeof lastOk.parsedBody === "object" && lastOk.parsedBody
-                  ? (lastOk.parsedBody as Record<string, unknown>)
-                  : {}),
-                properties: merged,
-                total_items: merged.length,
-                fetched_items: merged.length,
-                status_filter: SITE_STATUSES.join(","),
-                sync_meta: { complete: allComplete },
-              },
-            }
-          }
-        }
-      } catch (firstErr) {
-        console.error("[apimo-proxy] list fetch failed:", firstErr)
-        const stale = await readAnyListCache()
-        if (stale) return json(stale, 200, cacheHeaders("stale"))
-        return json({ error: "Apimo fetch failed on list", details: String(firstErr) }, 502)
-      }
-      if (!listResult.apimoResponse.ok) {
-        const stale = await readAnyListCache()
-        if (stale) {
-          console.warn("[apimo-proxy] Apimo", listResult.apimoResponse.status, "— serving stale cache")
-          return json(stale, 200, cacheHeaders("stale"))
-        }
-        return json(listResult.parsedBody, listResult.apimoResponse.status)
-      }
-
-      writeMemory(PROPERTIES_CACHE_KEY, listResult.parsedBody)
-      await writePersistent(PROPERTIES_CACHE_KEY, listResult.parsedBody)
-      return json(listResult.parsedBody, 200, cacheHeaders("miss"))
-    }
-
-    const wantedId = apimoPath.replace(/^\//, "")
-    if (!forceRefresh) {
-      const listCache = await readFreshListCache()
-      if (listCache) {
-        const match = findPropertyInList(listCache.payload, wantedId)
-        if (match) return json(match, 200, cacheHeaders(listCache.source))
-      }
-    }
-
-    let single: { apimoResponse: Response; parsedBody: unknown }
+    // Apimo n'accepte qu'un statut par requête : un appel par statut publié, puis fusion.
+    const byId = new Map<string, unknown>()
+    let complete = true
+    let failedStatus = 0
+    let anyOk = false
     try {
-      single = await fetchApimoPage(0, 100)
-    } catch (singleErr) {
-      console.error("[apimo-proxy] single fetch failed:", singleErr)
-      const stale = await readAnyListCache()
-      const match = stale ? findPropertyInList(stale, wantedId) : null
-      if (match) return json(match, 200, cacheHeaders("stale"))
-      return json({ error: "Apimo fetch failed", details: String(singleErr) }, 502)
+      for (const status of PUBLISHED_STATUSES) {
+        const result = await fetchStatus(status)
+        if (!result.ok) {
+          failedStatus ||= result.httpStatus
+          complete = false
+          console.warn("[apimo-proxy] status", status, "HTTP", result.httpStatus)
+          continue
+        }
+        anyOk = true
+        if (!result.complete) complete = false
+        for (const item of result.items) {
+          if (!item || typeof item !== "object") continue
+          const id = String((item as Record<string, unknown>).id ?? "")
+          if (id) byId.set(id, item)
+        }
+      }
+    } catch (error) {
+      console.error("[apimo-proxy] Apimo fetch failed:", (error as Error).name)
+      anyOk = false
     }
-    if (!single.apimoResponse.ok) {
-      const stale = await readAnyListCache()
-      const match = stale ? findPropertyInList(stale, wantedId) : null
-      if (match) return json(match, 200, cacheHeaders("stale"))
+
+    if (!anyOk) {
+      const fallback = stale()
+      if (fallback) return catalogResponse(fallback, "stale")
+      if (failedStatus === 429) return json({ error: "Quota Apimo atteint", status: 429 }, 429)
+      return json({ error: "Catalogue indisponible" }, 502)
     }
-    return json(single.parsedBody, single.apimoResponse.status)
-  } catch (err) {
-    console.error("[apimo-proxy] caught error:", err)
-    return json({ error: "Internal error in apimo-proxy", details: String(err) }, 500)
+
+    const merged = Array.from(byId.values())
+    // Le cache ne conserve que la version filtrée : aucune donnée privée n'est stockée pour être resservie.
+    const envelope = publicCatalogEnvelope({ properties: merged, total_items: merged.length, sync_meta: { complete } })
+    memoryCache.set(PROPERTIES_CACHE_KEY, { payload: envelope, expiresAt: Date.now() + CACHE_TTL_MS })
+    await writePersistent(envelope)
+    return catalogResponse(envelope, "miss")
+  } catch (error) {
+    console.error("[apimo-proxy] internal error:", (error as Error).name)
+    return json({ error: "Catalogue indisponible" }, 500)
   }
 })

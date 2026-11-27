@@ -11,6 +11,7 @@
     "test:og": "tsx scripts/og-images.test.ts",
     "check:og": "tsx scripts/check-og-meta.ts",
     "test:catalog": "tsx scripts/catalog-sync.test.ts",
+    "test:apimo-public": "tsx scripts/apimo-public.test.ts",
     "simulate:catalog": "tsx scripts/simulate-catalog.ts",
     "check:deployment": "tsx scripts/check-deployment.ts",
     "typecheck:server": "tsc --noEmit -p tsconfig.server.json",

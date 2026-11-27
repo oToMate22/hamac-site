@@ -1,6 +1,7 @@
 // Modèle commun du catalogue Hamac : code pur (aucune API Deno ni Node), partagé par
 // les fonctions Edge Supabase (catalog-sync, listing-feed) et les fonctions Vercel (server/).
 // Seules dépendances : WebCrypto (crypto.subtle) et TextEncoder, disponibles partout.
+import { sanitizeListing } from './public.ts'
 
 export type ListingKind = 'acheter' | 'louer'
 export type ListingStatus = 'active' | 'pending_withdrawal' | 'withdrawn'
@@ -105,79 +106,11 @@ export function apimoUpdatedAt(raw: RawListing): string | null {
 }
 
 /**
- * Liste BLANCHE des champs Apimo transmis hors de Supabase : uniquement ce que le site affiche ou
- * utilise (fiche, carte, filtres, JSON-LD). Tout autre champ — propriétaire, locataire, adresse,
- * cadastre, commentaires internes, journaux, données financières, ou tout champ ajouté plus tard
- * par Apimo — est retiré. Vérifié par scripts/catalog-sync.test.ts : le site rend exactement la
- * même fiche avec la charge filtrée qu'avec la charge complète, sur tout le catalogue réel.
+ * Champs Apimo transmis hors de Supabase : liste blanche profonde définie dans public.ts
+ * (prix sans commissions, conseiller sans données personnelles, coordonnées arrondies si l'adresse n'est pas publiée).
  */
-export const PUBLIC_KEYS = [
-  'id',
-  'reference',
-  'type',
-  'subtype',
-  'category',
-  'step',
-  'status',
-  'name',
-  'city',
-  'district',
-  'latitude',
-  'longitude',
-  'area',
-  'plot',
-  'rooms',
-  'bedrooms',
-  'price',
-  'floor',
-  'heating',
-  'water',
-  'condition',
-  'standing',
-  'view',
-  'construction',
-  'orientations',
-  'proximities',
-  'services',
-  'areas',
-  'regulations',
-  'comments',
-  'pictures',
-  'agreement',
-  'availability',
-  'available_at',
-  'updated_at',
-  'created_at',
-  'user',
-] as const
-
-/** Sous-champs du conseiller (affiché sur la fiche) : pas de date de naissance, d'identifiants internes… */
-export const PUBLIC_USER_KEYS = [
-  'firstname',
-  'lastname',
-  'name',
-  'fullName',
-  'email',
-  'mail',
-  'phone',
-  'mobile',
-  'telephone',
-  'tel',
-  'picture',
-  'photo',
-  'avatar',
-] as const
-
-function pick(source: Record<string, unknown>, keys: readonly string[]) {
-  const out: Record<string, unknown> = {}
-  for (const key of keys) if (source[key] !== undefined) out[key] = source[key]
-  return out
-}
-
 export function publicPayload(raw: RawListing): RawListing {
-  const copy = pick(raw, PUBLIC_KEYS) as RawListing
-  if (copy.user && typeof copy.user === 'object') copy.user = pick(copy.user as Record<string, unknown>, PUBLIC_USER_KEYS)
-  return copy
+  return (sanitizeListing(raw) ?? {}) as RawListing
 }
 
 /** Résumé exposé par le flux (index) : assez pour le sitemap et le routage, sans le contenu. */
