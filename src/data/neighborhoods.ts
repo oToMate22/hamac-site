@@ -54,7 +54,7 @@ export const NEIGHBORHOODS: Neighborhood[] = [
     parks: 'Parcs arborés, promenades sur les hauteurs, points de vue sur Lyon et espaces naturels préservés.',
     referentAgent: {
       name: 'Ana Sanabria',
-      role: 'Assistante de direction',
+      role: 'Agent commercial',
       photo: '/fr/images/team/ana-sanabria.webp?v=2'
     }
   },
